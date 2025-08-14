@@ -12,7 +12,6 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@financial-ai/shared": "workspace:*",
     "langchain": "^0.0.212",
     "@langchain/openai": "^0.0.14",
     "@langchain/anthropic": "^0.0.4",

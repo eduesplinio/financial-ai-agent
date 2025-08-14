@@ -24,8 +24,8 @@
     - Implementar testes unitários para sistema de auth
     - _Requisitos: 6.5_
 
-- [ ] 3. Configurar MongoDB Atlas e modelos de dados
-  - [ ] 3.1 Configurar conexão com MongoDB Atlas
+- [x] 3. Configurar MongoDB Atlas e modelos de dados
+  - [x] 3.1 Configurar conexão com MongoDB Atlas
     - Configurar variáveis de ambiente para MongoDB Atlas
     - Implementar classe de conexão com connection pooling
     - Implementar retry logic e error handling
@@ -33,14 +33,14 @@
     - Criar health check para conexão do banco
     - _Requisitos: 6.1, 6.2_
   
-  - [ ] 3.2 Implementar schemas e modelos de dados
+  - [x] 3.2 Implementar schemas e modelos de dados
     - Implementar modelos Mongoose para User, Transaction, KnowledgeDocument, Conversation
     - Integrar validação Zod com schemas Mongoose
     - Criar funções de CRUD para cada modelo
     - Implementar soft delete e auditoria de dados
     - _Requisitos: 1.2, 2.1, 3.1_
   
-  - [ ] 3.3 Configurar Vector Search para sistema RAG
+  - [x] 3.3 Configurar Vector Search para sistema RAG
     - Configurar índices vetoriais no MongoDB Atlas
     - Implementar funções de busca semântica com aggregation pipeline
     - Criar utilitários para embedding e similarity search
