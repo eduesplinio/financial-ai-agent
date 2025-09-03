@@ -6,9 +6,7 @@ const nextConfig = {
   images: {
     domains: ['localhost'],
   },
-  env: {
-    CUSTOM_KEY: process.env.CUSTOM_KEY,
-  },
+  // Environment variables are handled by .env files
   // Enable strict mode for better development experience
   reactStrictMode: true,
   // Optimize bundle size
@@ -41,4 +39,30 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+// Configuração para garantir que o middleware não interfira nas rotas de autenticação
+const withAuthRoutes = {
+  ...nextConfig,
+  async headers() {
+    return [
+      {
+        source: '/((?!_next/static|_next/image|favicon.ico|api/auth).*)',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+        ],
+      },
+    ];
+  },
+};
+
+module.exports = withAuthRoutes;

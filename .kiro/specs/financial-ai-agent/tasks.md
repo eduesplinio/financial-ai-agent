@@ -16,7 +16,6 @@
     - Criar middleware de autenticação para rotas protegidas
     - Implementar páginas de login, registro e perfil
     - _Requisitos: 1.3, 6.5_
-  
   - [x] 2.2 Implementar controle de acesso baseado em papéis (RBAC)
     - Criar sistema de roles (user, admin, support) no banco de dados
     - Implementar middleware de autorização para API routes
@@ -32,14 +31,12 @@
     - Configurar índices básicos para performance
     - Criar health check para conexão do banco
     - _Requisitos: 6.1, 6.2_
-  
   - [x] 3.2 Implementar schemas e modelos de dados
     - Implementar modelos Mongoose para User, Transaction, KnowledgeDocument, Conversation
     - Integrar validação Zod com schemas Mongoose
     - Criar funções de CRUD para cada modelo
     - Implementar soft delete e auditoria de dados
     - _Requisitos: 1.2, 2.1, 3.1_
-  
   - [x] 3.3 Configurar Vector Search para sistema RAG
     - Configurar índices vetoriais no MongoDB Atlas
     - Implementar funções de busca semântica com aggregation pipeline
@@ -55,7 +52,6 @@
     - Configurar ambiente sandbox para testes de desenvolvimento
     - Criar tipos TypeScript para respostas das APIs
     - _Requisitos: 1.1, 1.5_
-  
   - [ ] 4.2 Implementar sincronização de dados bancários
     - Criar serviço de sincronização de contas e transações
     - Implementar jobs agendados para sincronização automática
@@ -63,7 +59,6 @@
     - Criar sistema de webhooks para atualizações em tempo real
     - Implementar tratamento de erros e retry para falhas de sincronização
     - _Requisitos: 1.1, 2.1_
-  
   - [ ] 4.3 Implementar gerenciamento de consentimentos LGPD
     - Criar interface de consentimento explícito do usuário
     - Implementar armazenamento e rastreamento de consentimentos
@@ -80,7 +75,6 @@
     - Criar sistema de feedback do usuário para melhoria contínua
     - Implementar retreinamento automático do modelo
     - _Requisitos: 2.1, 2.2, 7.1_
-  
   - [ ] 5.2 Implementar detector de duplicatas e anomalias
     - Criar algoritmo de detecção de transações duplicadas baseado em similaridade
     - Implementar detector de anomalias usando isolation forest
@@ -88,7 +82,6 @@
     - Implementar alertas automáticos para usuários
     - Criar dashboard para monitoramento de anomalias
     - _Requisitos: 2.4, 4.4_
-  
   - [ ] 5.3 Desenvolver analisador de padrões financeiros
     - Implementar cálculo de métricas financeiras (gastos por categoria, tendências)
     - Criar sistema de insights proativos baseado em padrões
@@ -105,7 +98,6 @@
     - Implementar sistema de atualização automática da base de conhecimento
     - Criar métricas de qualidade para documentos indexados
     - _Requisitos: 3.2, 3.4_
-  
   - [ ] 6.2 Implementar sistema de busca semântica
     - Criar API para busca semântica usando MongoDB Vector Search
     - Implementar ranking e re-ranking de resultados por relevância
@@ -113,7 +105,6 @@
     - Implementar busca híbrida (semântica + keyword)
     - Criar cache para consultas frequentes
     - _Requisitos: 3.2, 3.4_
-  
   - [ ] 6.3 Desenvolver gerador de respostas aumentadas
     - Integrar OpenAI GPT-4 ou Anthropic Claude para geração de respostas
     - Implementar prompt engineering especializado para contexto financeiro
@@ -130,7 +121,6 @@
     - Implementar normalização de texto em português brasileiro
     - Criar sistema de detecção de sentimento para personalização
     - _Requisitos: 3.1_
-  
   - [ ] 7.2 Implementar gerenciamento de contexto conversacional
     - Criar sistema de memória de conversação com Redis
     - Implementar manutenção de contexto entre mensagens
@@ -138,7 +128,6 @@
     - Implementar sistema de sessões com timeout automático
     - Criar histórico de conversas para análise e melhoria
     - _Requisitos: 3.3, 5.3, 7.2_
-  
   - [ ] 7.3 Desenvolver orquestrador de serviços
     - Implementar roteamento inteligente de consultas para serviços apropriados
     - Criar integração entre RAG, análise de transações e recomendações
@@ -155,7 +144,6 @@
     - Implementar gráficos de gastos por categoria e tendências
     - Criar componentes responsivos para mobile e desktop
     - _Requisitos: 5.1, 5.2_
-  
   - [ ] 8.2 Implementar interface de chat conversacional
     - Criar componente de chat em tempo real com WebSocket ou Server-Sent Events
     - Implementar streaming de respostas do LLM com indicador de digitação
@@ -163,7 +151,6 @@
     - Implementar histórico de conversas com busca
     - Criar interface para feedback de qualidade das respostas
     - _Requisitos: 5.3, 3.4_
-  
   - [ ] 8.3 Desenvolver páginas de configuração e perfil
     - Criar formulários de configuração de preferências do usuário
     - Implementar interface para gerenciamento de contas conectadas
@@ -180,7 +167,6 @@
     - Criar sistema de metas SMART (específicas, mensuráveis, atingíveis, relevantes, temporais)
     - Implementar notificações de progresso e marcos importantes
     - _Requisitos: 8.1, 8.2_
-  
   - [ ] 9.2 Desenvolver sistema de notificações e alertas
     - Criar sistema de notificações in-app e email
     - Implementar alertas proativos baseados em padrões de gastos
@@ -197,7 +183,6 @@
     - Implementar hashing seguro para senhas com bcrypt
     - Configurar variáveis de ambiente seguras para secrets
     - _Requisitos: 6.1, 6.4_
-  
   - [ ] 10.2 Implementar auditoria e logging
     - Criar sistema de logs estruturados com Winston ou Pino
     - Implementar auditoria de acessos a dados sensíveis
@@ -205,7 +190,6 @@
     - Criar dashboard de monitoramento de segurança
     - Implementar logs de compliance para auditoria LGPD
     - _Requisitos: 6.2, 6.4_
-  
   - [ ] 10.3 Implementar funcionalidades LGPD
     - Criar API para exportação de dados pessoais em formato estruturado
     - Implementar exclusão completa de dados do usuário (right to be forgotten)
@@ -222,7 +206,6 @@
     - Configurar testes automatizados no GitHub Actions
     - Criar testes para utilitários de criptografia e segurança
     - _Requisitos: Todos os requisitos precisam de validação através de testes_
-  
   - [ ] 11.2 Implementar testes de integração
     - Criar testes end-to-end com Playwright para fluxos principais
     - Implementar testes de integração com MongoDB Atlas usando test database
@@ -230,7 +213,6 @@
     - Implementar testes de integração para APIs Open Finance
     - Configurar ambiente de teste isolado com Docker
     - _Requisitos: Validação de integração entre componentes_
-  
   - [ ] 11.3 Implementar testes de aceitação
     - Criar cenários de teste baseados em personas de usuário
     - Implementar testes de usabilidade automatizados
@@ -247,7 +229,6 @@
     - Implementar logging estruturado para debugging
     - Configurar alertas para métricas críticas de performance
     - _Requisitos: Monitoramento necessário para todos os requisitos_
-  
   - [ ] 12.2 Configurar alertas e SLA
     - Criar alertas para falhas críticas (downtime, erros 5xx)
     - Implementar health checks para todos os serviços (API, DB, Redis)
@@ -264,7 +245,6 @@
     - Configurar deploy automático apenas após aprovação de testes
     - Implementar semantic versioning e changelog automático
     - _Requisitos: Deploy seguro e confiável_
-  
   - [ ] 13.2 Configurar backup e disaster recovery
     - Configurar backup automático do MongoDB Atlas com retenção de 30 dias
     - Implementar estratégia de disaster recovery com RTO/RPO definidos
@@ -272,7 +252,6 @@
     - Configurar replicação de dados críticos
     - Criar documentação de procedimentos de emergência
     - _Requisitos: 6.1, 6.4_
-  
   - [ ] 13.3 Realizar testes de carga e performance
     - Executar load testing para 10.000 usuários simultâneos com k6
     - Otimizar queries e índices do MongoDB baseado em profiling

@@ -1,2 +1,8 @@
-// Open Finance API client
-// Implementation will be added in future tasks
+// Open Finance API client - placeholder implementation
+export class OpenFinanceClient {
+  constructor() {
+    // Placeholder constructor
+  }
+}
+
+export default OpenFinanceClient;

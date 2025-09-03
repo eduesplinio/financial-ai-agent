@@ -2,197 +2,263 @@
 
 Um agente de IA financeira baseado em arquitetura RAG (Retrieval-Augmented Generation) que fornece orientação financeira personalizada através da integração segura com contas bancárias dos usuários.
 
-## 🚀 Características
+## 🚀 Tecnologias
 
-- **Integração Open Finance**: Conexão segura com instituições financeiras brasileiras
-- **Análise Inteligente**: Categorização automática de transações usando ML
-- **Assistente Conversacional**: Interface de chat natural para consultas financeiras
-- **Sistema RAG**: Respostas baseadas em conhecimento financeiro confiável
-- **Conformidade LGPD**: Proteção completa de dados pessoais
-- **Dashboard Interativo**: Visualização intuitiva de dados financeiros
-
-## 🏗️ Arquitetura
-
-Este projeto utiliza uma arquitetura de monorepo com Turborepo, inspirada nas melhores práticas do [TabNews](https://github.com/filipedeschamps/tabnews.com.br).
-
-### Stack Tecnológica
-
-- **Frontend**: Next.js 14, React, TypeScript, Tailwind CSS
-- **Backend**: Node.js, Next.js API Routes
+- **Frontend**: Next.js 14, React, TypeScript, Tailwind CSS, Radix UI
+- **Backend**: Next.js API Routes, NextAuth.js v5
 - **Database**: MongoDB Atlas com Vector Search
-- **AI/ML**: LangChain, OpenAI GPT-4, Sentence Transformers
 - **Cache**: Redis
-- **Infraestrutura**: Vercel, Docker
+- **AI/ML**: OpenAI GPT-4, Sentence Transformers, LangChain
+- **Monorepo**: Turborepo
+- **Qualidade**: ESLint, Prettier, Husky, TypeScript strict
 
-### Estrutura do Projeto
-
-```
-financial-ai-agent/
-├── apps/
-│   └── web/                 # Next.js frontend
-├── packages/
-│   ├── shared/              # Tipos e utilitários compartilhados
-│   ├── database/            # Modelos e conexões de banco
-│   ├── ai/                  # Sistema RAG e integração LLM
-│   ├── open-finance/        # Integração Open Finance
-│   └── config/              # Configurações ESLint/Prettier
-├── scripts/                 # Scripts de desenvolvimento
-└── docs/                    # Documentação
-```
-
-## 🛠️ Desenvolvimento
-
-### Pré-requisitos
+## 📋 Pré-requisitos
 
 - Node.js 18+
-- Docker e Docker Compose
 - npm 8+
+- Docker e Docker Compose (para desenvolvimento local)
 
-### Configuração Inicial
+## 🛠️ Configuração Local
 
-1. **Clone o repositório**
-   ```bash
-   git clone <repository-url>
-   cd financial-ai-agent
-   ```
+### 1. Clone o repositório
 
-2. **Instale as dependências**
-   ```bash
-   npm install
-   ```
+```bash
+git clone <repository-url>
+cd financial-ai-agent
+```
 
-3. **Configure as variáveis de ambiente**
-   ```bash
-   cp .env.example .env.local
-   # Edite .env.local com suas configurações
-   ```
+### 2. Instale as dependências
 
-4. **Inicie os serviços de desenvolvimento**
-   ```bash
-   docker-compose up -d
-   ```
+```bash
+npm install
+```
 
-5. **Execute o projeto**
-   ```bash
-   npm run dev
-   ```
+### 3. Configure as variáveis de ambiente
 
-### Scripts Disponíveis
+```bash
+cp .env.example .env.local
+```
 
-- `npm run dev` - Inicia o servidor de desenvolvimento
-- `npm run build` - Build de produção
-- `npm run test` - Executa os testes
-- `npm run lint` - Executa o linter
-- `npm run format` - Formata o código
-- `npm run type-check` - Verifica tipos TypeScript
+Edite o arquivo `.env.local` com suas configurações:
 
-### Qualidade de Código
+```env
+# Database
+MONGODB_URI=mongodb://dev:dev123@localhost:27017/financial_ai?authSource=admin
 
-O projeto utiliza:
+# NextAuth.js
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-secret-key-here
 
-- **ESLint** com configurações rigorosas
-- **Prettier** para formatação consistente
-- **Husky** para git hooks
-- **lint-staged** para linting incremental
-- **Commitlint** para mensagens de commit padronizadas
+# OAuth Providers (opcional para teste)
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
+```
 
-## 🐳 Docker
-
-### Desenvolvimento Local
+### 4. Inicie os serviços de desenvolvimento
 
 ```bash
 # Inicia MongoDB e Redis
 docker-compose up -d
 
-# Para incluir MongoDB Express (opcional)
-docker-compose --profile tools up -d
+# Aguarde alguns segundos para os serviços iniciarem
 ```
 
-### Serviços Disponíveis
+### 5. Execute o projeto
 
-- **MongoDB**: `localhost:27017`
-- **Redis**: `localhost:6379`
-- **MongoDB Express**: `localhost:8081` (usuário: admin, senha: admin123)
+```bash
+# Desenvolvimento
+npm run dev
 
-## 📊 Banco de Dados
+# Ou para build de produção
+npm run build
+npm run start
+```
 
-O projeto utiliza MongoDB Atlas com as seguintes collections:
+### 6. Acesse a aplicação
 
-- `users` - Dados dos usuários e perfis
-- `transactions` - Transações financeiras
-- `knowledge_documents` - Base de conhecimento para RAG
-- `conversations` - Histórico de conversas
+Abra [http://localhost:3000](http://localhost:3000) no seu navegador.
 
-### Índices Configurados
+## 🔐 Testando a Autenticação
 
-- Vector Search para embeddings
-- Índices compostos para queries otimizadas
-- Índices de texto para busca
+### Criando uma conta local
 
-## 🔒 Segurança
+1. Acesse [http://localhost:3000/auth/signup](http://localhost:3000/auth/signup)
+2. Preencha o formulário de cadastro
+3. Faça login em [http://localhost:3000/auth/signin](http://localhost:3000/auth/signin)
 
-- Criptografia AES-256 para dados sensíveis
-- TLS 1.3 para comunicação
-- Autenticação multifatorial
-- Conformidade LGPD
-- Rate limiting e proteção DDoS
+### Testando diferentes roles
 
-## 🧪 Testes
+Para testar diferentes permissões, você pode alterar o role do usuário diretamente no MongoDB:
+
+```javascript
+// Conecte ao MongoDB
+use financial_ai
+
+// Torne um usuário admin
+db.users.updateOne(
+  { email: "seu@email.com" },
+  { $set: { role: "admin" } }
+)
+
+// Ou support
+db.users.updateOne(
+  { email: "seu@email.com" },
+  { $set: { role: "support" } }
+)
+
+// Voltar para user
+db.users.updateOne(
+  { email: "seu@email.com" },
+  { $set: { role: "user" } }
+)
+```
+
+## 📱 Páginas Disponíveis
+
+- **Home**: `/` - Página inicial (redireciona para dashboard se logado)
+- **Login**: `/auth/signin` - Página de login
+- **Cadastro**: `/auth/signup` - Página de cadastro
+- **Dashboard**: `/dashboard` - Dashboard principal (requer login)
+- **Perfil**: `/profile` - Página de perfil do usuário
+- **Admin**: `/admin` - Painel administrativo (apenas admins)
+
+## 🧪 Executando Testes
 
 ```bash
 # Testes unitários
 npm run test
 
-# Testes e2e
-npm run test:e2e
+# Testes com watch mode
+npm run test:watch
 
-# Coverage
+# Testes de cobertura
 npm run test:coverage
+
+# Testes E2E
+npm run test:e2e
 ```
 
-## 📈 Monitoramento
+## 🏗️ Estrutura do Projeto
 
-- **Sentry** para error tracking
-- **Posthog** para analytics
-- Health checks automatizados
-- Métricas de performance
+```
+financial-ai-agent/
+├── apps/
+│   └── web/                 # Next.js frontend
+│       ├── app/            # App Router pages
+│       ├── components/     # React components
+│       ├── lib/           # Utilities and configurations
+│       └── hooks/         # Custom React hooks
+├── packages/
+│   ├── shared/            # Tipos e utilitários compartilhados
+│   ├── database/          # MongoDB models e conexão
+│   ├── ai/               # Sistema RAG e LLM integrations
+│   └── open-finance/     # Integração Open Finance
+├── docker-compose.yml    # Serviços de desenvolvimento
+└── turbo.json           # Configuração Turborepo
+```
 
-## 🚀 Deploy
+## 🔧 Scripts Disponíveis
 
-O projeto está configurado para deploy automático na Vercel:
+```bash
+# Desenvolvimento
+npm run dev              # Inicia modo desenvolvimento
+npm run build           # Build de produção
+npm run start           # Inicia servidor de produção
 
-1. Conecte o repositório à Vercel
-2. Configure as variáveis de ambiente
-3. O deploy acontece automaticamente a cada push
+# Qualidade de código
+npm run lint            # Executa ESLint
+npm run lint:fix        # Corrige problemas do ESLint
+npm run format          # Formata código com Prettier
+npm run type-check      # Verifica tipos TypeScript
 
-## 📝 Contribuição
+# Database
+npm run db:generate     # Gera tipos do banco
+npm run db:push         # Aplica mudanças no schema
+npm run db:migrate      # Executa migrações
+npm run db:seed         # Popula banco com dados de teste
+
+# Limpeza
+npm run clean           # Limpa builds e cache
+```
+
+## 🐳 Docker
+
+### Serviços incluídos
+
+- **MongoDB**: Banco de dados principal na porta 27017
+- **Redis**: Cache e sessões na porta 6379
+- **Mongo Express**: Interface web para MongoDB na porta 8081 (opcional)
+
+### Comandos úteis
+
+```bash
+# Iniciar serviços
+docker-compose up -d
+
+# Ver logs
+docker-compose logs -f
+
+# Parar serviços
+docker-compose down
+
+# Resetar dados (cuidado!)
+docker-compose down -v
+```
+
+## 🔍 Monitoramento
+
+### MongoDB Express (opcional)
+
+Se quiser uma interface visual para o MongoDB:
+
+```bash
+# Inicia com Mongo Express
+docker-compose --profile tools up -d
+
+# Acesse: http://localhost:8081
+# Usuário: admin
+# Senha: admin123
+```
+
+## 🚧 Status do Desenvolvimento
+
+### ✅ Completo
+
+- [x] Fundação do projeto (Turborepo, ESLint, Prettier, TypeScript)
+- [x] Sistema de autenticação (NextAuth.js v5, OAuth, Credentials)
+- [x] RBAC (Role-Based Access Control)
+- [x] MongoDB Atlas e modelos de dados
+- [x] Vector Search para RAG
+- [x] Interface de usuário básica
+- [x] Testes unitários e de integração
+
+### 🚧 Em Desenvolvimento
+
+- [ ] Integração Open Finance
+- [ ] Processador de transações com ML
+- [ ] Sistema RAG completo
+- [ ] Agente conversacional
+- [ ] Dashboard financeiro avançado
+- [ ] Sistema de metas e notificações
+
+## 📝 Próximos Passos
+
+1. **Integração Open Finance**: Conectar com APIs bancárias
+2. **ML Pipeline**: Categorização automática de transações
+3. **Sistema RAG**: Indexação e busca de conhecimento financeiro
+4. **Chat IA**: Interface conversacional com LLM
+5. **Analytics**: Dashboard com visualizações avançadas
+
+## 🤝 Contribuindo
 
 1. Fork o projeto
 2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'feat: add some AmazingFeature'`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
 4. Push para a branch (`git push origin feature/AmazingFeature`)
 5. Abra um Pull Request
 
-### Padrão de Commits
-
-Utilizamos [Conventional Commits](https://www.conventionalcommits.org/):
-
-- `feat:` nova funcionalidade
-- `fix:` correção de bug
-- `docs:` documentação
-- `style:` formatação
-- `refactor:` refatoração
-- `test:` testes
-- `chore:` tarefas de manutenção
-
 ## 📄 Licença
 
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para detalhes.
-
-## 🤝 Suporte
-
-Para suporte, abra uma issue no GitHub ou entre em contato através do email: support@financial-ai.com
-
----
-
-**Desenvolvido com ❤️ pela equipe Financial AI**
+Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.

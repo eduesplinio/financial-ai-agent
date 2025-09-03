@@ -1,8 +1,8 @@
-"use client"
+'use client';
 
-import { signOut, useSession } from "next-auth/react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import { signOut, useSession } from 'next-auth/react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,21 +10,20 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { User, LogOut, Settings, Shield } from "lucide-react"
-import { AdminOnly, SupportOnly } from "@/components/auth/role-guard"
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { User, LogOut, Settings, Shield } from 'lucide-react';
 
 export function Navbar() {
-  const { data: session } = useSession()
+  const { data: session } = useSession();
 
   if (!session) {
-    return null
+    return null;
   }
 
   const handleSignOut = () => {
-    signOut({ callbackUrl: "/auth/signin" })
-  }
+    signOut({ callbackUrl: '/auth/signin' });
+  };
 
   return (
     <nav className="border-b bg-background">
@@ -59,33 +58,35 @@ export function Navbar() {
               >
                 Metas
               </Link>
-              <AdminOnly>
+              {session.user.role === 'admin' && (
                 <Link
                   href="/admin"
                   className="text-sm font-medium text-muted-foreground hover:text-foreground"
                 >
                   Admin
                 </Link>
-              </AdminOnly>
-              <SupportOnly>
+              )}
+              {session.user.role === 'support' && (
                 <Link
                   href="/support"
                   className="text-sm font-medium text-muted-foreground hover:text-foreground"
                 >
                   Suporte
                 </Link>
-              </SupportOnly>
+              )}
             </div>
           </div>
 
           <div className="flex items-center space-x-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                <Button
+                  variant="ghost"
+                  className="relative h-8 w-8 rounded-full"
+                >
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={session.user.image || ""} alt={session.user.name || ""} />
                     <AvatarFallback>
-                      {session.user.name?.charAt(0).toUpperCase() || "U"}
+                      {session.user.name?.charAt(0).toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
@@ -114,14 +115,14 @@ export function Navbar() {
                     <span>Configurações</span>
                   </Link>
                 </DropdownMenuItem>
-                <AdminOnly>
+                {session.user.role === 'admin' && (
                   <DropdownMenuItem asChild>
                     <Link href="/admin">
                       <Shield className="mr-2 h-4 w-4" />
                       <span>Painel Admin</span>
                     </Link>
                   </DropdownMenuItem>
-                </AdminOnly>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />
@@ -133,5 +134,5 @@ export function Navbar() {
         </div>
       </div>
     </nav>
-  )
+  );
 }

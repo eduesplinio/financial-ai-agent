@@ -1,2 +1,8 @@
-// LLM integration utilities
-// Implementation will be added in future tasks
+// LLM (Large Language Model) integration - placeholder
+export class LLMService {
+  constructor() {
+    // Placeholder constructor
+  }
+}
+
+export default LLMService;

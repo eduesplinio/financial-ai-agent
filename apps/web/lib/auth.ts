@@ -1,183 +1,196 @@
-import NextAuth from "next-auth"
-import { MongoDBAdapter } from "@auth/mongodb-adapter"
-import { MongoClient } from "mongodb"
-import GoogleProvider from "next-auth/providers/google"
-import GitHubProvider from "next-auth/providers/github"
-import CredentialsProvider from "next-auth/providers/credentials"
-import bcrypt from "bcryptjs"
-import { JWT } from "next-auth/jwt"
+import NextAuth, { type NextAuthOptions } from 'next-auth';
+import CredentialsProvider from 'next-auth/providers/credentials';
+import { MongoClient } from 'mongodb';
+import bcrypt from 'bcryptjs';
 
-const client = new MongoClient(process.env.MONGODB_URI!)
-const clientPromise = client.connect()
+// Função para conectar ao MongoDB
+async function connectDB() {
+  const client = new MongoClient(process.env.MONGODB_URI!);
+  await client.connect();
+  return { client, db: client.db('financial_ai') };
+}
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: MongoDBAdapter(clientPromise),
+// Configuração de cookies
+const useSecureCookies = process.env.NEXTAUTH_URL?.startsWith('https://') ?? false;
+
+// Configuração do NextAuth
+export const authOptions: NextAuthOptions = {
+  // Opções de sessão
+  session: {
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 dias
+    updateAge: 24 * 60 * 60, // Atualiza a sessão a cada 24 horas
+  },
+  
+  // Configuração dos providers
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
-    GitHubProvider({
-      clientId: process.env.GITHUB_CLIENT_ID!,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-    }),
     CredentialsProvider({
-      name: "credentials",
+      name: 'credentials',
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          return null
+          return null;
         }
 
-        const db = (await clientPromise).db()
-        const user = await db.collection("users").findOne({
-          email: credentials.email
-        })
+        try {
+          console.log('🔐 Tentando autenticar:', credentials.email);
+          const { client, db } = await connectDB();
 
-        if (!user) {
-          return null
-        }
+          const user = await db.collection('users').findOne({
+            email: (credentials.email as string).toLowerCase(),
+          });
 
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password as string,
-          user.password
-        )
+          if (!user || !user.password) {
+            console.log('❌ Usuário não encontrado ou sem senha');
+            await client.close();
+            return null;
+          }
 
-        if (!isPasswordValid) {
-          return null
-        }
+          const isValid = await bcrypt.compare(
+            credentials.password as string,
+            user.password as string
+          );
 
-        return {
-          id: user._id.toString(),
-          email: user.email,
-          name: user.name,
-          role: user.role || "user",
-        }
-      }
-    })
-  ],
-  session: {
-    strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-  },
-  jwt: {
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-  },
-  callbacks: {
-    async jwt({ token, user, account }) {
-      // Initial sign in
-      if (account && user) {
-        return {
-          ...token,
-          accessToken: account.access_token,
-          refreshToken: account.refresh_token,
-          accessTokenExpires: account.expires_at ? account.expires_at * 1000 : 0,
-          user: {
-            id: user.id,
+          if (!isValid) {
+            console.log('❌ Senha inválida');
+            await client.close();
+            return null;
+          }
+
+          console.log('✅ Autenticação bem-sucedida para:', user.email);
+          await client.close();
+
+          return {
+            id: user._id.toString(),
             email: user.email,
             name: user.name,
-            role: (user as any).role || "user",
-          },
+            role: user.role || 'user',
+          };
+        } catch (error) {
+          console.error('❌ Erro na autenticação:', error);
+          return null;
         }
+      },
+    }),
+  ],
+  
+  // Callbacks
+  callbacks: {
+    async jwt({ token, user, account }) {
+      // Passa as informações do usuário para o token
+      if (user) {
+        token.id = user.id;
+        token.role = (user as any).role;
       }
-
-      // Return previous token if the access token has not expired yet
-      if (Date.now() < (token.accessTokenExpires as number)) {
-        return token
-      }
-
-      // Access token has expired, try to update it
-      return refreshAccessToken(token)
+      return token;
     },
+    
     async session({ session, token }) {
-      if (token) {
-        session.user.id = token.user.id
-        session.user.email = token.user.email
-        session.user.name = token.user.name
-        session.user.role = token.user.role
-        session.accessToken = token.accessToken
-        session.error = token.error
+      // Passa as informações do token para a sessão
+      if (session.user) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as string;
       }
-
-      return session
+      return session;
     },
-    async signIn({ user, account, profile }) {
-      // Allow OAuth sign-ins
-      if (account?.provider !== "credentials") {
-        return true
+    
+    async redirect({ url, baseUrl }) {
+      // Se a URL for uma rota de autenticação, redireciona para o dashboard
+      if (url.startsWith('/auth')) {
+        return `${baseUrl}/dashboard`;
       }
-
-      // For credentials, user is already validated in authorize function
-      return true
+      
+      // Se for a URL base, redireciona para o dashboard
+      if (url === baseUrl || url === '/') {
+        return `${baseUrl}/dashboard`;
+      }
+      
+      // Se for uma URL relativa, adiciona a base
+      if (url.startsWith('/')) {
+        return `${baseUrl}${url}`;
+      }
+      
+      // Se for uma URL completa da mesma origem, retorna a URL
+      try {
+        const urlObj = new URL(url);
+        if (urlObj.origin === baseUrl) {
+          return url;
+        }
+      } catch (e) {
+        console.error('Erro ao analisar URL:', e);
+      }
+      
+      // Redirecionamento padrão para o dashboard
+      return `${baseUrl}/dashboard`;
     },
   },
+  
+  // Páginas personalizadas
   pages: {
-    signIn: "/auth/signin",
-    signUp: "/auth/signup",
-    error: "/auth/error",
+    signIn: '/auth/signin',
+    error: '/auth/signin',
   },
-  events: {
-    async signIn({ user, account, profile, isNewUser }) {
-      // Log successful sign-ins for security monitoring
-      console.log(`User ${user.email} signed in with ${account?.provider}`)
-    },
-    async signOut({ token }) {
-      // Log sign-outs for security monitoring
-      console.log(`User ${token?.email} signed out`)
+  
+  // Configuração de cookies
+  cookies: {
+    sessionToken: {
+      name: `${useSecureCookies ? '__Secure-' : ''}next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: useSecureCookies,
+      },
     },
   },
-})
+  
+  // Debug em desenvolvimento
+  debug: process.env.NODE_ENV === 'development',
+  
+  // Logger
+  logger: {
+    error(code, metadata) {
+      console.error('Auth error:', code, metadata);
+    },
+    warn(code) {
+      console.warn('Auth warning:', code);
+    },
+    debug(code, metadata) {
+      if (metadata) {
+        console.debug('Auth debug:', code, metadata);
+      } else {
+        console.debug('Auth debug:', code);
+      }
+    },
+  },
+  
+  // Chave secreta
+  secret: process.env.NEXTAUTH_SECRET || 'your-secret-key',
+};
 
-async function refreshAccessToken(token: JWT) {
-  try {
-    // This is a placeholder for refresh token logic
-    // In a real implementation, you would refresh the token here
-    // For now, we'll just return the token as-is
-    return {
-      ...token,
-      error: "RefreshAccessTokenError",
-    }
-  } catch (error) {
-    console.error("Error refreshing access token:", error)
-    return {
-      ...token,
-      error: "RefreshAccessTokenError",
-    }
-  }
-}
+// Inicializa o NextAuth
+const handler = NextAuth(authOptions);
 
-// Extend the built-in session types
-declare module "next-auth" {
+// Exporta os métodos necessários
+export const { auth, signIn, signOut } = handler;
+
+// Tipagem estendida para o módulo next-auth
+declare module 'next-auth' {
   interface Session {
     user: {
-      id: string
-      email: string
-      name: string
-      role: string
-    }
-    accessToken?: string
-    error?: string
+      id: string;
+      email: string;
+      name: string;
+      role: string;
+    };
   }
 
   interface User {
-    role?: string
+    role?: string;
   }
 }
 
-declare module "next-auth/jwt" {
-  interface JWT {
-    accessToken?: string
-    refreshToken?: string
-    accessTokenExpires?: number
-    user: {
-      id: string
-      email: string
-      name: string
-      role: string
-    }
-    error?: string
-  }
-}
+export default handler;

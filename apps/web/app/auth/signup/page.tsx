@@ -1,231 +1,147 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { signIn } from "next-auth/react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Icons } from "@/components/ui/icons"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-
-const signUpSchema = z.object({
-  name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-  email: z.string().email("Email inválido"),
-  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Senhas não coincidem",
-  path: ["confirmPassword"],
-})
-
-type SignUpFormData = z.infer<typeof signUpSchema>
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function SignUpPage() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
-  const router = useRouter()
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<SignUpFormData>({
-    resolver: zodResolver(signUpSchema),
-  })
-
-  const onSubmit = async (data: SignUpFormData) => {
-    setIsLoading(true)
-    setError(null)
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
 
     try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
+      // Primeiro, criar a conta
+      const registerResponse = await fetch('/api/auth/register', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name: data.name,
-          email: data.email,
-          password: data.password,
-        }),
-      })
+        body: JSON.stringify({ name, email, password }),
+      });
 
-      if (response.ok) {
-        setSuccess(true)
-        // Auto sign-in after successful registration
-        const result = await signIn("credentials", {
-          email: data.email,
-          password: data.password,
-          redirect: false,
-        })
+      if (registerResponse.ok) {
+        // Auto login após cadastro usando a mesma abordagem do login
+        const loginResponse = await fetch('/api/auth/callback/credentials', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+        });
 
-        if (result?.ok) {
-          router.push("/dashboard")
+        if (loginResponse.ok) {
+          router.push('/dashboard');
+          router.refresh();
+        } else {
+          // Se o login automático falhar, redireciona para a página de login
+          router.push(
+            '/auth/signin?message=Conta criada com sucesso. Faça login.'
+          );
         }
       } else {
-        const errorData = await response.json()
-        setError(errorData.message || "Erro ao criar conta")
+        const data = await registerResponse.json();
+        setError(data.message || 'Erro ao criar conta');
+        setLoading(false);
       }
     } catch (error) {
-      setError("Erro interno do servidor")
-    } finally {
-      setIsLoading(false)
+      setError('Erro interno do servidor');
+      setLoading(false);
     }
-  }
-
-  const handleOAuthSignIn = async (provider: "google" | "github") => {
-    setIsLoading(true)
-    setError(null)
-
-    try {
-      await signIn(provider, { callbackUrl: "/dashboard" })
-    } catch (error) {
-      setError(`Erro ao fazer cadastro com ${provider}`)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  if (success) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold text-center text-green-600">
-              Conta criada com sucesso!
-            </CardTitle>
-            <CardDescription className="text-center">
-              Você será redirecionado para o dashboard em instantes...
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
-    )
-  }
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">
-            Criar conta
-          </CardTitle>
-          <CardDescription className="text-center">
-            Crie sua conta para acessar o Agente Financeiro IA
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="max-w-md w-full space-y-8 p-8">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Criar nova conta
+          </h2>
+        </div>
+
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+              {error}
+            </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
-            <Button
-              variant="outline"
-              onClick={() => handleOAuthSignIn("google")}
-              disabled={isLoading}
-            >
-              <Icons.google className="mr-2 h-4 w-4" />
-              Google
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => handleOAuthSignIn("github")}
-              disabled={isLoading}
-            >
-              <Icons.gitHub className="mr-2 h-4 w-4" />
-              GitHub
-            </Button>
+          <div>
+            <label htmlFor="name" className="sr-only">
+              Nome
+            </label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              required
+              value={name}
+              onChange={e => setName(e.target.value)}
+              className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="Nome completo"
+            />
           </div>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                Ou cadastre-se com
-              </span>
-            </div>
+          <div>
+            <label htmlFor="email" className="sr-only">
+              Email
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="Email"
+            />
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome completo</Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="Seu nome completo"
-                {...register("name")}
-                disabled={isLoading}
-              />
-              {errors.name && (
-                <p className="text-sm text-red-600">{errors.name.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="seu@email.com"
-                {...register("email")}
-                disabled={isLoading}
-              />
-              {errors.email && (
-                <p className="text-sm text-red-600">{errors.email.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Sua senha"
-                {...register("password")}
-                disabled={isLoading}
-              />
-              {errors.password && (
-                <p className="text-sm text-red-600">{errors.password.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmar senha</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="Confirme sua senha"
-                {...register("confirmPassword")}
-                disabled={isLoading}
-              />
-              {errors.confirmPassword && (
-                <p className="text-sm text-red-600">{errors.confirmPassword.message}</p>
-              )}
-            </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
-              Criar conta
-            </Button>
-          </form>
-        </CardContent>
-        <CardFooter>
-          <p className="text-center text-sm text-gray-600 w-full">
-            Já tem uma conta?{" "}
-            <Link href="/auth/signin" className="font-medium text-blue-600 hover:text-blue-500">
-              Entrar
+          <div>
+            <label htmlFor="password" className="sr-only">
+              Senha
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              minLength={6}
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="Senha (mínimo 6 caracteres)"
+            />
+          </div>
+
+          <div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+            >
+              {loading ? 'Criando conta...' : 'Criar conta'}
+            </button>
+          </div>
+
+          <div className="text-center">
+            <Link
+              href="/auth/signin"
+              className="font-medium text-indigo-600 hover:text-indigo-500"
+            >
+              Já tem conta? Entrar
             </Link>
-          </p>
-        </CardFooter>
-      </Card>
+          </div>
+        </form>
+      </div>
     </div>
-  )
+  );
 }

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   redis:
     image: redis:7-alpine
@@ -16,6 +14,7 @@ services:
       retries: 3
     networks:
       - financial-ai-network
+    # Redis habilitado por padrão
 
   mongodb:
     image: mongo:7
