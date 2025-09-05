@@ -1,4 +1,5 @@
 import type { Config } from 'tailwindcss';
+import { fontFamily } from 'tailwindcss/defaultTheme';
 
 const config: Config = {
   darkMode: ['class'],
@@ -11,41 +12,67 @@ const config: Config = {
   theme: {
     container: {
       center: true,
-      padding: '2rem',
+      padding: '1.5rem',
       screens: {
-        '2xl': '1400px',
+        '2xl': '1440px',
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['var(--font-sans)', ...fontFamily.sans],
+        mono: ['var(--font-mono)', ...fontFamily.mono],
+        display: ['var(--font-display)', ...fontFamily.sans],
+      },
       colors: {
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
+        // Cores base
+        border: 'hsl(var(--border) / <alpha-value>)',
+        input: 'hsl(var(--input) / <alpha-value>)',
+        ring: 'hsl(var(--ring) / <alpha-value>)',
+        background: 'hsl(var(--background) / <alpha-value>)',
+        foreground: 'hsl(var(--foreground) / <alpha-value>)',
+        
+        // Cores primárias
         primary: {
-          DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
+          DEFAULT: 'hsl(var(--primary) / <alpha-value>)',
+          foreground: 'hsl(var(--primary-foreground) / <alpha-value>)',
+          light: 'hsl(var(--primary-light) / <alpha-value>)',
+          dark: 'hsl(var(--primary-dark) / <alpha-value>)',
         },
+        
+        // Cores secundárias
         secondary: {
-          DEFAULT: 'hsl(var(--secondary))',
-          foreground: 'hsl(var(--secondary-foreground))',
+          DEFAULT: 'hsl(var(--secondary) / <alpha-value>)',
+          foreground: 'hsl(var(--secondary-foreground) / <alpha-value>)',
         },
-        destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))',
-        },
-        muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
-        },
+        
+        // Cores de destaque
         accent: {
-          DEFAULT: 'hsl(var(--accent))',
-          foreground: 'hsl(var(--accent-foreground))',
+          DEFAULT: 'hsl(var(--accent) / <alpha-value>)',
+          foreground: 'hsl(var(--accent-foreground) / <alpha-value>)',
         },
-        popover: {
-          DEFAULT: 'hsl(var(--popover))',
-          foreground: 'hsl(var(--popover-foreground))',
+        
+        // Cores de feedback
+        success: {
+          DEFAULT: 'hsl(var(--success) / <alpha-value>)',
+          foreground: 'hsl(var(--success-foreground) / <alpha-value>)',
+        },
+        warning: {
+          DEFAULT: 'hsl(var(--warning) / <alpha-value>)',
+          foreground: 'hsl(var(--warning-foreground) / <alpha-value>)',
+        },
+        error: {
+          DEFAULT: 'hsl(var(--error) / <alpha-value>)',
+          foreground: 'hsl(var(--error-foreground) / <alpha-value>)',
+        },
+        info: {
+          DEFAULT: 'hsl(var(--info) / <alpha-value>)',
+          foreground: 'hsl(var(--info-foreground) / <alpha-value>)',
+        },
+        
+        // Cores de UI
+        muted: {
+          DEFAULT: 'hsl(var(--muted) / <alpha-value>)',
+          foreground: 'hsl(var(--muted-foreground) / <alpha-value>)',
         },
         card: {
           DEFAULT: 'hsl(var(--card))',
