@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import './no-underline.css';
 import { Providers } from '@/components/providers';
-import { Navbar } from '@/components/layout/navbar';
+import { Sidebar } from '@/components/layout/sidebar';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -20,12 +21,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR">
-      <body className={inter.className}>
+    <html lang="pt-BR" suppressHydrationWarning>
+      <body className={inter.className} suppressHydrationWarning>
         <Providers>
-          <div className="min-h-screen bg-background">
-            <Navbar />
-            <main>{children}</main>
+          <div className="flex h-screen overflow-hidden bg-background">
+            <Sidebar />
+            <main className="flex-1 overflow-y-auto p-4 lg:p-6 pt-20 lg:pt-6">
+              {children}
+            </main>
           </div>
         </Providers>
       </body>
