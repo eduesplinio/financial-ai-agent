@@ -3,6 +3,9 @@
 @tailwind utilities;
 
 @layer base {
+  .disable-transitions * {
+    transition: none !important;
+  }
   a,
   a:hover,
   a:focus,

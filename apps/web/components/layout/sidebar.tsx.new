@@ -147,7 +147,7 @@ export function Sidebar({ className }: SidebarProps) {
       {/* Navigation Links */}
       <div
         className={cn(
-          'flex-1 py-6 px-3 space-y-1 overflow-y-auto overflow-x-hidden transition-[padding] duration-300 ease-out',
+          'flex-1 py-6 px-3 space-y-1 overflow-y-auto overflow-x-hidden transition-[padding] duration-200 ease-in-out',
           mobile && 'mt-10'
         )}
       >
@@ -173,13 +173,13 @@ export function Sidebar({ className }: SidebarProps) {
                 </div>
                 <div
                   className={cn(
-                    'overflow-hidden transition-all duration-300 ease-out',
+                    'overflow-hidden transition-all duration-250 ease-in-out',
                     expanded || mobile
                       ? 'w-auto opacity-100 max-w-[200px] translate-x-0'
                       : 'w-0 opacity-0 max-w-0 -translate-x-4'
                   )}
                 >
-                  <span className="whitespace-nowrap block transform transition-transform duration-300 ease-out">
+                  <span className="whitespace-nowrap block transform transition-transform duration-250 ease-in-out">
                     {item.name}
                   </span>
                 </div>
@@ -235,60 +235,49 @@ export function Sidebar({ className }: SidebarProps) {
       {/* User Profile Section */}
       <div
         className={cn(
-          'border-t p-3 transition-all duration-300 ease-out',
+          'border-t p-3 transition-all duration-200 ease-in-out',
           expanded || mobile
             ? 'flex items-center justify-between'
             : 'flex flex-col items-center'
         )}
       >
         <DropdownMenu>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className={cn(
-                    'flex items-center w-full rounded-lg transition-all duration-200 ease-in-out',
-                    !expanded && !mobile
-                      ? 'justify-center px-0'
-                      : 'justify-start px-2'
-                  )}
-                >
-                  <div className="flex items-center justify-center min-w-[48px]">
-                    <Avatar className="h-8 w-8 flex-shrink-0">
-                      <AvatarFallback>
-                        {session.user.name?.charAt(0).toUpperCase() || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
-                  </div>
-                  <div
-                    className={cn(
-                      'text-left overflow-hidden transition-all duration-300 ease-out',
-                      expanded || mobile
-                        ? 'w-auto opacity-100 max-w-[200px] translate-x-0'
-                        : 'w-0 opacity-0 max-w-0 -translate-x-4'
-                    )}
-                  >
-                    <div className="transform transition-transform duration-300 ease-out">
-                      <p className="text-sm font-medium truncate">
-                        {session.user.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {session.user.email}
-                      </p>
-                    </div>
-                  </div>
-                </Button>
-              </DropdownMenuTrigger>
-            </TooltipTrigger>
-            <TooltipContent
-              side={expanded ? 'left' : 'right'}
-              className="bg-popover/100 border border-border shadow-md backdrop-blur-none"
-              style={{ backgroundColor: 'hsl(var(--popover))' }}
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className={cn(
+                'flex items-center w-full rounded-lg transition-all duration-200 ease-in-out',
+                !expanded && !mobile
+                  ? 'justify-center px-0'
+                  : 'justify-start px-2'
+              )}
             >
-              {expanded ? 'Configurações de perfil' : 'Perfil e configurações'}
-            </TooltipContent>
-          </Tooltip>
+              <div className="flex items-center justify-center min-w-[48px]">
+                <Avatar className="h-8 w-8 flex-shrink-0">
+                  <AvatarFallback>
+                    {session.user.name?.charAt(0).toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+              <div
+                className={cn(
+                  'text-left overflow-hidden transition-all duration-250 ease-in-out',
+                  expanded || mobile
+                    ? 'w-auto opacity-100 max-w-[200px] translate-x-0'
+                    : 'w-0 opacity-0 max-w-0 -translate-x-4'
+                )}
+              >
+                <div className="transform transition-transform duration-250 ease-in-out">
+                  <p className="text-sm font-medium truncate">
+                    {session.user.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {session.user.email}
+                  </p>
+                </div>
+              </div>
+            </Button>
+          </DropdownMenuTrigger>
           <DropdownMenuContent
             className="w-56 shadow-lg border border-border/40 bg-popover rounded-lg p-0.5"
             align={mobile ? 'center' : 'end'}
@@ -389,11 +378,7 @@ export function Sidebar({ className }: SidebarProps) {
   // Mobile Menu (appears only on mobile)
   if (isMobile) {
     return (
-      <TooltipProvider
-        delayDuration={500}
-        disableHoverableContent
-        skipDelayDuration={0}
-      >
+      <TooltipProvider delayDuration={200}>
         <>
           {/* Mobile Header */}
           <div className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-background border-b h-16 flex items-center justify-between px-4">
@@ -461,51 +446,47 @@ export function Sidebar({ className }: SidebarProps) {
 
   // Desktop Sidebar
   return (
-    <TooltipProvider
-      delayDuration={500}
-      disableHoverableContent
-      skipDelayDuration={0}
-    >
+    <TooltipProvider delayDuration={200}>
       <div
         className={cn(
-          'hidden lg:flex flex-col h-screen bg-background border-r transition-[width] duration-300 ease-out overflow-x-hidden',
+          'hidden lg:flex flex-col h-screen bg-background border-r transition-[width] duration-200 ease-in-out overflow-x-hidden',
           expanded ? 'w-64' : 'w-20',
           className
         )}
       >
-        {/* Logo */}
-        <div className="flex items-center justify-center p-4 border-b overflow-hidden">
-          <Link
-            href="/dashboard"
-            className="no-underline hover:no-underline transition-all duration-500 ease-in-out"
-            style={{ textDecoration: 'none' }}
-          >
-            <div className="flex items-center justify-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-8 w-8 text-primary transition-transform duration-500 ease-in-out"
-              >
-                <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                <path d="M2 17l10 5 10-5" />
-                <path d="M2 12l10 5 10-5" />
-              </svg>
-              {expanded && (
-                <span className="ml-2 text-xl font-bold whitespace-nowrap transition-opacity duration-500 ease-in-out">
-                  FinanceAI
-                </span>
-              )}
-            </div>
-          </Link>
-        </div>
-
-        <SidebarContent />
+      {/* Logo */}
+      <div className="flex items-center justify-center p-4 border-b overflow-hidden">
+        <Link
+          href="/dashboard"
+          className="no-underline hover:no-underline transition-all duration-500 ease-in-out"
+          style={{ textDecoration: 'none' }}
+        >
+          <div className="flex items-center justify-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-8 w-8 text-primary transition-transform duration-500 ease-in-out"
+            >
+              <path d="M12 2L2 7l10 5 10-5-10-5z" />
+              <path d="M2 17l10 5 10-5" />
+              <path d="M2 12l10 5 10-5" />
+            </svg>
+            {expanded && (
+              <span className="ml-2 text-xl font-bold whitespace-nowrap transition-opacity duration-500 ease-in-out">
+                FinanceAI
+              </span>
+            )}
+          </div>
+        </Link>
       </div>
+
+      <SidebarContent />
+    </div>
     </TooltipProvider>
   );
 }
