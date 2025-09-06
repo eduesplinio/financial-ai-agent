@@ -1,10 +1,11 @@
 import bcrypt from 'bcryptjs';
 import { MongoClient } from 'mongodb';
 
-const client = new MongoClient(
-  process.env.MONGODB_URI ||
-    'mongodb://dev:dev123@localhost:27017/financial_ai?authSource=admin'
-);
+if (!process.env.MONGODB_URI) {
+  throw new Error('A variável de ambiente MONGODB_URI não está definida');
+}
+
+const client = new MongoClient(process.env.MONGODB_URI);
 
 export interface CreateUserData {
   email: string;
