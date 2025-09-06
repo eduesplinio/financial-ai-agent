@@ -1,9 +1,58 @@
 // Jest setup file for database package
-require('dotenv').config({ path: '../../.env.local' });
+const { MongoMemoryServer } = require('mongodb-memory-server');
 
-// Set test environment variables
+// Sempre defina o ambiente de teste
 process.env.NODE_ENV = 'test';
-process.env.MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/test_financial_ai';
 
-// Increase timeout for database operations
+// Aumentar o tempo limite para operações do MongoDB em testes
+process.env.MONGODB_SERVER_SELECTION_TIMEOUT = '5000'; // 5 segundos
+
+let mongod;
+
+// Configurar MongoDB em memória antes de todos os testes
+beforeAll(async () => {
+  // Iniciar o servidor MongoDB em memória
+  mongod = await MongoMemoryServer.create();
+
+  // Obter a URI de conexão com o MongoDB em memória
+  const uri = mongod.getUri();
+
+  // Configurar variável de ambiente para testes
+  process.env.MONGODB_URI = uri;
+
+  console.log(`MongoDB Memory Server iniciado com URI: ${uri}`);
+});
+
+// Encerrar o MongoDB em memória após todos os testes
+afterAll(async () => {
+  if (mongod) {
+    await mongod.stop();
+    console.log('MongoDB Memory Server encerrado');
+  }
+});
+
+// Configurar o NODE_ENV para permitir URLs de teste
+process.env.NODE_ENV = 'test';
+
+// Definir função global para limpar o banco de dados
+global.clearAllCollections = async () => {
+  try {
+    const { connection } = require('mongoose');
+    if (connection && connection.readyState === 1) {
+      const collections = await connection.db.collections();
+
+      for (let collection of collections) {
+        await collection.deleteMany({});
+      }
+      console.log('Dados limpos com sucesso');
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error('Erro ao limpar coleções:', error);
+    return false;
+  }
+};
+
+// Aumentar o timeout para operações de banco de dados
 jest.setTimeout(30000);

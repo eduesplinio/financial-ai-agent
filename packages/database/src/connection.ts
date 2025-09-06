@@ -4,7 +4,9 @@ import { z } from 'zod';
 // Environment validation schema
 const envSchema = z.object({
   MONGODB_URI: z.string().url('Invalid MongoDB URI'),
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  NODE_ENV: z
+    .enum(['development', 'production', 'test'])
+    .default('development'),
 });
 
 // Connection configuration interface
@@ -34,8 +36,21 @@ class MongoDBConnection {
   private static instance: MongoDBConnection;
   private connectionStatus: ConnectionStatus = ConnectionStatus.DISCONNECTED;
   private retryAttempts = 0;
-  private readonly maxRetryAttempts = 5;
-  private readonly retryDelay = 1000; // Base delay in ms
+  private maxRetryAttempts = 5;
+  private retryDelay = 1000; // Base delay in ms
+
+  // Métodos getter e setter para testes
+  public getMaxRetries(): number {
+    return this.maxRetryAttempts;
+  }
+
+  public setMaxRetries(value: number): void {
+    this.maxRetryAttempts = value;
+  }
+
+  public setRetryDelay(value: number): void {
+    this.retryDelay = value;
+  }
   private healthCheckInterval?: NodeJS.Timeout;
 
   private constructor() {
@@ -56,21 +71,20 @@ class MongoDBConnection {
     try {
       // Validate environment variables
       const env = envSchema.parse(process.env);
-      
+
       const config = this.getConnectionConfig(env.MONGODB_URI, env.NODE_ENV);
-      
+
       this.connectionStatus = ConnectionStatus.CONNECTING;
-      
+
       await this.connectWithRetry(config);
-      
+
       this.connectionStatus = ConnectionStatus.CONNECTED;
       this.retryAttempts = 0;
-      
+
       // Start health check monitoring
       this.startHealthCheckMonitoring();
-      
+
       console.log('✅ MongoDB connected successfully');
-      
     } catch (error) {
       this.connectionStatus = ConnectionStatus.ERROR;
       console.error('❌ MongoDB connection failed:', error);
@@ -84,18 +98,17 @@ class MongoDBConnection {
   public async disconnect(): Promise<void> {
     try {
       this.connectionStatus = ConnectionStatus.DISCONNECTING;
-      
+
       // Stop health check monitoring
       if (this.healthCheckInterval) {
         clearInterval(this.healthCheckInterval);
         this.healthCheckInterval = undefined;
       }
-      
+
       await mongoose.disconnect();
       this.connectionStatus = ConnectionStatus.DISCONNECTED;
-      
+
       console.log('✅ MongoDB disconnected successfully');
-      
     } catch (error) {
       console.error('❌ MongoDB disconnection failed:', error);
       throw error;
@@ -113,8 +126,10 @@ class MongoDBConnection {
    * Check if database is connected
    */
   public isConnected(): boolean {
-    return this.connectionStatus === ConnectionStatus.CONNECTED && 
-           mongoose.connection.readyState === 1;
+    return (
+      this.connectionStatus === ConnectionStatus.CONNECTED &&
+      mongoose.connection.readyState === 1
+    );
   }
 
   /**
@@ -122,7 +137,7 @@ class MongoDBConnection {
    */
   public async healthCheck(): Promise<HealthCheckResult> {
     const startTime = Date.now();
-    
+
     try {
       if (!this.isConnected()) {
         return {
@@ -134,15 +149,14 @@ class MongoDBConnection {
 
       // Perform a simple ping operation
       await mongoose.connection.db.admin().ping();
-      
+
       const latency = Date.now() - startTime;
-      
+
       return {
         status: ConnectionStatus.CONNECTED,
         latency,
         timestamp: new Date(),
       };
-      
     } catch (error) {
       return {
         status: ConnectionStatus.ERROR,
@@ -162,45 +176,54 @@ class MongoDBConnection {
       }
 
       const db = mongoose.connection.db;
-      
+
       // User collection indexes
-      await db.collection('users').createIndexes([
-        { key: { email: 1 }, unique: true },
-        { key: { createdAt: 1 } },
-        { key: { 'profile.riskTolerance': 1 } },
-      ]);
+      await db
+        .collection('users')
+        .createIndexes([
+          { key: { email: 1 }, unique: true },
+          { key: { createdAt: 1 } },
+          { key: { 'profile.riskTolerance': 1 } },
+        ]);
 
       // Transaction collection indexes
-      await db.collection('transactions').createIndexes([
-        { key: { userId: 1, date: -1 } },
-        { key: { accountId: 1 } },
-        { key: { 'category.primary': 1 } },
-        { key: { amount: 1 } },
-        { key: { date: -1 } },
-        { key: { userId: 1, 'category.primary': 1, date: -1 } },
-      ]);
+      await db
+        .collection('transactions')
+        .createIndexes([
+          { key: { userId: 1, date: -1 } },
+          { key: { accountId: 1 } },
+          { key: { 'category.primary': 1 } },
+          { key: { amount: 1 } },
+          { key: { date: -1 } },
+          { key: { userId: 1, 'category.primary': 1, date: -1 } },
+        ]);
 
       // Knowledge documents indexes
-      await db.collection('knowledgedocuments').createIndexes([
-        { key: { category: 1 } },
-        { key: { source: 1 } },
-        { key: { 'metadata.lastUpdated': -1 } },
-        { key: { title: 'text', content: 'text' } },
-      ]);
+      await db
+        .collection('knowledgedocuments')
+        .createIndexes([
+          { key: { category: 1 } },
+          { key: { source: 1 } },
+          { key: { 'metadata.lastUpdated': -1 } },
+          { key: { title: 'text', content: 'text' } },
+        ]);
 
       // Conversations indexes
-      await db.collection('conversations').createIndexes([
-        { key: { userId: 1, createdAt: -1 } },
-        { key: { sessionId: 1 }, unique: true },
-        { key: { updatedAt: -1 } },
-      ]);
+      await db
+        .collection('conversations')
+        .createIndexes([
+          { key: { userId: 1, createdAt: -1 } },
+          { key: { sessionId: 1 }, unique: true },
+          { key: { updatedAt: -1 } },
+        ]);
 
       console.log('✅ Database indexes created successfully');
-      
+
       // Note: Vector search index creation is handled separately
       // as it requires MongoDB Atlas and may take time to complete
-      console.log('ℹ️  Vector search index should be created separately using VectorSearchService.createVectorSearchIndex()');
-      
+      console.log(
+        'ℹ️  Vector search index should be created separately using VectorSearchService.createVectorSearchIndex()'
+      );
     } catch (error) {
       console.error('❌ Failed to create database indexes:', error);
       throw error;
@@ -218,11 +241,10 @@ class MongoDBConnection {
       maxIdleTimeMS: 30000,
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
-      
-      // Buffering settings
-      bufferMaxEntries: 0,
+
+      // Buffering settings - bufferMaxEntries removido pois está obsoleto
       bufferCommands: false,
-      
+
       // Monitoring
       monitorCommands: nodeEnv === 'development',
     };
@@ -241,10 +263,9 @@ class MongoDBConnection {
       try {
         await mongoose.connect(config.uri, config.options);
         return;
-        
       } catch (error) {
         this.retryAttempts++;
-        
+
         if (this.retryAttempts >= this.maxRetryAttempts) {
           throw new Error(
             `Failed to connect to MongoDB after ${this.maxRetryAttempts} attempts: ${
@@ -252,12 +273,12 @@ class MongoDBConnection {
             }`
           );
         }
-        
+
         const delay = this.retryDelay * Math.pow(2, this.retryAttempts - 1);
         console.warn(
           `⚠️ MongoDB connection attempt ${this.retryAttempts} failed. Retrying in ${delay}ms...`
         );
-        
+
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
@@ -271,7 +292,7 @@ class MongoDBConnection {
       console.log('🔗 Mongoose connected to MongoDB');
     });
 
-    mongoose.connection.on('error', (error) => {
+    mongoose.connection.on('error', error => {
       console.error('❌ Mongoose connection error:', error);
       this.connectionStatus = ConnectionStatus.ERROR;
     });
@@ -305,10 +326,10 @@ class MongoDBConnection {
     // Perform health check every 30 seconds
     this.healthCheckInterval = setInterval(async () => {
       const health = await this.healthCheck();
-      
+
       if (health.status === ConnectionStatus.ERROR) {
         console.warn('⚠️ Database health check failed:', health.error);
-        
+
         // Attempt to reconnect if connection is lost
         if (!this.isConnected()) {
           console.log('🔄 Attempting to reconnect to MongoDB...');
