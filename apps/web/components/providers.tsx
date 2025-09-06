@@ -2,8 +2,9 @@
 
 import { SessionProvider } from 'next-auth/react';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
+import { ThemeProvider } from 'next-themes';
 
 interface ProvidersProps {
   children: React.ReactNode;
@@ -11,14 +12,14 @@ interface ProvidersProps {
 
 export function Providers({ children }: ProvidersProps) {
   return (
-    <SessionProvider 
-      refetchInterval={5 * 60} // Refetch session every 5 minutes
-      refetchOnWindowFocus={true}
-    >
-      <SessionHandler>
-        {children}
-      </SessionHandler>
-    </SessionProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <SessionProvider
+        refetchInterval={5 * 60} // Refetch session every 5 minutes
+        refetchOnWindowFocus={true}
+      >
+        <SessionHandler>{children}</SessionHandler>
+      </SessionProvider>
+    </ThemeProvider>
   );
 }
 
@@ -26,19 +27,31 @@ function SessionHandler({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Log session changes for debugging
+  // Garantir que o componente só execute lógicas específicas do cliente após a montagem
   useEffect(() => {
-    console.log('Session status changed:', { status, session });
-  }, [status, session]);
+    setIsMounted(true);
+  }, []);
 
-  // Handle session changes
+  // Log session changes for debugging (apenas no lado do cliente)
   useEffect(() => {
-    if (status === 'unauthenticated' && !pathname.startsWith('/auth')) {
+    if (isMounted) {
+      console.log('Session status changed:', { status, session });
+    }
+  }, [isMounted, status, session]);
+
+  // Handle session changes (apenas no lado do cliente)
+  useEffect(() => {
+    if (
+      isMounted &&
+      status === 'unauthenticated' &&
+      !pathname.startsWith('/auth')
+    ) {
       console.log('User not authenticated, redirecting to signin');
       router.push('/auth/signin');
     }
-  }, [status, pathname, router]);
+  }, [isMounted, status, pathname, router]);
 
   return <>{children}</>;
 }

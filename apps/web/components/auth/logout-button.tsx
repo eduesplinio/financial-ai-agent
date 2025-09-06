@@ -3,6 +3,7 @@
 import { signOut } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
+import { useIsMounted } from '@/hooks/use-client-side';
 
 interface LogoutButtonProps {
   variant?:
@@ -21,7 +22,14 @@ export function LogoutButton({
   size = 'default',
   className,
 }: LogoutButtonProps) {
+  const isMounted = useIsMounted();
+
   const handleLogout = async () => {
+    // Limpa a informação de autenticação do localStorage
+    if (isMounted) {
+      localStorage.removeItem('userAuthenticated');
+    }
+
     await signOut({
       callbackUrl: '/',
       redirect: true,

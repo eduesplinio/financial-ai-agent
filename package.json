@@ -55,6 +55,8 @@
     "@auth/mongodb-adapter": "^3.10.0",
     "@types/bcryptjs": "^2.4.6",
     "bcryptjs": "^3.0.2",
-    "mongodb": "^6.19.0"
+    "lucide-react": "^0.542.0",
+    "mongodb": "^6.19.0",
+    "react-icons": "^5.5.0"
   }
 }
