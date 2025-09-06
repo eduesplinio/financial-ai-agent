@@ -4,6 +4,7 @@ import { SessionProvider } from 'next-auth/react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
+import { ThemeProvider } from 'next-themes';
 
 interface ProvidersProps {
   children: React.ReactNode;
@@ -11,12 +12,14 @@ interface ProvidersProps {
 
 export function Providers({ children }: ProvidersProps) {
   return (
-    <SessionProvider
-      refetchInterval={5 * 60} // Refetch session every 5 minutes
-      refetchOnWindowFocus={true}
-    >
-      <SessionHandler>{children}</SessionHandler>
-    </SessionProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <SessionProvider
+        refetchInterval={5 * 60} // Refetch session every 5 minutes
+        refetchOnWindowFocus={true}
+      >
+        <SessionHandler>{children}</SessionHandler>
+      </SessionProvider>
+    </ThemeProvider>
   );
 }
 

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/hooks/use-theme';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +28,9 @@ import {
   User,
   LogOut,
   Settings,
+  Sun,
+  Moon,
+  Laptop,
   Shield,
   LayoutDashboard,
   Receipt,
@@ -56,6 +60,7 @@ export function Sidebar({ className }: SidebarProps) {
   const [expanded, setExpanded] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     // Check if we're on mobile when component mounts
@@ -209,7 +214,7 @@ export function Sidebar({ className }: SidebarProps) {
                 </AvatarFallback>
               </Avatar>
               {(expanded || mobile) && (
-                <div className="ml-3 text-left overflow-hidden">
+                <div className="ml-2 text-left overflow-hidden">
                   <p className="text-sm font-medium truncate">
                     {session.user.name}
                   </p>
@@ -221,72 +226,96 @@ export function Sidebar({ className }: SidebarProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-56 bg-white shadow-lg border border-gray-200"
+            className="w-56 shadow-lg border border-border/40 bg-popover rounded-lg p-0.5"
             align={mobile ? 'center' : 'end'}
+            side="top"
+            sideOffset={5}
             forceMount
+            style={{
+              backgroundColor: 'hsl(var(--popover))',
+            }}
           >
-            <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">
-                  {session.user.name}
-                </p>
-                <p className="text-xs leading-none text-muted-foreground">
-                  {session.user.email}
-                </p>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem
-                asChild
-                className="hover:bg-gray-100 active:bg-gray-200"
+            <div className="py-1 px-0.5">
+              <Link
+                href="/profile"
+                className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium no-underline hover:no-underline focus:no-underline active:no-underline hover:bg-muted/70 transition-colors"
               >
-                <Link
-                  href="/profile"
-                  className="no-underline hover:no-underline focus:no-underline active:no-underline flex items-center w-full"
-                  style={{ textDecoration: 'none' }}
-                >
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Perfil</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                asChild
-                className="hover:bg-gray-100 active:bg-gray-200"
+                <User className="h-4 w-4" />
+                <div>Perfil</div>
+              </Link>
+
+              <Link
+                href="/settings"
+                className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium no-underline hover:no-underline focus:no-underline active:no-underline hover:bg-muted/70 transition-colors"
               >
-                <Link
-                  href="/settings"
-                  className="no-underline hover:no-underline focus:no-underline active:no-underline flex items-center w-full"
-                  style={{ textDecoration: 'none' }}
-                >
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Configurações</span>
-                </Link>
-              </DropdownMenuItem>
+                <Settings className="h-4 w-4" />
+                <div>Configurações</div>
+              </Link>
+
               {session.user.role === 'admin' && (
-                <DropdownMenuItem
-                  asChild
-                  className="hover:bg-gray-100 active:bg-gray-200"
+                <Link
+                  href="/admin"
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium no-underline hover:no-underline focus:no-underline active:no-underline hover:bg-muted/70 transition-colors"
                 >
-                  <Link
-                    href="/admin"
-                    className="no-underline hover:no-underline focus:no-underline active:no-underline flex items-center w-full"
-                    style={{ textDecoration: 'none' }}
-                  >
-                    <Shield className="mr-2 h-4 w-4" />
-                    <span>Painel Admin</span>
-                  </Link>
-                </DropdownMenuItem>
+                  <Shield className="h-4 w-4" />
+                  <div>Admin</div>
+                </Link>
               )}
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={handleSignOut}
-              className="hover:bg-gray-100 active:bg-gray-200"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>Sair</span>
-            </DropdownMenuItem>
+            </div>
+            <DropdownMenuSeparator className="my-1 opacity-70" />
+
+            {/* Appearance Section */}
+            <div className="px-3 py-2 flex items-center justify-center">
+              <div className="flex items-center gap-3 bg-muted/40 rounded-md p-1">
+                <button
+                  onClick={() => setTheme('light')}
+                  className={`p-1.5 rounded-md transition-colors ${
+                    theme === 'light'
+                      ? 'bg-background shadow-sm'
+                      : 'hover:bg-muted/80'
+                  }`}
+                  aria-label="Tema Claro"
+                  title="Claro"
+                >
+                  <Sun className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setTheme('dark')}
+                  className={`p-1.5 rounded-md transition-colors ${
+                    theme === 'dark'
+                      ? 'bg-background shadow-sm'
+                      : 'hover:bg-muted/80'
+                  }`}
+                  aria-label="Tema Escuro"
+                  title="Escuro"
+                >
+                  <Moon className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setTheme('system')}
+                  className={`p-1.5 rounded-md transition-colors ${
+                    theme === 'system'
+                      ? 'bg-background shadow-sm'
+                      : 'hover:bg-muted/80'
+                  }`}
+                  aria-label="Tema do Sistema"
+                  title="Sistema"
+                >
+                  <Laptop className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+            <DropdownMenuSeparator className="my-1 opacity-70" />
+
+            <div className="py-1 px-0.5">
+              <button
+                onClick={handleSignOut}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-muted/70 transition-colors text-sm font-medium"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Sair</span>
+              </button>
+            </div>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
