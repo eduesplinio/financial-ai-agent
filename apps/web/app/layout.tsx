@@ -4,6 +4,12 @@ import './globals.css';
 import './no-underline.css';
 import { Providers } from '@/components/providers';
 import { Sidebar } from '@/components/layout/sidebar';
+import dynamic from 'next/dynamic';
+
+// Importação dinâmica do ErrorBoundary para evitar erros de SSR
+const ErrorBoundary = dynamic(() => import('@/components/error-boundary'), {
+  ssr: false,
+});
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -27,7 +33,7 @@ export default function RootLayout({
           <div className="flex h-screen overflow-hidden bg-background">
             <Sidebar />
             <main className="flex-1 overflow-y-auto p-4 lg:p-6 pt-20 lg:pt-6">
-              {children}
+              <ErrorBoundary>{children}</ErrorBoundary>
             </main>
           </div>
         </Providers>

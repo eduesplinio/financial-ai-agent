@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import { signOut, useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { routeExists } from '@/lib/route-utils';
 import {
   DropdownMenu,
   DropdownMenuContent,

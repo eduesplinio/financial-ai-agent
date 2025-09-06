@@ -8,6 +8,7 @@ export function LoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,17 +34,26 @@ export function LoginForm() {
 
       if (result?.error) {
         setError('Email ou senha incorretos');
-      } else if (result?.ok) {
-        // Se o login for bem-sucedido, redireciona para o dashboard
-        window.location.href = '/dashboard';
-        return;
-      } else if (result?.url) {
-        // Se houver uma URL de redirecionamento, usa ela
-        window.location.href = result.url;
+        setLoading(false);
+      } else if (result?.ok || result?.url) {
+        // Mostrar estado de carregamento antes de redirecionar
+        setLoading(true);
+        setRedirecting(true);
+
+        // Aguarda um momento para garantir que o estado de carregamento seja exibido
+        setTimeout(() => {
+          // Se o login for bem-sucedido, redireciona para o dashboard ou para a URL específica
+          window.location.href = result?.url || '/dashboard';
+        }, 800);
         return;
       } else {
         // Redirecionamento padrão em caso de sucesso sem URL específica
-        window.location.href = '/dashboard';
+        setLoading(true);
+        setRedirecting(true);
+
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 800);
         return;
       }
     } catch (err) {
@@ -53,6 +63,20 @@ export function LoginForm() {
       setLoading(false);
     }
   };
+
+  // Se estiver redirecionando após um login bem-sucedido, mostrar tela de carregamento
+  if (redirecting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-6 text-lg text-gray-600">
+            Redirecionando para o Dashboard...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
