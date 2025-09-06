@@ -141,7 +141,7 @@ export function Sidebar({ className }: SidebarProps) {
       {/* Navigation Links */}
       <div
         className={cn(
-          'flex-1 py-6 px-3 space-y-1 overflow-y-auto overflow-x-hidden',
+          'flex-1 py-6 px-3 space-y-1 overflow-y-auto overflow-x-hidden transition-all duration-700 ease-[cubic-bezier(0.25,0.1,0.25,1.0)]',
           mobile && 'mt-10'
         )}
       >
@@ -151,16 +151,31 @@ export function Sidebar({ className }: SidebarProps) {
             href={item.href}
             onClick={mobile ? () => setMobileOpen(false) : undefined}
             className={cn(
-              'flex items-center py-3 px-3 rounded-lg transition-colors no-underline',
+              'group flex py-3 rounded-lg transition-all duration-700 ease-[cubic-bezier(0.25,0.1,0.25,1.0)] no-underline',
               pathname === item.href
                 ? 'bg-primary/10 text-primary'
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-              !expanded && !mobile && 'justify-center'
+              !expanded && !mobile ? 'justify-center' : 'justify-start',
+              expanded ? 'px-3' : 'px-0',
+              !mobile && 'min-w-[48px]'
             )}
             style={{ textDecoration: 'none' }}
           >
-            {item.icon}
-            {(expanded || mobile) && <span className="ml-3">{item.name}</span>}
+            <div className="flex items-center justify-center min-w-[48px]">
+              {item.icon}
+            </div>
+            <div
+              className={cn(
+                'overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)]',
+                expanded || mobile
+                  ? 'w-auto opacity-100 max-w-[200px] translate-x-0'
+                  : 'w-0 opacity-0 max-w-0 -translate-x-4'
+              )}
+            >
+              <span className="whitespace-nowrap block transform transition-transform duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)]">
+                {item.name}
+              </span>
+            </div>
           </Link>
         ))}
       </div>
@@ -171,21 +186,33 @@ export function Sidebar({ className }: SidebarProps) {
           <button
             onClick={toggleSidebar}
             className={cn(
-              'flex items-center py-3 px-3 rounded-lg transition-colors w-full overflow-hidden',
+              'flex items-center py-3 rounded-lg transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] w-full overflow-hidden',
               'text-muted-foreground hover:bg-muted hover:text-foreground',
-              !expanded && 'justify-center'
+              !expanded ? 'justify-center' : 'justify-start',
+              expanded ? 'px-3' : 'px-0'
             )}
             aria-label={expanded ? 'Recolher' : 'Expandir'}
             type="button"
           >
-            {expanded ? (
-              <>
-                <ChevronLeft className="h-5 w-5 flex-shrink-0" />
-                <span className="ml-3 truncate">Recolher</span>
-              </>
-            ) : (
-              <ChevronRight className="h-5 w-5 flex-shrink-0" />
-            )}
+            <div className="flex items-center justify-center min-w-[48px]">
+              {expanded ? (
+                <ChevronLeft className="h-5 w-5 transition-transform duration-500 ease-in-out" />
+              ) : (
+                <ChevronRight className="h-5 w-5 transition-transform duration-500 ease-in-out" />
+              )}
+            </div>
+            <div
+              className={cn(
+                'overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)]',
+                expanded
+                  ? 'w-auto opacity-100 max-w-[200px] translate-x-0'
+                  : 'w-0 opacity-0 max-w-0 -translate-x-4'
+              )}
+            >
+              <span className="whitespace-nowrap block transform transition-transform duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)]">
+                Recolher
+              </span>
+            </div>
           </button>
         </div>
       )}
@@ -193,7 +220,7 @@ export function Sidebar({ className }: SidebarProps) {
       {/* User Profile Section */}
       <div
         className={cn(
-          'border-t p-3',
+          'border-t p-3 transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)]',
           expanded || mobile
             ? 'flex items-center justify-between'
             : 'flex flex-col items-center'
@@ -204,17 +231,28 @@ export function Sidebar({ className }: SidebarProps) {
             <Button
               variant="ghost"
               className={cn(
-                'flex items-center w-full px-2 rounded-lg',
-                !expanded && !mobile && 'justify-center'
+                'flex items-center w-full rounded-lg transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)]',
+                !expanded && !mobile
+                  ? 'justify-center px-0'
+                  : 'justify-start px-2'
               )}
             >
-              <Avatar className="h-8 w-8">
-                <AvatarFallback>
-                  {session.user.name?.charAt(0).toUpperCase() || 'U'}
-                </AvatarFallback>
-              </Avatar>
-              {(expanded || mobile) && (
-                <div className="ml-2 text-left overflow-hidden">
+              <div className="flex items-center justify-center min-w-[48px]">
+                <Avatar className="h-8 w-8 flex-shrink-0">
+                  <AvatarFallback>
+                    {session.user.name?.charAt(0).toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+              <div
+                className={cn(
+                  'text-left overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)]',
+                  expanded || mobile
+                    ? 'w-auto opacity-100 max-w-[200px] translate-x-0'
+                    : 'w-0 opacity-0 max-w-0 -translate-x-4'
+                )}
+              >
+                <div className="transform transition-transform duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)]">
                   <p className="text-sm font-medium truncate">
                     {session.user.name}
                   </p>
@@ -222,7 +260,7 @@ export function Sidebar({ className }: SidebarProps) {
                     {session.user.email}
                   </p>
                 </div>
-              )}
+              </div>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -393,43 +431,19 @@ export function Sidebar({ className }: SidebarProps) {
   return (
     <div
       className={cn(
-        'hidden lg:flex flex-col h-screen bg-background border-r transition-all duration-300 overflow-x-hidden',
+        'hidden lg:flex flex-col h-screen bg-background border-r transition-all duration-700 ease-[cubic-bezier(0.25,0.1,0.25,1.0)] overflow-x-hidden',
         expanded ? 'w-64' : 'w-20',
         className
       )}
     >
       {/* Logo */}
-      <div className="flex items-center justify-center p-4 border-b">
-        {expanded ? (
-          <Link
-            href="/dashboard"
-            className="no-underline hover:no-underline"
-            style={{ textDecoration: 'none' }}
-          >
-            <div className="flex items-center justify-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-8 w-8 text-primary"
-              >
-                <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                <path d="M2 17l10 5 10-5" />
-                <path d="M2 12l10 5 10-5" />
-              </svg>
-              <span className="ml-2 text-xl font-bold">FinanceAI</span>
-            </div>
-          </Link>
-        ) : (
-          <Link
-            href="/dashboard"
-            className="no-underline hover:no-underline"
-            style={{ textDecoration: 'none' }}
-          >
+      <div className="flex items-center justify-center p-4 border-b overflow-hidden">
+        <Link
+          href="/dashboard"
+          className="no-underline hover:no-underline transition-all duration-500 ease-in-out"
+          style={{ textDecoration: 'none' }}
+        >
+          <div className="flex items-center justify-center">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -438,14 +452,19 @@ export function Sidebar({ className }: SidebarProps) {
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="h-8 w-8 text-primary"
+              className="h-8 w-8 text-primary transition-transform duration-500 ease-in-out"
             >
               <path d="M12 2L2 7l10 5 10-5-10-5z" />
               <path d="M2 17l10 5 10-5" />
               <path d="M2 12l10 5 10-5" />
             </svg>
-          </Link>
-        )}
+            {expanded && (
+              <span className="ml-2 text-xl font-bold whitespace-nowrap transition-opacity duration-500 ease-in-out">
+                FinanceAI
+              </span>
+            )}
+          </div>
+        </Link>
       </div>
 
       <SidebarContent />
