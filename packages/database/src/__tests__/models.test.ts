@@ -93,7 +93,6 @@ describe('Database Models', () => {
     beforeEach(() => {
       validUserData = {
         email: generateUniqueEmail('user-' + Date.now()),
-        connectedAccounts: [],
         profile: {
           riskTolerance: 'moderate' as const,
           financialGoals: [
@@ -176,7 +175,7 @@ describe('Database Models', () => {
 
       it('should update user successfully', async () => {
         const user = await UserService.create(validUserData);
-        const updatedUser = await UserService.update(user._id.toString(), {
+        const updatedUser = await UserService.update(user._id ? user._id.toString() : '', {
           profile: {
             ...validUserData.profile,
             riskTolerance: 'aggressive',
@@ -188,12 +187,12 @@ describe('Database Models', () => {
 
       it('should soft delete user', async () => {
         const user = await UserService.create(validUserData);
-        const deletedUser = await UserService.softDelete(user._id.toString());
+        const deletedUser = await UserService.softDelete(user._id ? user._id.toString() : '');
 
         expect(deletedUser?.deletedAt).toBeDefined();
 
         // Should not find deleted user in normal queries
-        const foundUser = await UserService.findById(user._id.toString());
+        const foundUser = await UserService.findById(user._id ? user._id.toString() : '');
         expect(foundUser).toBeNull();
       });
 
@@ -217,8 +216,9 @@ describe('Database Models', () => {
             ageGroup: '26-35' as const,
             financialKnowledgeLevel: 'intermediate' as const,
           },
+          connectedAccounts: []
         });
-        userId = user._id.toString();
+        userId = user._id ? user._id.toString() : '';
       });
 
       const validTransactionData = {
@@ -382,7 +382,7 @@ describe('Database Models', () => {
           await KnowledgeDocumentService.findByCategory('investment');
 
         expect(result.documents).toHaveLength(1);
-        expect(result.documents[0].category).toBe('investment');
+        expect(result.documents && result.documents[0]?.category).toBe('investment');
       });
 
       it('should search documents by text', async () => {
@@ -413,8 +413,9 @@ describe('Database Models', () => {
             ageGroup: '26-35' as const,
             financialKnowledgeLevel: 'intermediate' as const,
           },
+          connectedAccounts: []
         });
-        userId = user._id.toString();
+        userId = user._id ? user._id.toString() : '';
       });
 
       const validConversationData = {
@@ -426,6 +427,7 @@ describe('Database Models', () => {
             content: 'How can I improve my savings?',
             role: 'user' as const,
             timestamp: new Date(),
+            metadata: {},
             sources: [
               {
                 id: 'doc-1',
@@ -482,6 +484,7 @@ describe('Database Models', () => {
           content: 'Thank you for the advice!',
           role: 'user' as const,
           timestamp: new Date(),
+          metadata: {}
         };
 
         const updatedConversation = await ConversationService.addMessage(
@@ -490,7 +493,7 @@ describe('Database Models', () => {
         );
 
         expect(updatedConversation?.messages).toHaveLength(2);
-        expect(updatedConversation?.messages[1].content).toBe(
+        expect(updatedConversation?.messages && updatedConversation.messages[1]?.content).toBe(
           'Thank you for the advice!'
         );
       });
@@ -549,10 +552,11 @@ describe('Database Models', () => {
             ageGroup: '26-35' as const,
             financialKnowledgeLevel: 'intermediate' as const,
           },
+          connectedAccounts: []
         });
 
         // Soft delete the user
-        await UserService.softDelete(user._id.toString());
+        await UserService.softDelete(user._id ? user._id.toString() : '');
 
         // Should not find the user in normal queries
         const foundUser = await User.findById(user._id);

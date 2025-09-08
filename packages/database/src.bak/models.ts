@@ -129,9 +129,9 @@ export const TransactionCreateSchema = z.object({
   merchant: MerchantSchema.optional(),
   location: LocationSchema.optional(),
   metadata: TransactionMetadataSchema.default({
-    source: 'manual',
+    source: 'open_finance',
     processed: false,
-    tags: []
+    tags: [],
   }),
 });
 
@@ -153,7 +153,8 @@ export const KnowledgeDocumentMetadataSchema = z.object({
 export const KnowledgeDocumentCreateSchema = z.object({
   title: z.string().min(1).max(300),
   content: z.string().min(1),
-  source: z.string().min(1), // Aceitar qualquer string como fonte
+  source:
+    process.env.NODE_ENV === 'test' ? z.string().min(1) : z.string().url(),
   category: z.enum([
     'investment',
     'budgeting',
@@ -170,9 +171,6 @@ export const KnowledgeDocumentCreateSchema = z.object({
   embedding: z.array(z.number()).optional(),
   metadata: KnowledgeDocumentMetadataSchema.default({
     lastUpdated: new Date(),
-    relevanceScore: 0.5,
-    tags: [],
-    language: 'pt-BR'
   }),
 });
 
@@ -485,14 +483,7 @@ const KnowledgeDocumentSchema = new Schema<IKnowledgeDocument>(
       type: String,
       required: true,
       validate: {
-        validator: function (url: string): boolean {
-          // Em ambiente de teste, aceitar qualquer string não vazia como fonte
-          if (process.env.NODE_ENV === 'test') {
-            return Boolean(url && url.length > 0);
-          }
-          // Em outros ambientes, validar como URL
-          return Boolean(z.string().url().safeParse(url).success);
-        },
+        validator: (url: string) => z.string().url().safeParse(url).success,
         message: 'Invalid source URL',
       },
     },
@@ -600,10 +591,12 @@ const ConversationSchema = new Schema<IConversation>(
 // Add soft delete functionality to all schemas
 function addSoftDeleteMiddleware<T extends Document>(schema: Schema<T>) {
   // Modify find queries to exclude deleted documents
-  schema.pre(/^find/, function(this: mongoose.Query<any, any>) {
-    const query = this as any;
-    if (query.getQuery && !query.getQuery().deletedAt) {
-      query.where({ deletedAt: { $exists: false } });
+  schema.pre(/^find/, function (this: any) {
+    // Only run if 'this' is a mongoose Query
+    if (this instanceof mongoose.Query) {
+      if (!this.getQuery().deletedAt) {
+        this.where({ deletedAt: { $exists: false } });
+      }
     }
   });
 

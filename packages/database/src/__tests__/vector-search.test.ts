@@ -24,9 +24,9 @@ describe('Vector Search', () => {
     // Limpar todos os dados antes de iniciar os testes
     await KnowledgeDocument.deleteMany({});
 
-    // Garantir que o banco está completamente limpo
-    if (global.clearAllCollections) {
-      await global.clearAllCollections();
+        // Clean up collections before tests
+    if ((global as any).clearAllCollections) {
+      await (global as any).clearAllCollections();
     }
 
     try {
@@ -263,10 +263,10 @@ describe('Vector Search', () => {
         expect(VECTOR_SEARCH_INDEX_CONFIG.definition.fields).toHaveLength(4);
 
         const vectorField = VECTOR_SEARCH_INDEX_CONFIG.definition.fields[0];
-        expect(vectorField.type).toBe('vector');
-        expect(vectorField.path).toBe('embedding');
-        expect(vectorField.numDimensions).toBe(1536);
-        expect(vectorField.similarity).toBe('cosine');
+        expect(vectorField?.type).toBe('vector');
+        expect(vectorField?.path).toBe('embedding');
+        expect(vectorField?.numDimensions).toBe(1536);
+        expect(vectorField?.similarity).toBe('cosine');
       });
     });
 
@@ -406,7 +406,7 @@ describe('Vector Search', () => {
         });
 
         const savedDoc = await testDoc.save();
-        const docId = savedDoc._id.toString();
+        const docId = savedDoc._id ? savedDoc._id.toString() : '';
         expect(docId).toBeDefined();
 
         const newEmbedding = EmbeddingUtils.generateRandomEmbedding();
@@ -445,7 +445,7 @@ describe('Vector Search', () => {
 
           await expect(
             VectorSearchService.updateDocumentEmbedding(
-              testDoc._id.toString(),
+              testDoc._id ? testDoc._id.toString() : '',
               invalidEmbedding
             )
           ).rejects.toThrow('Embedding must have 1536 dimensions');
@@ -494,19 +494,20 @@ describe('Vector Search', () => {
           const createdDocs = await KnowledgeDocument.insertMany(docsToCreate);
           expect(createdDocs).toHaveLength(3);
 
-          const updates = createdDocs.map(doc => ({
-            documentId: doc._id.toString(),
+          // Update embeddings
+          const updates = createdDocs.map((doc: any) => ({
+            documentId: doc._id ? doc._id.toString() : '',
             embedding: EmbeddingUtils.generateRandomEmbedding(),
           }));
-
+          
           const results =
             await VectorSearchService.batchUpdateEmbeddings(updates);
           expect(results).toHaveLength(createdDocs.length);
 
           // Verify embeddings were updated
           for (let i = 0; i < updates.length; i++) {
-            const doc = await KnowledgeDocument.findById(updates[i].documentId);
-            expect(doc?.embedding).toEqual(updates[i].embedding);
+            const doc = await KnowledgeDocument.findById(updates[i]?.documentId);
+            expect(doc?.embedding).toEqual(updates[i]?.embedding);
           }
         });
       });
@@ -516,8 +517,8 @@ describe('Vector Search', () => {
           const docs = await KnowledgeDocument.find({});
           expect(docs).toHaveLength(3);
 
-          const updates = docs.map(doc => ({
-            documentId: doc._id.toString(),
+          const updates = docs.map((doc: any) => ({
+            documentId: doc._id ? doc._id.toString() : '',
             embedding: EmbeddingUtils.generateRandomEmbedding(),
           }));
 
@@ -528,7 +529,7 @@ describe('Vector Search', () => {
           // Verify embeddings were updated
           const updatedDocs = await KnowledgeDocument.find({});
           updatedDocs.forEach((doc, index) => {
-            expect(doc.embedding).toEqual(updates[index].embedding);
+            expect(doc?.embedding).toEqual(updates[index]?.embedding);
           });
         });
       });
@@ -646,7 +647,7 @@ describe('Vector Search', () => {
           expect(doc).toBeDefined();
 
           const results = await VectorSearchService.findSimilarDocuments(
-            doc!._id.toString(),
+            doc && doc._id ? doc._id.toString() : '',
             5,
             true
           );
@@ -657,7 +658,7 @@ describe('Vector Search', () => {
           // Should not include the original document
           results.forEach(result => {
             expect(result.document._id.toString()).not.toBe(
-              doc!._id.toString()
+              doc && doc._id ? doc._id.toString() : ''
             );
           });
         });

@@ -38,7 +38,6 @@ class MongoDBConnection {
   private retryAttempts = 0;
   private maxRetryAttempts = 5;
   private retryDelay = 1000; // Base delay in ms
-  private healthCheckInterval: NodeJS.Timeout | null = null;
 
   // Métodos getter e setter para testes
   public getMaxRetries(): number {
@@ -52,6 +51,7 @@ class MongoDBConnection {
   public setRetryDelay(value: number): void {
     this.retryDelay = value;
   }
+  private healthCheckInterval?: NodeJS.Timeout;
 
   private constructor() {
     this.setupEventListeners();
@@ -102,7 +102,7 @@ class MongoDBConnection {
       // Stop health check monitoring
       if (this.healthCheckInterval) {
         clearInterval(this.healthCheckInterval);
-        this.healthCheckInterval = null;
+        this.healthCheckInterval = undefined;
       }
 
       await mongoose.disconnect();
@@ -148,11 +148,7 @@ class MongoDBConnection {
       }
 
       // Perform a simple ping operation
-      if (mongoose.connection.db) {
-        await mongoose.connection.db.admin().ping();
-      } else {
-        throw new Error('Database connection is not established');
-      }
+      await mongoose.connection.db.admin().ping();
 
       const latency = Date.now() - startTime;
 
@@ -180,9 +176,6 @@ class MongoDBConnection {
       }
 
       const db = mongoose.connection.db;
-      if (!db) {
-        throw new Error('Database connection is not established');
-      }
 
       // User collection indexes
       await db
