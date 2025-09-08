@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import './no-underline.css';
@@ -13,12 +13,16 @@ const ErrorBoundary = dynamic(() => import('@/components/error-boundary'), {
 
 const inter = Inter({ subsets: ['latin'] });
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+};
+
 export const metadata: Metadata = {
   title: 'Financial AI Agent',
   description: 'AI-powered financial advisor using RAG architecture',
   keywords: ['finance', 'AI', 'advisor', 'RAG', 'financial planning'],
   authors: [{ name: 'Financial AI Team' }],
-  viewport: 'width=device-width, initial-scale=1',
 };
 
 export default function RootLayout({

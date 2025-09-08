@@ -17,8 +17,10 @@ export function useClickOutside<T extends HTMLElement = HTMLElement>(
       // Do nothing if clicking excluded elements
       if (
         excludeRefs &&
-        excludeRefs.some((excludeRef) => 
-          excludeRef.current && excludeRef.current.contains(event.target as Node)
+        excludeRefs.some(
+          excludeRef =>
+            excludeRef.current &&
+            excludeRef.current.contains(event.target as Node)
         )
       ) {
         return;
@@ -34,5 +36,5 @@ export function useClickOutside<T extends HTMLElement = HTMLElement>(
       document.removeEventListener('mousedown', listener);
       document.removeEventListener('touchstart', listener);
     };
-  }, [ref, handler, excludeRef]);
+  }, [ref, handler, excludeRefs]);
 }
