@@ -175,24 +175,31 @@ describe('Database Models', () => {
 
       it('should update user successfully', async () => {
         const user = await UserService.create(validUserData);
-        const updatedUser = await UserService.update(user._id ? user._id.toString() : '', {
-          profile: {
-            ...validUserData.profile,
-            riskTolerance: 'aggressive',
-          },
-        });
+        const updatedUser = await UserService.update(
+          user._id ? user._id.toString() : '',
+          {
+            profile: {
+              ...validUserData.profile,
+              riskTolerance: 'aggressive',
+            },
+          }
+        );
 
         expect(updatedUser?.profile.riskTolerance).toBe('aggressive');
       });
 
       it('should soft delete user', async () => {
         const user = await UserService.create(validUserData);
-        const deletedUser = await UserService.softDelete(user._id ? user._id.toString() : '');
+        const deletedUser = await UserService.softDelete(
+          user._id ? user._id.toString() : ''
+        );
 
         expect(deletedUser?.deletedAt).toBeDefined();
 
         // Should not find deleted user in normal queries
-        const foundUser = await UserService.findById(user._id ? user._id.toString() : '');
+        const foundUser = await UserService.findById(
+          user._id ? user._id.toString() : ''
+        );
         expect(foundUser).toBeNull();
       });
 
@@ -216,7 +223,7 @@ describe('Database Models', () => {
             ageGroup: '26-35' as const,
             financialKnowledgeLevel: 'intermediate' as const,
           },
-          connectedAccounts: []
+          connectedAccounts: [],
         });
         userId = user._id ? user._id.toString() : '';
       });
@@ -382,7 +389,9 @@ describe('Database Models', () => {
           await KnowledgeDocumentService.findByCategory('investment');
 
         expect(result.documents).toHaveLength(1);
-        expect(result.documents && result.documents[0]?.category).toBe('investment');
+        expect(result.documents && result.documents[0]?.category).toBe(
+          'investment'
+        );
       });
 
       it('should search documents by text', async () => {
@@ -413,7 +422,7 @@ describe('Database Models', () => {
             ageGroup: '26-35' as const,
             financialKnowledgeLevel: 'intermediate' as const,
           },
-          connectedAccounts: []
+          connectedAccounts: [],
         });
         userId = user._id ? user._id.toString() : '';
       });
@@ -484,7 +493,7 @@ describe('Database Models', () => {
           content: 'Thank you for the advice!',
           role: 'user' as const,
           timestamp: new Date(),
-          metadata: {}
+          metadata: {},
         };
 
         const updatedConversation = await ConversationService.addMessage(
@@ -493,9 +502,10 @@ describe('Database Models', () => {
         );
 
         expect(updatedConversation?.messages).toHaveLength(2);
-        expect(updatedConversation?.messages && updatedConversation.messages[1]?.content).toBe(
-          'Thank you for the advice!'
-        );
+        expect(
+          updatedConversation?.messages &&
+            updatedConversation.messages[1]?.content
+        ).toBe('Thank you for the advice!');
       });
 
       it('should update conversation context', async () => {
@@ -552,7 +562,7 @@ describe('Database Models', () => {
             ageGroup: '26-35' as const,
             financialKnowledgeLevel: 'intermediate' as const,
           },
-          connectedAccounts: []
+          connectedAccounts: [],
         });
 
         // Soft delete the user

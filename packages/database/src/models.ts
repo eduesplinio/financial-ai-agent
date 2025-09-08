@@ -131,7 +131,7 @@ export const TransactionCreateSchema = z.object({
   metadata: TransactionMetadataSchema.default({
     source: 'manual',
     processed: false,
-    tags: []
+    tags: [],
   }),
 });
 
@@ -172,7 +172,7 @@ export const KnowledgeDocumentCreateSchema = z.object({
     lastUpdated: new Date(),
     relevanceScore: 0.5,
     tags: [],
-    language: 'pt-BR'
+    language: 'pt-BR',
   }),
 });
 
@@ -600,7 +600,7 @@ const ConversationSchema = new Schema<IConversation>(
 // Add soft delete functionality to all schemas
 function addSoftDeleteMiddleware<T extends Document>(schema: Schema<T>) {
   // Modify find queries to exclude deleted documents
-  schema.pre(/^find/, function(this: mongoose.Query<any, any>) {
+  schema.pre(/^find/, function (this: mongoose.Query<any, any>) {
     const query = this as any;
     if (query.getQuery && !query.getQuery().deletedAt) {
       query.where({ deletedAt: { $exists: false } });

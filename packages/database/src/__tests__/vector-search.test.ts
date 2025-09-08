@@ -24,7 +24,7 @@ describe('Vector Search', () => {
     // Limpar todos os dados antes de iniciar os testes
     await KnowledgeDocument.deleteMany({});
 
-        // Clean up collections before tests
+    // Clean up collections before tests
     if ((global as any).clearAllCollections) {
       await (global as any).clearAllCollections();
     }
@@ -499,14 +499,16 @@ describe('Vector Search', () => {
             documentId: doc._id ? doc._id.toString() : '',
             embedding: EmbeddingUtils.generateRandomEmbedding(),
           }));
-          
+
           const results =
             await VectorSearchService.batchUpdateEmbeddings(updates);
           expect(results).toHaveLength(createdDocs.length);
 
           // Verify embeddings were updated
           for (let i = 0; i < updates.length; i++) {
-            const doc = await KnowledgeDocument.findById(updates[i]?.documentId);
+            const doc = await KnowledgeDocument.findById(
+              updates[i]?.documentId
+            );
             expect(doc?.embedding).toEqual(updates[i]?.embedding);
           }
         });

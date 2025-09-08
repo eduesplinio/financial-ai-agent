@@ -30,25 +30,28 @@ describe('MongoDB Document ID Tests', () => {
       metadata: {
         language: 'pt-BR',
         relevanceScore: 0.9,
-        lastUpdated: new Date()
-      }
+        lastUpdated: new Date(),
+      },
     });
-    
+
     // Save document
     const savedDoc = await testDoc.save();
     const docId = savedDoc._id ? savedDoc._id.toString() : '';
-    
+
     console.log('Document saved with ID:', docId);
-    
+
     // Generate an embedding
     const embedding = EmbeddingUtils.generateRandomEmbedding();
     console.log('Generated embedding with length:', embedding.length);
-    
+
     try {
       // Update the document embedding
-      const updatedDoc = await VectorSearchService.updateDocumentEmbedding(docId, embedding);
+      const updatedDoc = await VectorSearchService.updateDocumentEmbedding(
+        docId,
+        embedding
+      );
       console.log('Document updated successfully:', updatedDoc ? 'yes' : 'no');
-      
+
       if (updatedDoc) {
         console.log('Updated embedding length:', updatedDoc.embedding?.length);
         expect(updatedDoc.embedding).toEqual(embedding);
