@@ -46,11 +46,11 @@
 
 - [ ] 4. Desenvolver integração com Open Finance
   - [ ] 4.1 Implementar cliente para APIs Open Finance
-    - Implementar cliente HTTP base com axios e interceptors
-    - Configurar retry logic exponencial e rate limiting
+    - ✅ Implementar cliente HTTP base com axios e interceptors
+    - ✅ Configurar retry logic exponencial e rate limiting
     - Implementar autenticação OAuth2 para instituições financeiras
     - Configurar ambiente sandbox para testes de desenvolvimento
-    - Criar tipos TypeScript para respostas das APIs
+    - ✅ Criar tipos TypeScript para respostas das APIs
     - _Requisitos: 1.1, 1.5_
   - [ ] 4.2 Implementar sincronização de dados bancários
     - Criar serviço de sincronização de contas e transações
