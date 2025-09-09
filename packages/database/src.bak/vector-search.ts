@@ -107,7 +107,7 @@ export class VectorSearchService {
     try {
       const db = mongoose.connection.db;
       if (!db) {
-        throw new Error('Database connection not established');
+        throw new Error('Database connection is not established');
       }
       const collection = db.collection('knowledgedocuments');
 
@@ -280,67 +280,70 @@ export class VectorSearchService {
    */
   static async getVectorSearchStats(): Promise<VectorSearchStats> {
     try {
-      // Abordagem mais simples e direta para obter contagens exatas
-      const totalDocuments = await KnowledgeDocument.countDocuments();
-
-      const documentsWithEmbeddingsCount =
-        await KnowledgeDocument.countDocuments({
-          embedding: { $exists: true, $ne: null },
-        });
-
-      // Consulta para categorias e idiomas
-      const categoryCounts = await KnowledgeDocument.aggregate([
-        { $group: { _id: '$category', count: { $sum: 1 } } },
-      ]);
-
-      const languageCounts = await KnowledgeDocument.aggregate([
-        { $group: { _id: '$metadata.language', count: { $sum: 1 } } },
-      ]);
-
-      // Consulta para obter a média de dimensões de embedding
-      const embeddingDimensions = await KnowledgeDocument.aggregate([
+      const pipeline = [
         {
-          $match: {
-            embedding: { $exists: true, $ne: null },
+          $group: {
+            _id: null,
+            totalDocuments: { $sum: 1 },
+            documentsWithEmbeddings: {
+              $sum: {
+                $cond: [{ $ne: ['$embedding', null] }, 1, 0],
+              },
+            },
+            categories: { $push: '$category' },
+            languages: { $push: '$metadata.language' },
+            embeddingDimensions: {
+              $push: {
+                $cond: [
+                  { $ne: ['$embedding', null] },
+                  { $size: '$embedding' },
+                  null,
+                ],
+              },
+            },
           },
         },
-        {
-          $project: {
-            dimensions: { $size: '$embedding' },
-          },
-        },
-      ]);
+      ];
 
-      // Converter resultados em formato esperado
+      const [stats] = await KnowledgeDocument.aggregate(pipeline);
+
+      if (!stats) {
+        return {
+          totalDocuments: 0,
+          documentsWithEmbeddings: 0,
+          averageEmbeddingDimensions: 0,
+          categoriesCount: {},
+          languagesCount: {},
+        };
+      }
+
+      // Count categories
       const categoriesCount: Record<string, number> = {};
-      categoryCounts.forEach((item: any) => {
-        if (item._id) {
-          categoriesCount[item._id] = item.count;
-        }
+      stats.categories.forEach((category: string) => {
+        categoriesCount[category] = (categoriesCount[category] || 0) + 1;
       });
 
-      // Converter contagens de idioma
+      // Count languages
       const languagesCount: Record<string, number> = {};
-      languageCounts.forEach((item: any) => {
-        if (item._id) {
-          languagesCount[item._id] = item.count;
+      stats.languages.forEach((language: string) => {
+        if (language) {
+          languagesCount[language] = (languagesCount[language] || 0) + 1;
         }
       });
 
-      // Calcular média de dimensões
-      const totalDimensions = embeddingDimensions.reduce(
-        (sum: number, item: any) => sum + (item.dimensions || 0),
-        0
+      // Calculate average embedding dimensions
+      const validDimensions = stats.embeddingDimensions.filter(
+        (dim: number) => dim !== null
       );
-
       const averageEmbeddingDimensions =
-        embeddingDimensions.length > 0
-          ? totalDimensions / embeddingDimensions.length
+        validDimensions.length > 0
+          ? validDimensions.reduce((sum: number, dim: number) => sum + dim, 0) /
+            validDimensions.length
           : 0;
 
       return {
-        totalDocuments,
-        documentsWithEmbeddings: documentsWithEmbeddingsCount,
+        totalDocuments: stats.totalDocuments,
+        documentsWithEmbeddings: stats.documentsWithEmbeddings,
         averageEmbeddingDimensions,
         categoriesCount,
         languagesCount,
@@ -357,31 +360,17 @@ export class VectorSearchService {
   static async updateDocumentEmbedding(
     documentId: string,
     embedding: number[]
-  ): Promise<IKnowledgeDocument> {
+  ): Promise<IKnowledgeDocument | null> {
     try {
-      if (!documentId) {
-        throw new Error('Document ID is required');
-      }
-
-      if (!embedding || !Array.isArray(embedding)) {
-        throw new Error('Embedding must be an array');
-      }
-
       if (embedding.length !== 1536) {
         throw new Error('Embedding must have 1536 dimensions');
       }
 
-      const updatedDoc = await KnowledgeDocument.findByIdAndUpdate(
+      return await KnowledgeDocument.findByIdAndUpdate(
         documentId,
-        { $set: { embedding } },
+        { embedding },
         { new: true, runValidators: true }
       );
-
-      if (!updatedDoc) {
-        throw new Error(`Document with ID ${documentId} not found`);
-      }
-
-      return updatedDoc;
     } catch (error) {
       console.error('❌ Failed to update document embedding:', error);
       throw error;
@@ -393,34 +382,18 @@ export class VectorSearchService {
    */
   static async batchUpdateEmbeddings(
     updates: Array<{ documentId: string; embedding: number[] }>
-  ): Promise<IKnowledgeDocument[]> {
+  ): Promise<void> {
     try {
-      // Verificar todas as dimensões de embedding primeiro
-      for (const update of updates) {
-        if (update.embedding.length !== 1536) {
-          throw new Error(
-            `Embedding for document ${update.documentId} must have 1536 dimensions`
-          );
-        }
-      }
+      const bulkOps = updates.map(update => ({
+        updateOne: {
+          filter: { _id: update.documentId },
+          update: { $set: { embedding: update.embedding } },
+        },
+      }));
 
-      // Atualizar documentos individualmente para poder retornar os resultados
-      const updatedDocs: IKnowledgeDocument[] = [];
-
-      for (const update of updates) {
-        const doc = await KnowledgeDocument.findByIdAndUpdate(
-          update.documentId,
-          { $set: { embedding: update.embedding } },
-          { new: true, runValidators: true }
-        );
-
-        if (doc) {
-          updatedDocs.push(doc);
-        }
-      }
+      await KnowledgeDocument.bulkWrite(bulkOps);
 
       console.log(`✅ Updated embeddings for ${updates.length} documents`);
-      return updatedDocs;
     } catch (error) {
       console.error('❌ Batch update embeddings failed:', error);
       throw error;
@@ -429,26 +402,10 @@ export class VectorSearchService {
 
   /**
    * Remove embeddings from documents (useful for testing or cleanup)
-   *
-   * @param filter - Filtro MongoDB para selecionar documentos
-   * @param keepEmbeddingsWhere - Opcional: filtro para documentos que devem manter embeddings
    */
-  static async removeEmbeddings(
-    filter: any = {},
-    keepEmbeddingsWhere?: any
-  ): Promise<void> {
+  static async removeEmbeddings(filter: any = {}): Promise<void> {
     try {
-      let finalFilter = { ...filter };
-
-      // Se houver um filtro para manter embeddings, excluir esses documentos
-      if (keepEmbeddingsWhere) {
-        finalFilter = {
-          ...filter,
-          $nor: [keepEmbeddingsWhere],
-        };
-      }
-
-      const result = await KnowledgeDocument.updateMany(finalFilter, {
+      const result = await KnowledgeDocument.updateMany(filter, {
         $unset: { embedding: 1 },
       });
 
@@ -563,10 +520,8 @@ export class VectorSearchService {
 // EMBEDDING UTILITIES
 // =============================================================================
 
-/**
- * Utility class for embedding operations
- */
-export class EmbeddingUtils {
+// Classe utilitária para manipulação de embeddings
+class EmbeddingUtilsClass {
   /**
    * Validate embedding vector
    */
@@ -654,6 +609,9 @@ export class EmbeddingUtils {
     return this.normalizeEmbedding(embedding);
   }
 }
+
+// Exportar como constante para evitar redeclaração
+export const EmbeddingUtils = EmbeddingUtilsClass;
 
 // =============================================================================
 // EXPORTS
