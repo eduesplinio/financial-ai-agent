@@ -9,13 +9,13 @@ jest.mock('axios', () => {
     request: jest.fn(),
     interceptors: {
       request: { use: jest.fn(), eject: jest.fn() },
-      response: { use: jest.fn(), eject: jest.fn() }
+      response: { use: jest.fn(), eject: jest.fn() },
     },
     get: jest.fn(),
     post: jest.fn(),
     put: jest.fn(),
     delete: jest.fn(),
-    defaults: {}
+    defaults: {},
   };
   return mockAxios;
 });
@@ -29,14 +29,14 @@ describe('OpenFinanceClient', () => {
     authUrl: 'https://auth.openfinance.example.com',
     useAuth: true,
     timeout: 5000,
-    maxRetries: 3
+    maxRetries: 3,
   };
-  
+
   beforeEach(() => {
     jest.clearAllMocks();
     client = new OpenFinanceClient(mockConfig);
   });
-  
+
   test('cria instância com configuração válida', () => {
     expect(client).toBeInstanceOf(OpenFinanceClient);
     expect(axios.create).toHaveBeenCalledWith({
@@ -44,17 +44,17 @@ describe('OpenFinanceClient', () => {
       timeout: mockConfig.timeout,
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        Accept: 'application/json',
       },
     });
   });
-  
+
   test('configura interceptors corretamente', () => {
     const mockAxios = axios.create();
     expect(mockAxios.interceptors.request.use).toHaveBeenCalled();
     expect(mockAxios.interceptors.response.use).toHaveBeenCalled();
   });
-  
+
   test('método GET faz request corretamente', async () => {
     const mockAxios = axios.create();
     (mockAxios.request as jest.Mock).mockResolvedValueOnce({
@@ -62,24 +62,24 @@ describe('OpenFinanceClient', () => {
       status: 200,
       headers: {},
       config: {},
-      statusText: 'OK'
+      statusText: 'OK',
     });
-    
+
     const result = await client.get('/accounts');
-    
+
     expect(mockAxios.request).toHaveBeenCalledWith({
       method: 'GET',
-      url: '/accounts'
+      url: '/accounts',
     });
-    
+
     expect(result).toEqual({
       data: { success: true },
       status: 200,
       headers: {},
-      success: true
+      success: true,
     });
   });
-  
+
   test('método POST envia dados corretamente', async () => {
     const mockAxios = axios.create();
     (mockAxios.request as jest.Mock).mockResolvedValueOnce({
@@ -87,26 +87,26 @@ describe('OpenFinanceClient', () => {
       status: 201,
       headers: {},
       config: {},
-      statusText: 'Created'
+      statusText: 'Created',
     });
-    
+
     const postData = { name: 'Test Account' };
     const result = await client.post('/accounts', postData);
-    
+
     expect(mockAxios.request).toHaveBeenCalledWith({
       method: 'POST',
       url: '/accounts',
-      data: postData
+      data: postData,
     });
-    
+
     expect(result).toEqual({
       data: { id: '123', success: true },
       status: 201,
       headers: {},
-      success: true
+      success: true,
     });
   });
-  
+
   test('lida com erro de resposta corretamente', async () => {
     const mockAxios = axios.create();
     const error = {
@@ -115,17 +115,17 @@ describe('OpenFinanceClient', () => {
         status: 404,
         headers: {},
         config: {},
-        statusText: 'Not Found'
+        statusText: 'Not Found',
       },
       message: 'Request failed with status code 404',
       code: 'ERR_BAD_REQUEST',
-      isAxiosError: true
+      isAxiosError: true,
     };
-    
+
     (mockAxios.request as jest.Mock).mockRejectedValueOnce(error);
-    
+
     const result = await client.get('/nonexistent');
-    
+
     expect(result).toEqual({
       success: false,
       status: 404,
@@ -133,8 +133,8 @@ describe('OpenFinanceClient', () => {
       error: {
         message: 'Request failed with status code 404',
         code: 'ERR_BAD_REQUEST',
-        response: { message: 'Resource not found' }
-      }
+        response: { message: 'Resource not found' },
+      },
     });
   });
 });

@@ -1,4 +1,8 @@
-import { AxiosRequestConfig, AxiosResponseHeaders, RawAxiosResponseHeaders } from 'axios';
+import {
+  AxiosRequestConfig,
+  AxiosResponseHeaders,
+  RawAxiosResponseHeaders,
+} from 'axios';
 
 /**
  * Configuração para o cliente Open Finance
@@ -17,7 +21,8 @@ export interface OpenFinanceConfig {
 /**
  * Opções adicionais para requisições
  */
-export interface RequestOptions extends Omit<AxiosRequestConfig, 'url' | 'method'> {
+export interface RequestOptions
+  extends Omit<AxiosRequestConfig, 'url' | 'method'> {
   retries?: number;
   retryDelay?: number;
 }
@@ -58,7 +63,7 @@ export enum ConsentType {
   INVESTMENTS = 'investments',
   FINANCINGS = 'financings',
   INSURANCE = 'insurance',
-  PENSION = 'pension'
+  PENSION = 'pension',
 }
 
 /**
@@ -69,7 +74,7 @@ export enum ConsentStatus {
   AUTHORIZED = 'AUTHORIZED',
   REJECTED = 'REJECTED',
   EXPIRED = 'EXPIRED',
-  REVOKED = 'REVOKED'
+  REVOKED = 'REVOKED',
 }
 
 /**
@@ -253,22 +258,22 @@ export interface SandboxConfig {
    * Se deve usar URLs reais ou simuladas
    */
   useRealUrls?: boolean;
-  
+
   /**
    * Se deve gerar respostas simuladas em vez de fazer chamadas reais
    */
   mockResponses?: boolean;
-  
+
   /**
    * Se deve registrar requisições para debug
    */
   logRequests?: boolean;
-  
+
   /**
    * Delay artificial em milissegundos para simular latência de rede
    */
   delayResponseMs?: number;
-  
+
   /**
    * URL de redirecionamento para fluxo OAuth
    */
@@ -283,47 +288,47 @@ export interface SandboxInstitution {
    * Identificador único da instituição
    */
   id: string;
-  
+
   /**
    * Nome da instituição
    */
   name: string;
-  
+
   /**
    * Tipo da instituição
    */
   type: 'BANK' | 'INVESTMENT' | 'CREDIT_CARD' | 'OTHER';
-  
+
   /**
    * URL base da API da instituição
    */
   apiBaseUrl: string;
-  
+
   /**
    * URL base para autenticação
    */
   authUrl: string;
-  
+
   /**
    * ID do cliente para autenticação
    */
   clientId: string;
-  
+
   /**
    * Segredo do cliente para autenticação
    */
   clientSecret: string;
-  
+
   /**
    * Versão da API
    */
   apiVersion: string;
-  
+
   /**
    * Escopos disponíveis para autenticação
    */
   scopes: string[];
-  
+
   /**
    * Se a instituição requer certificado para autenticação
    */

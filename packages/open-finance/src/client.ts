@@ -1,9 +1,9 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
-import { 
-  OpenFinanceConfig, 
-  ApiResponse, 
+import {
+  OpenFinanceConfig,
+  ApiResponse,
   RequestOptions,
-  OAuthTokenResponse
+  OAuthTokenResponse,
 } from './types';
 
 // Helper function para verificar se um erro é do tipo AxiosError
@@ -31,7 +31,7 @@ export class OpenFinanceClient {
       timeout: config.timeout || 10000,
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        Accept: 'application/json',
       },
     });
 
@@ -45,22 +45,28 @@ export class OpenFinanceClient {
   private setupInterceptors(): void {
     // Request interceptor
     this.client.interceptors.request.use(
-      async (config) => {
+      async config => {
         // Adiciona token de autorização se necessário
-        if (this.config.useAuth && !config.headers.Authorization && this.authToken) {
+        if (
+          this.config.useAuth &&
+          !config.headers.Authorization &&
+          this.authToken
+        ) {
           config.headers.Authorization = `Bearer ${this.authToken}`;
         }
         return config;
       },
-      (error) => Promise.reject(error)
+      error => Promise.reject(error)
     );
 
     // Response interceptor
     this.client.interceptors.response.use(
-      (response) => response,
+      response => response,
       async (error: AxiosError) => {
-        const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
-        
+        const originalRequest = error.config as AxiosRequestConfig & {
+          _retry?: boolean;
+        };
+
         // Implement retry logic for specific error scenarios
         if (
           error.response?.status === 429 || // Too Many Requests
@@ -68,7 +74,7 @@ export class OpenFinanceClient {
         ) {
           if (!originalRequest._retry) {
             originalRequest._retry = true;
-            
+
             // Refresh token if unauthorized
             if (error.response?.status === 401 && this.config.useAuth) {
               await this.refreshAuthToken();
@@ -77,22 +83,25 @@ export class OpenFinanceClient {
                 originalRequest.headers.Authorization = `Bearer ${this.authToken}`;
               }
             }
-            
+
             // Retry with exponential backoff for rate limiting
             if (error.response?.status === 429) {
-              const retryAfter = parseInt(error.response.headers['retry-after'] || '1', 10);
+              const retryAfter = parseInt(
+                error.response.headers['retry-after'] || '1',
+                10
+              );
               await this.delay(retryAfter * 1000);
             }
-            
+
             return this.client(originalRequest);
           }
         }
-        
+
         return Promise.reject(error);
       }
     );
   }
-  
+
   /**
    * Helper para criar delay usando Promise
    */
@@ -126,7 +135,7 @@ export class OpenFinanceClient {
       );
 
       this.authToken = response.data.access_token;
-      
+
       // Calcular tempo de expiração (normalmente em segundos)
       const expiresIn = response.data.expires_in || 3600; // Default 1 hour
       this.tokenExpiresAt = new Date(Date.now() + expiresIn * 1000);
@@ -141,7 +150,10 @@ export class OpenFinanceClient {
    * @param url Endpoint da API
    * @param options Opções da requisição
    */
-  public async get<T>(url: string, options: RequestOptions = {}): Promise<ApiResponse<T>> {
+  public async get<T>(
+    url: string,
+    options: RequestOptions = {}
+  ): Promise<ApiResponse<T>> {
     return this.request<T>({ ...options, method: 'GET', url });
   }
 
@@ -151,7 +163,11 @@ export class OpenFinanceClient {
    * @param data Dados a serem enviados
    * @param options Opções da requisição
    */
-  public async post<T>(url: string, data: any, options: RequestOptions = {}): Promise<ApiResponse<T>> {
+  public async post<T>(
+    url: string,
+    data: any,
+    options: RequestOptions = {}
+  ): Promise<ApiResponse<T>> {
     return this.request<T>({ ...options, method: 'POST', url, data });
   }
 
@@ -161,7 +177,11 @@ export class OpenFinanceClient {
    * @param data Dados a serem enviados
    * @param options Opções da requisição
    */
-  public async put<T>(url: string, data: any, options: RequestOptions = {}): Promise<ApiResponse<T>> {
+  public async put<T>(
+    url: string,
+    data: any,
+    options: RequestOptions = {}
+  ): Promise<ApiResponse<T>> {
     return this.request<T>({ ...options, method: 'PUT', url, data });
   }
 
@@ -170,7 +190,10 @@ export class OpenFinanceClient {
    * @param url Endpoint da API
    * @param options Opções da requisição
    */
-  public async delete<T>(url: string, options: RequestOptions = {}): Promise<ApiResponse<T>> {
+  public async delete<T>(
+    url: string,
+    options: RequestOptions = {}
+  ): Promise<ApiResponse<T>> {
     return this.request<T>({ ...options, method: 'DELETE', url });
   }
 
@@ -178,42 +201,52 @@ export class OpenFinanceClient {
    * Método genérico para realizar requisições HTTP
    * @param options Opções da requisição
    */
-  private async request<T>(options: RequestOptions & { method: string; url: string; data?: any }): Promise<ApiResponse<T>> {
-    const { retries = this.config.maxRetries || 3, retryDelay = 1000, ...requestOptions } = options;
-    
+  private async request<T>(
+    options: RequestOptions & { method: string; url: string; data?: any }
+  ): Promise<ApiResponse<T>> {
+    const {
+      retries = this.config.maxRetries || 3,
+      retryDelay = 1000,
+      ...requestOptions
+    } = options;
+
     let lastError: Error | null = null;
     let attempt = 0;
-    
+
     while (attempt <= retries) {
       try {
         // Verificar se é necessário autenticar (pular em ambiente de teste)
-        if (process.env.NODE_ENV !== 'test' && this.config.useAuth && 
-            (!this.authToken || (this.tokenExpiresAt && new Date() >= this.tokenExpiresAt))) {
+        if (
+          process.env.NODE_ENV !== 'test' &&
+          this.config.useAuth &&
+          (!this.authToken ||
+            (this.tokenExpiresAt && new Date() >= this.tokenExpiresAt))
+        ) {
           await this.refreshAuthToken();
         }
-        
+
         const response = await this.client.request<T>(requestOptions);
-        
+
         return {
           data: response.data,
           status: response.status,
           headers: response.headers,
-          success: true
+          success: true,
         };
       } catch (error) {
         lastError = error as Error;
-        
+
         // Não fazer retry para alguns tipos de erro
         if (
-          isAxiosError(error) && 
-          error.response && 
+          isAxiosError(error) &&
+          error.response &&
           ![408, 429, 500, 502, 503, 504].includes(error.response.status)
         ) {
           break;
         }
-        
+
         attempt += 1;
-        
+
         if (attempt <= retries) {
           // Exponential backoff with jitter
           const delay = Math.min(
@@ -224,7 +257,7 @@ export class OpenFinanceClient {
         }
       }
     }
-    
+
     if (isAxiosError(lastError) && lastError.response) {
       return {
         success: false,
@@ -233,17 +266,17 @@ export class OpenFinanceClient {
         error: {
           message: lastError.message,
           code: lastError.code || 'UNKNOWN_ERROR',
-          response: lastError.response.data
-        }
+          response: lastError.response.data,
+        },
       };
     }
-    
+
     return {
       success: false,
       error: {
         message: lastError?.message || 'Unknown error occurred',
-        code: 'UNKNOWN_ERROR'
-      }
+        code: 'UNKNOWN_ERROR',
+      },
     };
   }
 }
