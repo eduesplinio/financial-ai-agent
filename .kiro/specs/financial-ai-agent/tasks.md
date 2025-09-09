@@ -48,7 +48,7 @@
   - [ ] 4.1 Implementar cliente para APIs Open Finance
     - ✅ Implementar cliente HTTP base com axios e interceptors
     - ✅ Configurar retry logic exponencial e rate limiting
-    - Implementar autenticação OAuth2 para instituições financeiras
+    - ✅ Implementar autenticação OAuth2 para instituições financeiras
     - Configurar ambiente sandbox para testes de desenvolvimento
     - ✅ Criar tipos TypeScript para respostas das APIs
     - _Requisitos: 1.1, 1.5_
