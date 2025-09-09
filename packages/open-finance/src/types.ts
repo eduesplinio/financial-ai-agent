@@ -334,3 +334,108 @@ export interface SandboxInstitution {
    */
   certificateRequired: boolean;
 }
+
+/**
+ * Status de sincronização de dados
+ */
+export enum SyncStatus {
+  SUCCESS = 'success',
+  ERROR = 'error',
+  CACHED = 'cached',
+  IN_PROGRESS = 'in_progress',
+}
+
+/**
+ * Resultado de uma operação de sincronização
+ */
+export interface SyncResult<T> {
+  data?: T;
+  status: SyncStatus;
+  error?: string;
+  timestamp: number;
+}
+
+/**
+ * Configuração para o serviço de sincronização
+ */
+export interface SyncConfig {
+  client?: OpenFinanceClient;
+  auth?: OpenFinanceAuth;
+  clientConfig?: OpenFinanceConfig;
+  authConfig?: OpenFinanceConfig;
+  rateLimitConfig?: RateLimitConfig;
+  cacheLifetime?: number; // em ms
+}
+
+/**
+ * Opções para sincronização de contas
+ */
+export interface AccountSyncOptions {
+  forceRefresh?: boolean;
+  includeBalances?: boolean;
+  includeCreditCards?: boolean;
+}
+
+/**
+ * Opções para sincronização de transações
+ */
+export interface TransactionSyncOptions {
+  forceRefresh?: boolean;
+  fromDate?: Date;
+  toDate?: Date;
+  pageSize?: number;
+  pageNumber?: number;
+  includeDetails?: boolean;
+}
+
+/**
+ * Dados de conta bancária retornados pelo serviço de sincronização
+ */
+export interface AccountData extends Account {
+  institution: {
+    id: string;
+    name: string;
+    compeCode?: string;
+    ispb?: string;
+  };
+  updatedAt: string;
+}
+
+/**
+ * Dados de transação bancária retornados pelo serviço de sincronização
+ */
+export interface TransactionData extends Transaction {
+  correlationId?: string;
+  details?: Record<string, any>;
+}
+
+// Definição forward das classes para resolver referências circulares
+// Estas são apenas declarações de tipo, as implementações estão em seus respectivos arquivos
+export interface OpenFinanceClient {
+  get<T = any>(path: string, options?: RequestOptions): Promise<ApiResponse<T>>;
+  post<T = any, D = any>(
+    path: string,
+    data: D,
+    options?: RequestOptions
+  ): Promise<ApiResponse<T>>;
+  put<T = any, D = any>(
+    path: string,
+    data: D,
+    options?: RequestOptions
+  ): Promise<ApiResponse<T>>;
+  delete<T = any>(
+    path: string,
+    options?: RequestOptions
+  ): Promise<ApiResponse<T>>;
+  getAccounts(institutionId: string, token: string): Promise<AccountData[]>;
+  getTransactions(
+    institutionId: string,
+    accountId: string,
+    token: string,
+    options?: TransactionSyncOptions
+  ): Promise<TransactionData[]>;
+}
+
+export interface OpenFinanceAuth {
+  getToken(institutionId: string): Promise<string>;
+}
