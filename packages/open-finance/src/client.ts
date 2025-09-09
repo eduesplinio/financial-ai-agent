@@ -279,6 +279,85 @@ export class OpenFinanceClient {
       },
     };
   }
+
+  /**
+   * Obtém lista de contas de uma instituição financeira
+   *
+   * @param institutionId ID da instituição financeira
+   * @param token Token de autenticação
+   * @returns Lista de contas bancárias
+   */
+  public async getAccounts(
+    institutionId: string,
+    token: string
+  ): Promise<import('./types').AccountData[]> {
+    try {
+      const response = await this.get<{
+        data: import('./types').AccountData[];
+      }>(`/accounts/${institutionId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.success || !response.data?.data) {
+        throw new Error(response.error?.message || 'Falha ao obter contas');
+      }
+
+      return response.data.data;
+    } catch (error: any) {
+      throw new Error(`Erro ao buscar contas: ${error.message}`);
+    }
+  }
+
+  /**
+   * Obtém transações de uma conta específica
+   *
+   * @param institutionId ID da instituição financeira
+   * @param accountId ID da conta
+   * @param token Token de autenticação
+   * @param options Opções de consulta
+   * @returns Lista de transações
+   */
+  public async getTransactions(
+    institutionId: string,
+    accountId: string,
+    token: string,
+    options?: import('./types').TransactionSyncOptions
+  ): Promise<import('./types').TransactionData[]> {
+    try {
+      const fromDate = options?.fromDate
+        ? options.fromDate.toISOString().split('T')[0]
+        : undefined;
+      const toDate = options?.toDate
+        ? options.toDate.toISOString().split('T')[0]
+        : undefined;
+
+      const queryParams: Record<string, string | number> = {};
+
+      if (fromDate) queryParams.fromDate = fromDate;
+      if (toDate) queryParams.toDate = toDate;
+      if (options?.pageSize) queryParams.pageSize = options.pageSize;
+      if (options?.pageNumber) queryParams.pageNumber = options.pageNumber;
+
+      const response = await this.get<{
+        data: import('./types').TransactionData[];
+      }>(`/accounts/${institutionId}/${accountId}/transactions`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        params: queryParams,
+      });
+
+      if (!response.success || !response.data?.data) {
+        throw new Error(response.error?.message || 'Falha ao obter transações');
+      }
+
+      return response.data.data;
+    } catch (error: any) {
+      throw new Error(`Erro ao buscar transações: ${error.message}`);
+    }
+  }
 }
 
 export default OpenFinanceClient;
