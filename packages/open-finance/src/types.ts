@@ -244,3 +244,88 @@ export interface ConsentResponse {
     };
   };
 }
+
+/**
+ * Configuração para o ambiente sandbox
+ */
+export interface SandboxConfig {
+  /**
+   * Se deve usar URLs reais ou simuladas
+   */
+  useRealUrls?: boolean;
+  
+  /**
+   * Se deve gerar respostas simuladas em vez de fazer chamadas reais
+   */
+  mockResponses?: boolean;
+  
+  /**
+   * Se deve registrar requisições para debug
+   */
+  logRequests?: boolean;
+  
+  /**
+   * Delay artificial em milissegundos para simular latência de rede
+   */
+  delayResponseMs?: number;
+  
+  /**
+   * URL de redirecionamento para fluxo OAuth
+   */
+  redirectUri?: string;
+}
+
+/**
+ * Detalhes de uma instituição financeira no sandbox
+ */
+export interface SandboxInstitution {
+  /**
+   * Identificador único da instituição
+   */
+  id: string;
+  
+  /**
+   * Nome da instituição
+   */
+  name: string;
+  
+  /**
+   * Tipo da instituição
+   */
+  type: 'BANK' | 'INVESTMENT' | 'CREDIT_CARD' | 'OTHER';
+  
+  /**
+   * URL base da API da instituição
+   */
+  apiBaseUrl: string;
+  
+  /**
+   * URL base para autenticação
+   */
+  authUrl: string;
+  
+  /**
+   * ID do cliente para autenticação
+   */
+  clientId: string;
+  
+  /**
+   * Segredo do cliente para autenticação
+   */
+  clientSecret: string;
+  
+  /**
+   * Versão da API
+   */
+  apiVersion: string;
+  
+  /**
+   * Escopos disponíveis para autenticação
+   */
+  scopes: string[];
+  
+  /**
+   * Se a instituição requer certificado para autenticação
+   */
+  certificateRequired: boolean;
+}
