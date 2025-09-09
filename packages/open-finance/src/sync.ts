@@ -13,6 +13,8 @@ import {
   SyncStatus,
   TransactionSyncOptions,
   AccountSyncOptions,
+  OpenFinanceClient as IOpenFinanceClient,
+  OpenFinanceAuth as IOpenFinanceAuth,
 } from './types';
 
 /**
@@ -20,8 +22,8 @@ import {
  * Implementa lógica para sincronizar contas e transações com cache
  */
 export class SyncService {
-  private client: OpenFinanceClient;
-  private auth: OpenFinanceAuth;
+  private client: IOpenFinanceClient;
+  private auth: IOpenFinanceAuth;
   private rateLimiter: RateLimiter;
   private cache: Map<string, { data: any; timestamp: number }> = new Map();
   private cacheLifetime: number; // tempo de vida do cache em ms
@@ -32,9 +34,29 @@ export class SyncService {
    * @param config Configurações de sincronização
    */
   constructor(config: SyncConfig) {
-    this.client = config.client || new OpenFinanceClient(config.clientConfig);
-    this.auth = config.auth || new OpenFinanceAuth(config.authConfig);
-    this.rateLimiter = new RateLimiter(config.rateLimitConfig);
+    // Verificar se client ou clientConfig estão disponíveis
+    if (config.client) {
+      this.client = config.client as IOpenFinanceClient;
+    } else if (config.clientConfig) {
+      this.client = new OpenFinanceClient(
+        config.clientConfig
+      ) as unknown as IOpenFinanceClient;
+    } else {
+      throw new Error('É necessário fornecer um client ou clientConfig');
+    }
+
+    // Verificar se auth ou authConfig estão disponíveis
+    if (config.auth) {
+      this.auth = config.auth as IOpenFinanceAuth;
+    } else if (config.authConfig) {
+      this.auth = new OpenFinanceAuth(
+        config.authConfig
+      ) as unknown as IOpenFinanceAuth;
+    } else {
+      throw new Error('É necessário fornecer um auth ou authConfig');
+    }
+
+    this.rateLimiter = new RateLimiter(config.rateLimitConfig || {});
     this.cacheLifetime = config.cacheLifetime || 5 * 60 * 1000; // 5 minutos por padrão
   }
 
@@ -218,12 +240,19 @@ export class SyncService {
    */
   private cleanExpiredCache(): void {
     const now = Date.now();
+    const keysToDelete: string[] = [];
 
-    for (const [key, value] of this.cache.entries()) {
+    // Primeiro coletamos todas as chaves que precisam ser deletadas
+    this.cache.forEach((value, key) => {
       if (now - value.timestamp > this.cacheLifetime) {
-        this.cache.delete(key);
+        keysToDelete.push(key);
       }
-    }
+    });
+
+    // Depois removemos as entradas expiradas
+    keysToDelete.forEach(key => {
+      this.cache.delete(key);
+    });
   }
 
   /**
