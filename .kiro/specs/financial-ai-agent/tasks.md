@@ -45,7 +45,7 @@
     - _Requisitos: 3.2, 3.4_
 
 - [ ] 4. Desenvolver integração com Open Finance
-  - [ ] 4.1 Implementar cliente para APIs Open Finance
+  - [x] 4.1 Implementar cliente para APIs Open Finance
     - ✅ Implementar cliente HTTP base com axios e interceptors
     - ✅ Configurar retry logic exponencial e rate limiting
     - ✅ Implementar autenticação OAuth2 para instituições financeiras
