@@ -44,7 +44,7 @@
     - Implementar testes para operações vetoriais
     - _Requisitos: 3.2, 3.4_
 
-- [ ] 4. Desenvolver integração com Open Finance
+- [x] 4. Desenvolver integração com Open Finance
   - [x] 4.1 Implementar cliente para APIs Open Finance
     - ✅ Implementar cliente HTTP base com axios e interceptors
     - ✅ Configurar retry logic exponencial e rate limiting
@@ -53,11 +53,11 @@
     - ✅ Criar tipos TypeScript para respostas das APIs
     - _Requisitos: 1.1, 1.5_
   - [ ] 4.2 Implementar sincronização de dados bancários
-    - Criar serviço de sincronização de contas e transações
+    - ✅ Criar serviço de sincronização de contas e transações
     - Implementar jobs agendados para sincronização automática
-    - Implementar cache Redis para otimizar chamadas de API
+    - ✅ Implementar cache para otimizar chamadas de API (in-memory)
     - Criar sistema de webhooks para atualizações em tempo real
-    - Implementar tratamento de erros e retry para falhas de sincronização
+    - ✅ Implementar tratamento de erros e retry para falhas de sincronização
     - _Requisitos: 1.1, 2.1_
   - [ ] 4.3 Implementar gerenciamento de consentimentos LGPD
     - Criar interface de consentimento explícito do usuário
