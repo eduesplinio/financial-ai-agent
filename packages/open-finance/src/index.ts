@@ -1,7 +1,7 @@
 // Open Finance integration package
-export * from './client';
-export * from './types';
 export * from './retry';
-export * from './auth';
+export * from './types';
+export { OpenFinanceClient } from './client';
+export { OpenFinanceAuth } from './auth';
 export * from './sandbox';
-export * from './sync';
+export { SyncService } from './sync';
