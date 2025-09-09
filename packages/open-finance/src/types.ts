@@ -158,3 +158,29 @@ export interface FinancialInstitution {
   apiUrl: string;
   type: 'BANK' | 'INVESTMENT' | 'CREDIT_CARD' | 'OTHER';
 }
+
+/**
+ * Configuração para retry logic
+ */
+export interface RetryConfig {
+  maxRetries?: number;
+  baseDelay?: number;
+  maxDelay?: number;
+  retryableStatusCodes?: number[];
+  retryableErrors?: Array<string | RegExp>;
+  onRetry?: (info: {
+    error: Error;
+    attempt: number;
+    waitTime: number;
+    willRetry: boolean;
+  }) => void;
+}
+
+/**
+ * Configuração para rate limiting
+ */
+export interface RateLimitConfig {
+  tokensPerInterval?: number;
+  interval?: number;
+  maxTokens?: number;
+}
