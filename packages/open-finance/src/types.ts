@@ -184,3 +184,63 @@ export interface RateLimitConfig {
   interval?: number;
   maxTokens?: number;
 }
+
+/**
+ * Configuração OAuth para uma instituição financeira
+ */
+export interface OAuthConfig {
+  institutionId: string;
+  clientId: string;
+  clientSecret: string;
+  redirectUri: string;
+  authorizationEndpoint: string;
+  tokenEndpoint: string;
+  apiBaseUrl: string;
+  scopes: string | string[];
+  certificateUrl?: string;
+  additionalParams?: Record<string, string>;
+}
+
+/**
+ * Requisição de consentimento
+ */
+export interface ConsentRequest {
+  data: {
+    loggedUser: {
+      document: {
+        identification: string;
+        rel: string;
+      };
+    };
+    permissions: string[];
+    expirationDateTime: string;
+    transactionFromDateTime?: string;
+    transactionToDateTime?: string;
+  };
+}
+
+/**
+ * Resposta de consentimento
+ */
+export interface ConsentResponse {
+  data: {
+    consentId: string;
+    creationDateTime: string;
+    expirationDateTime: string;
+    statusUpdateDateTime: string;
+    status: string;
+    permissions: string[];
+    links: {
+      self: string;
+      first?: string;
+      prev?: string;
+      next?: string;
+      last?: string;
+    };
+    meta: {
+      totalRecords: number;
+      totalPages: number;
+      requestDateTime: string;
+    };
+  };
+}
