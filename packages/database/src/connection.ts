@@ -76,6 +76,8 @@ class MongoDBConnection {
 
       this.connectionStatus = ConnectionStatus.CONNECTING;
 
+      console.log(`🔎 Conectando com URI: ${config.uri}`);
+
       await this.connectWithRetry(config);
 
       this.connectionStatus = ConnectionStatus.CONNECTED;

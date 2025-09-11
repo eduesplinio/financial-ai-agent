@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { TransactionCreateSchema } from '../../database/src/models';
 
+export { TransactionCreateSchema };
+
 /**
  * Pipeline de pré-processamento de texto para descrições de transações.
  * - Limpeza de texto
