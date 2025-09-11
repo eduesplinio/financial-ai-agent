@@ -46,6 +46,7 @@ import {
   Menu,
   ChevronLeft,
   ChevronRight,
+  Landmark,
   X,
 } from 'lucide-react';
 
@@ -113,13 +114,18 @@ export function Sidebar({ className }: SidebarProps) {
     },
     {
       name: 'Chat IA',
-      href: '#',
+      href: '/chat',
       icon: <MessageSquare className="h-5 w-5" />,
     },
     {
       name: 'Metas',
       href: '/goals',
       icon: <Target className="h-5 w-5" />,
+    },
+    {
+      name: 'Integrações',
+      href: '/integracoes',
+      icon: <Landmark className="h-5 w-5" />,
     },
   ];
 
