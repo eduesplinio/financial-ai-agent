@@ -3,6 +3,7 @@ import { mongoConnection } from '../src/connection';
 import { KnowledgeDocument } from '../src/models';
 
 async function populateKnowledgeDocuments() {
+  console.log('MONGODB_URI:', process.env.MONGODB_URI);
   await mongoConnection.connect();
 
   const docs = [
