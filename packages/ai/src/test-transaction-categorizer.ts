@@ -48,3 +48,39 @@ testCases.forEach(desc => {
   }
   console.log('---');
 });
+
+// Simulate automatic retraining with new feedback samples
+const feedbackSamples = [
+  { description: 'Pagamento de conta de luz', category: 'Pagamento' },
+  { description: 'Compra no Carrefour', category: 'Mercado' },
+  { description: 'PIX para José', category: 'Transferência' },
+  { description: 'Transferência recebida de Ana', category: 'Recebimento' },
+];
+categorizer.retrain([
+  {
+    description: 'Pagamento de boleto bancário no Itaú',
+    category: 'Pagamento',
+  },
+  { description: 'Compra no supermercado Extra', category: 'Mercado' },
+  { description: 'PIX enviado para Maria', category: 'Transferência' },
+  {
+    description: 'Transferência recebida de João Silva',
+    category: 'Recebimento',
+  },
+  ...feedbackSamples,
+]);
+console.log('After automatic retraining:');
+testCases.forEach(desc => {
+  const result = categorizer.predict(desc, { confidenceThreshold: 0.5 });
+  console.log(`Description: ${desc}`);
+  if (result.fallback) {
+    console.log(
+      `Manual categorization required (confidence: ${result.confidence})`
+    );
+  } else {
+    console.log(
+      `Predicted category: ${result.category}, Confidence: ${result.confidence}`
+    );
+  }
+  console.log('---');
+});

@@ -8,6 +8,14 @@ export interface TrainingSample {
 
 export class TransactionCategorizer {
   /**
+   * Retrain the model with a new batch of samples (e.g., after collecting feedbacks).
+   */
+  retrain(samples: TrainingSample[]) {
+    this.classifier = new BayesClassifier();
+    this.tfidf = new TfIdf();
+    this.train(samples);
+  }
+  /**
    * Receives user feedback and updates the classifier with the correct category.
    * This enables continuous improvement of the model.
    */
