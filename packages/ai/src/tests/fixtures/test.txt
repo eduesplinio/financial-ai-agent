@@ -1,0 +1,4 @@
+Este é um arquivo de texto de teste para métricas de qualidade.
+O conteúdo é simples, mas suficiente para gerar chunks e embeddings.
+Linha 3: Mais conteúdo para garantir chunking.
+Linha 4: Finalizando o teste.
