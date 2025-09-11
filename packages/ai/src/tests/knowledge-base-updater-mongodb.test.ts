@@ -1,34 +1,37 @@
-import { KnowledgeBaseUpdater } from '../knowledge-base-updater';
+import {
+  KnowledgeBaseUpdater,
+  KnowledgeBaseUpdaterOptions,
+} from '../knowledge-base-updater';
 import { QualityMetrics } from '../quality-metrics';
-// Update the import path if the module is located elsewhere, for example:
-import { DocumentIndexService } from '@financial-ai/database/src/document-index';
-// Or, if the module should be installed, run: npm install @financial-ai/database
 import path from 'path';
 import { extractText } from '../document-format-processor';
 import { chunkFinancialDocument } from '../chunking';
 import { OpenAIEmbeddingProvider } from '../embedding-generator';
 
-// Mock do DocumentIndexService para teste
-jest.mock('@financial-ai/database/src/document-index', () => ({
-  DocumentIndexService: {
-    saveProcessedDocument: jest.fn().mockResolvedValue({
-      _id: 'test-document-id',
-      filename: 'test.txt',
-      filepath: '/path/to/test.txt',
+// Importação manual do DocumentIndexService (mocado)
+const DocumentIndexService = {
+  saveProcessedDocument: jest.fn().mockResolvedValue({
+    _id: 'test-document-id',
+    filename: 'test.txt',
+    filepath: '/path/to/test.txt',
+    format: 'txt',
+    processingStatus: 'success',
+    metrics: {
+      coverage: 0.95,
+      chunkCount: 3,
+      avgChunkSize: 100,
+      embeddingCompleteness: 1.0,
       format: 'txt',
-      processingStatus: 'success',
-      metrics: {
-        coverage: 0.95,
-        chunkCount: 3,
-        avgChunkSize: 100,
-        embeddingCompleteness: 1.0,
-        format: 'txt',
-        fileSize: 300,
-        extractionSuccess: true,
-      },
-      totalChunks: 3,
-    }),
-  },
+      fileSize: 300,
+      extractionSuccess: true,
+    },
+    totalChunks: 3,
+  }),
+};
+
+// Mock do módulo @financial-ai/database
+jest.mock('@financial-ai/database', () => ({
+  DocumentIndexService,
 }));
 
 // Mock para extractText
@@ -55,11 +58,10 @@ jest.mock('../embedding-generator', () => ({
 }));
 
 describe('KnowledgeBaseUpdater - MongoDB Integration', () => {
-  // Definindo options diretamente
-  const formats = ['txt', 'pdf', 'html', 'md'];
-  const options = {
+  // Definindo options com o tipo correto
+  const options: KnowledgeBaseUpdaterOptions = {
     watchDir: '/path/to/docs',
-    formats: formats,
+    formats: ['txt', 'pdf', 'html', 'md'] as ('txt' | 'pdf' | 'html' | 'md')[],
     embeddingApiKey: 'sk-test',
   };
 
