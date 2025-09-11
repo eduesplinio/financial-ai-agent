@@ -5,13 +5,15 @@ import bcrypt from 'bcryptjs';
 
 // Função para conectar ao MongoDB
 async function connectDB() {
+  console.log('DEBUG MONGODB_URI:', process.env.MONGODB_URI);
   const client = new MongoClient(process.env.MONGODB_URI!);
   await client.connect();
   return { client, db: client.db('financial_ai') };
 }
 
 // Configuração de cookies
-const useSecureCookies = process.env.NEXTAUTH_URL?.startsWith('https://') ?? false;
+const useSecureCookies =
+  process.env.NEXTAUTH_URL?.startsWith('https://') ?? false;
 
 // Configuração do NextAuth
 export const authOptions: NextAuthOptions = {
@@ -21,7 +23,7 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 dias
     updateAge: 24 * 60 * 60, // Atualiza a sessão a cada 24 horas
   },
-  
+
   // Configuração dos providers
   providers: [
     CredentialsProvider({
@@ -76,7 +78,7 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
-  
+
   // Callbacks
   callbacks: {
     async jwt({ token, user, account }) {
@@ -87,7 +89,7 @@ export const authOptions: NextAuthOptions = {
       }
       return token;
     },
-    
+
     async session({ session, token }) {
       // Passa as informações do token para a sessão
       if (session.user) {
@@ -96,23 +98,23 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    
+
     async redirect({ url, baseUrl }) {
       // Se a URL for uma rota de autenticação, redireciona para o dashboard
       if (url.startsWith('/auth')) {
         return `${baseUrl}/dashboard`;
       }
-      
+
       // Se for a URL base, redireciona para o dashboard
       if (url === baseUrl || url === '/') {
         return `${baseUrl}/dashboard`;
       }
-      
+
       // Se for uma URL relativa, adiciona a base
       if (url.startsWith('/')) {
         return `${baseUrl}${url}`;
       }
-      
+
       // Se for uma URL completa da mesma origem, retorna a URL
       try {
         const urlObj = new URL(url);
@@ -122,18 +124,18 @@ export const authOptions: NextAuthOptions = {
       } catch (e) {
         console.error('Erro ao analisar URL:', e);
       }
-      
+
       // Redirecionamento padrão para o dashboard
       return `${baseUrl}/dashboard`;
     },
   },
-  
+
   // Páginas personalizadas
   pages: {
     signIn: '/auth/signin',
     error: '/auth/signin',
   },
-  
+
   // Configuração de cookies
   cookies: {
     sessionToken: {
@@ -146,10 +148,10 @@ export const authOptions: NextAuthOptions = {
       },
     },
   },
-  
+
   // Debug em desenvolvimento
   debug: process.env.NODE_ENV === 'development',
-  
+
   // Logger
   logger: {
     error(code, metadata) {
@@ -166,7 +168,7 @@ export const authOptions: NextAuthOptions = {
       }
     },
   },
-  
+
   // Chave secreta
   secret: process.env.NEXTAUTH_SECRET || 'your-secret-key',
 };
