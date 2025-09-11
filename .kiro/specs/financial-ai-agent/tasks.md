@@ -11,7 +11,6 @@
 - ✅ 2. Implementar sistema de autenticação e autorização
   - 2.1 Configurar NextAuth.js com provedores OAuth2
     - Instalar e configurar NextAuth.js v5 (Auth.js)
-    - Implementar autenticação com Google, GitHub e email/senha
     - Configurar JWT tokens com refresh token rotation
     - Criar middleware de autenticação para rotas protegidas
     - Implementar páginas de login, registro e perfil
@@ -46,18 +45,18 @@
 
 - [] 4. Desenvolver integração com Open Finance
   - [✅] 4.1 Implementar cliente para APIs Open Finance
-    - ✅ Implementar cliente HTTP base com axios e interceptors
-    - ✅ Configurar retry logic exponencial e rate limiting
-    - ✅ Implementar autenticação OAuth2 para instituições financeiras
-    - ✅ Configurar ambiente sandbox para testes de desenvolvimento
-    - ✅ Criar tipos TypeScript para respostas das APIs
+    - Implementar cliente HTTP base com axios e interceptors
+    - Configurar retry logic exponencial e rate limiting
+    - Implementar autenticação OAuth2 para instituições financeiras
+    - Configurar ambiente sandbox para testes de desenvolvimento
+    - Criar tipos TypeScript para respostas das APIs
     - _Requisitos: 1.1, 1.5_
   - [✅] 4.2 Implementar sincronização de dados bancários
-    - ✅ Criar serviço de sincronização de contas e transações
-    - ✅ Implementar jobs agendados para sincronização automática
-    - ✅ Implementar cache para otimizar chamadas de API (in-memory)
-    - ✅ Criar sistema de webhooks para atualizações em tempo real
-    - ✅ Implementar tratamento de erros e retry para falhas de sincronização
+    - Criar serviço de sincronização de contas e transações
+    - Implementar jobs agendados para sincronização automática
+    - Implementar cache para otimizar chamadas de API (in-memory)
+    - Criar sistema de webhooks para atualizações em tempo real
+    - Implementar tratamento de erros e retry para falhas de sincronização
     - _Requisitos: 1.1, 2.1_
   - [ ] 4.3 Implementar gerenciamento de consentimentos LGPD
     - Criar interface de consentimento explícito do usuário
@@ -68,16 +67,16 @@
     - _Requisitos: 1.2, 6.2, 6.3_
 
 - [ ] 5. Desenvolver processador de transações com ML
-  - [ ] 5.1 Implementar categorizador automático de transações
+  - [✅] 5.1 Implementar categorizador automático de transações
     - Implementar pipeline de pré-processamento de texto para descrições
     - Criar modelo de classificação usando TF-IDF e Naive Bayes
     - Implementar sistema de confiança e fallback para categorização manual
     - Criar sistema de feedback do usuário para melhoria contínua
     - Implementar retreinamento automático do modelo
     - _Requisitos: 2.1, 2.2, 7.1_
-  - [ ] 5.2 Implementar detector de duplicatas e anomalias
+  - [✅] 5.2 Implementar detector de duplicatas e anomalias
     - Criar algoritmo de detecção de transações duplicadas baseado em similaridade
-    - Implementar detector de anomalias usando isolation forest
+    - Implementar detector de anomalias usando isolation forest (substituído por lógica estatística)
     - Criar sistema de scoring para transações suspeitas
     - Implementar alertas automáticos para usuários
     - Criar dashboard para monitoramento de anomalias
