@@ -66,22 +66,22 @@
     - Criar relatórios de compliance LGPD
     - _Requisitos: 1.2, 6.2, 6.3_
 
-- [ ] 5. Desenvolver processador de transações com ML
-  - [✅] 5.1 Implementar categorizador automático de transações
+- [✅] 5. Desenvolver processador de transações com ML
+  - 5.1 Implementar categorizador automático de transações
     - Implementar pipeline de pré-processamento de texto para descrições
     - Criar modelo de classificação usando TF-IDF e Naive Bayes
     - Implementar sistema de confiança e fallback para categorização manual
     - Criar sistema de feedback do usuário para melhoria contínua
     - Implementar retreinamento automático do modelo
     - _Requisitos: 2.1, 2.2, 7.1_
-  - [✅] 5.2 Implementar detector de duplicatas e anomalias
+  - 5.2 Implementar detector de duplicatas e anomalias
     - Criar algoritmo de detecção de transações duplicadas baseado em similaridade
-    - Implementar detector de anomalias usando isolation forest (substituído por lógica estatística)
+    - Implementar detector de anomalias usando lógica estatística
     - Criar sistema de scoring para transações suspeitas
     - Implementar alertas automáticos para usuários
     - Criar dashboard para monitoramento de anomalias
     - _Requisitos: 2.4, 4.4_
-  - [✅] 5.3 Desenvolver analisador de padrões financeiros
+  - 5.3 Desenvolver analisador de padrões financeiros
     - Implementar cálculo de métricas financeiras (gastos por categoria, tendências)
     - Criar sistema de insights proativos baseado em padrões
     - Implementar geração de relatórios personalizados
@@ -90,21 +90,21 @@
     - _Requisitos: 4.1, 4.5_
 
 - [ ] 6. Implementar sistema RAG para conhecimento financeiro
-  - [ ] 6.1 Criar pipeline de indexação de documentos
+  - [✅] 6.1 Criar pipeline de indexação de documentos
     - Implementar chunking inteligente de documentos financeiros
     - Configurar geração de embeddings com OpenAI ou Sentence Transformers
     - Criar sistema de processamento de diferentes formatos (PDF, HTML, MD)
     - Implementar sistema de atualização automática da base de conhecimento
     - Criar métricas de qualidade para documentos indexados
     - _Requisitos: 3.2, 3.4_
-  - [ ] 6.2 Implementar sistema de busca semântica
+  - [✅] 6.2 Implementar sistema de busca semântica
     - Criar API para busca semântica usando MongoDB Vector Search
     - Implementar ranking e re-ranking de resultados por relevância
     - Configurar filtros por categoria, data e relevância
     - Implementar busca híbrida (semântica + keyword)
     - Criar cache para consultas frequentes
     - _Requisitos: 3.2, 3.4_
-  - [ ] 6.3 Desenvolver gerador de respostas aumentadas
+  - [x] 6.3 Desenvolver gerador de respostas aumentadas
     - Integrar OpenAI GPT-4 ou Anthropic Claude para geração de respostas
     - Implementar prompt engineering especializado para contexto financeiro
     - Criar sistema de citação de fontes com rastreabilidade
