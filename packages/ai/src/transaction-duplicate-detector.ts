@@ -39,3 +39,5 @@ export function detectDuplicates(
   }
   return duplicates;
 }
+
+export const findDuplicateTransactions = detectDuplicates;
