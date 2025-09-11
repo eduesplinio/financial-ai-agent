@@ -74,9 +74,9 @@
     - Criar sistema de feedback do usuário para melhoria contínua
     - Implementar retreinamento automático do modelo
     - _Requisitos: 2.1, 2.2, 7.1_
-  - [ ] 5.2 Implementar detector de duplicatas e anomalias
+  - [✅] 5.2 Implementar detector de duplicatas e anomalias
     - Criar algoritmo de detecção de transações duplicadas baseado em similaridade
-    - Implementar detector de anomalias usando isolation forest
+    - Implementar detector de anomalias usando isolation forest (substituído por lógica estatística)
     - Criar sistema de scoring para transações suspeitas
     - Implementar alertas automáticos para usuários
     - Criar dashboard para monitoramento de anomalias
