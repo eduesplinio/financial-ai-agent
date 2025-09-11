@@ -4,11 +4,20 @@ import { extractText } from './document-format-processor';
 import { chunkFinancialDocument } from './chunking';
 import { OpenAIEmbeddingProvider } from './embedding-generator';
 import { calculateQualityMetrics, QualityMetrics } from './quality-metrics';
+import { DocumentIndexService } from '@financial-ai/database/src/document-index';
 
 export interface KnowledgeBaseUpdaterOptions {
   watchDir: string;
   formats: ('pdf' | 'html' | 'md' | 'txt')[];
   embeddingApiKey: string;
+}
+
+export interface ProcessingResult {
+  documentId?: string;
+  chunks: { content: string }[];
+  embeddings: (number[] | undefined)[];
+  metrics: QualityMetrics;
+  processingStatus: 'success' | 'partial_success' | 'failed';
 }
 
 export class KnowledgeBaseUpdater {
@@ -22,7 +31,10 @@ export class KnowledgeBaseUpdater {
     );
   }
 
-  async processFile(filePath: string, format: string) {
+  async processFile(
+    filePath: string,
+    format: string
+  ): Promise<ProcessingResult> {
     let extractionSuccess = true;
     let errorMessage: string | undefined = undefined;
     let text = '';
@@ -54,8 +66,35 @@ export class KnowledgeBaseUpdater {
       extractionSuccess,
       errorMessage: errorMessage ?? '',
     });
-    // TODO: Salvar chunks, embeddings e metrics na base de conhecimento (MongoDB)
-    return { chunks, embeddings, metrics };
+
+    // Salvar no MongoDB usando DocumentIndexService
+    try {
+      const filename = path.basename(filePath);
+      const savedDoc = await DocumentIndexService.saveProcessedDocument({
+        filename,
+        filepath: filePath,
+        format: format as any,
+        metrics,
+        chunks,
+        embeddings,
+      });
+
+      return {
+        documentId: savedDoc._id.toString(),
+        chunks,
+        embeddings,
+        metrics,
+        processingStatus: savedDoc.processingStatus,
+      };
+    } catch (err: any) {
+      console.error('Erro ao salvar documento no MongoDB:', err);
+      return {
+        chunks,
+        embeddings,
+        metrics,
+        processingStatus: 'failed',
+      };
+    }
   }
 
   watch() {
@@ -64,9 +103,31 @@ export class KnowledgeBaseUpdater {
       const ext = path.extname(filename).replace('.', '');
       if (!this.options.formats.includes(ext as any)) return;
       const filePath = path.join(this.options.watchDir, filename);
-      await this.processFile(filePath, ext);
-      // TODO: Atualizar/inserir no MongoDB
+
+      console.log(
+        `[${new Date().toISOString()}] Arquivo detectado: ${filename}`
+      );
+
+      try {
+        const result = await this.processFile(filePath, ext);
+        console.log(
+          `[${new Date().toISOString()}] Processado ${filename}: ${result.processingStatus}`
+        );
+        console.log(
+          `Chunks: ${result.chunks.length}, Qualidade: ${Math.round(result.metrics.coverage * 100)}% cobertura`
+        );
+      } catch (error) {
+        console.error(
+          `[${new Date().toISOString()}] Erro ao processar ${filename}:`,
+          error
+        );
+      }
     });
+
+    console.log(
+      `[${new Date().toISOString()}] Observando diretório: ${this.options.watchDir}`
+    );
+    console.log(`Formatos monitorados: ${this.options.formats.join(', ')}`);
   }
 }
 
