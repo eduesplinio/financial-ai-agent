@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { TransactionCreateSchema } from '@financial-ai-agent/database/src/models';
+import { TransactionCreateSchema } from '../../database/src/models';
 
 /**
  * Pipeline de pré-processamento de texto para descrições de transações.
