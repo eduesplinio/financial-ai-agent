@@ -1,4 +1,4 @@
-import { TransactionCategorizer } from './transaction-categorizer';
+import { TransactionCategorizer } from '../src/transaction-categorizer';
 
 const categorizer = new TransactionCategorizer();
 categorizer.train([
