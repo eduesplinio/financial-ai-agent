@@ -4,5 +4,3 @@ export class RAGService {
     // Placeholder constructor
   }
 }
-
-export default RAGService;
