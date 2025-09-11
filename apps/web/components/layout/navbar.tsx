@@ -73,6 +73,11 @@ export function Sidebar({ className }: SidebarProps) {
       href: '/goals',
       icon: <Target className="h-5 w-5" />,
     },
+    {
+      name: 'Integrações',
+      href: '/integracoes',
+      icon: <LifeBuoy className="h-5 w-5" />,
+    },
   ];
 
   // Add conditional menu items based on user role
