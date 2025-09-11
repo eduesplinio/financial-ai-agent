@@ -28,6 +28,19 @@ testCases.forEach(desc => {
     console.log(
       `Manual categorization required (confidence: ${result.confidence})`
     );
+    // Simulate user feedback
+    let feedbackCategory = '';
+    if (desc.includes('Pagamento')) feedbackCategory = 'Pagamento';
+    else if (desc.includes('Compra')) feedbackCategory = 'Mercado';
+    else if (desc.includes('PIX')) feedbackCategory = 'Transferência';
+    else if (desc.includes('Transferência')) feedbackCategory = 'Recebimento';
+    if (feedbackCategory) {
+      categorizer.addFeedback(desc, feedbackCategory);
+      const improved = categorizer.predict(desc, { confidenceThreshold: 0.5 });
+      console.log(
+        `After feedback: Predicted category: ${improved.category}, Confidence: ${improved.confidence}`
+      );
+    }
   } else {
     console.log(
       `Predicted category: ${result.category}, Confidence: ${result.confidence}`
