@@ -24,13 +24,17 @@ export class TransactionCategorizer {
     this.classifier.train();
   }
 
-  predict(description: string) {
+  predict(description: string, options?: { confidenceThreshold?: number }) {
     const tokens = preprocessDescription(description).join(' ');
     const category = this.classifier.classify(tokens);
     const classifications = this.classifier.getClassifications(tokens);
     const confidence =
       classifications.find(c => c.label === category)?.value ?? 0;
-    return { category, confidence };
+    const threshold = options?.confidenceThreshold ?? 0.5;
+    if (confidence < threshold) {
+      return { category: 'manual', confidence, fallback: true };
+    }
+    return { category, confidence, fallback: false };
   }
 }
 

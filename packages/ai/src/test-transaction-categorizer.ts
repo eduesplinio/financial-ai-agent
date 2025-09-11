@@ -22,10 +22,16 @@ const testCases = [
 ];
 
 testCases.forEach(desc => {
-  const result = categorizer.predict(desc);
+  const result = categorizer.predict(desc, { confidenceThreshold: 0.5 });
   console.log(`Description: ${desc}`);
-  console.log(
-    `Predicted category: ${result.category}, Confidence: ${result.confidence}`
-  );
+  if (result.fallback) {
+    console.log(
+      `Manual categorization required (confidence: ${result.confidence})`
+    );
+  } else {
+    console.log(
+      `Predicted category: ${result.category}, Confidence: ${result.confidence}`
+    );
+  }
   console.log('---');
 });
