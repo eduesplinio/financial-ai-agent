@@ -7,6 +7,15 @@ export interface TrainingSample {
 }
 
 export class TransactionCategorizer {
+  /**
+   * Receives user feedback and updates the classifier with the correct category.
+   * This enables continuous improvement of the model.
+   */
+  addFeedback(description: string, correctCategory: string) {
+    const tokens = preprocessDescription(description).join(' ');
+    this.classifier.addDocument(tokens, correctCategory);
+    this.classifier.train();
+  }
   private tfidf: TfIdf;
   private classifier: BayesClassifier;
 
