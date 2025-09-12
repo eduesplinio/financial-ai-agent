@@ -3,11 +3,14 @@
 import { extractFinancialEntities } from './entity-extraction';
 import { classifyQuery } from './classification';
 import { normalizePTBR } from './normalize-ptbr';
+import { detectSentiment } from './sentiment';
 
 export interface FinancialIntent {
   type: 'informacao' | 'analise' | 'recomendacao';
   confidence: number;
   entities?: Record<string, any>;
+  sentiment?: 'positivo' | 'negativo' | 'neutro';
+  sentimentScore?: number;
 }
 
 export interface NLPPipelineInput {
@@ -28,10 +31,15 @@ export class FinancialNLPPipeline {
     const entities = extractFinancialEntities(normalizedText);
     // Classificação da consulta
     const { type, confidence } = classifyQuery(normalizedText);
+    // Detecção de sentimento
+    const { sentiment, score: sentimentScore } =
+      detectSentiment(normalizedText);
     return {
       type,
       confidence,
       entities,
+      sentiment,
+      sentimentScore,
     };
   }
 }
