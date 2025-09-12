@@ -1,6 +1,7 @@
 // Pipeline de NLP para compreensão de intenções financeiras
 // Estrutura inicial para integração de módulos futuros
 import { extractFinancialEntities } from './entity-extraction';
+import { classifyQuery } from './classification';
 
 export interface FinancialIntent {
   type: 'informacao' | 'analise' | 'recomendacao';
@@ -21,10 +22,11 @@ export class FinancialNLPPipeline {
   async analyzeIntent(input: NLPPipelineInput): Promise<FinancialIntent> {
     // Extração de entidades financeiras
     const entities = extractFinancialEntities(input.text);
-    // TODO: Implementar análise de intenção financeira
+    // Classificação da consulta
+    const { type, confidence } = classifyQuery(input.text);
     return {
-      type: 'informacao',
-      confidence: 0.0,
+      type,
+      confidence,
       entities,
     };
   }
