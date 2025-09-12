@@ -2,6 +2,7 @@
 // Estrutura inicial para integração de módulos futuros
 import { extractFinancialEntities } from './entity-extraction';
 import { classifyQuery } from './classification';
+import { normalizePTBR } from './normalize-ptbr';
 
 export interface FinancialIntent {
   type: 'informacao' | 'analise' | 'recomendacao';
@@ -20,10 +21,13 @@ export class FinancialNLPPipeline {
   }
 
   async analyzeIntent(input: NLPPipelineInput): Promise<FinancialIntent> {
+    // Normalização de texto PT-BR
+    const tokens = normalizePTBR(input.text);
+    const normalizedText = tokens.join(' ');
     // Extração de entidades financeiras
-    const entities = extractFinancialEntities(input.text);
+    const entities = extractFinancialEntities(normalizedText);
     // Classificação da consulta
-    const { type, confidence } = classifyQuery(input.text);
+    const { type, confidence } = classifyQuery(normalizedText);
     return {
       type,
       confidence,
