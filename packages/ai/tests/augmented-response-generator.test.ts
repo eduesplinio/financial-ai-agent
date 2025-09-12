@@ -3,10 +3,10 @@
  *
  * This file contains tests for the RAG response generation system.
  */
-import { LLMService } from '../src/llm';
-import { RAGService } from '../src/rag';
-import { AugmentedResponseGenerator } from '../src/augmented-response-generator';
-import { ResponseValidator } from '../src/response-validator';
+import { LLMService } from '../src/llm/llm-service';
+import { RAGService } from '../src/rag/rag-service';
+import { AugmentedResponseGenerator } from '../src/rag/augmented-response-generator';
+import { ResponseValidator } from '../src/rag/response-validator';
 import { KnowledgeDocument } from '@/shared/src/types';
 
 describe('Augmented Response Generator', () => {
