@@ -1,4 +1,4 @@
-import { scoreSuspiciousTransactions } from './transaction-anomaly-detector';
+import { scoreSuspiciousTransactions } from './anomaly-detector';
 
 export interface SuspiciousTransaction {
   id: string;

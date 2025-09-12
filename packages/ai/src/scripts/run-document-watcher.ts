@@ -1,4 +1,4 @@
-import { KnowledgeBaseUpdater } from '../knowledge-base-updater';
+import { KnowledgeBaseUpdater } from '../rag/knowledge-base-updater';
 import dotenv from 'dotenv';
 import path from 'path';
 import mongoose from 'mongoose';

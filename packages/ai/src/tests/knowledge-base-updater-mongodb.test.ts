@@ -1,12 +1,12 @@
 import {
   KnowledgeBaseUpdater,
   KnowledgeBaseUpdaterOptions,
-} from '../knowledge-base-updater';
-import { QualityMetrics } from '../quality-metrics';
+} from '../rag/knowledge-base-updater';
+import { QualityMetrics } from '../utils/quality-metrics';
 import path from 'path';
-import { extractText } from '../document-format-processor';
-import { chunkFinancialDocument } from '../chunking';
-import { OpenAIEmbeddingProvider } from '../embedding-generator';
+import { extractText } from '../utils/document-format-processor';
+import { chunkFinancialDocument } from '../rag/chunking';
+import { OpenAIEmbeddingProvider } from '../rag/embedding-generator';
 
 // Importação manual do DocumentIndexService (mocado)
 const DocumentIndexService = {

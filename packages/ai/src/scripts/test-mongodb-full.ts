@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
 import mongoose from 'mongoose';
-import { KnowledgeBaseUpdater } from '../knowledge-base-updater';
+import { KnowledgeBaseUpdater } from '../rag/knowledge-base-updater';
 
 // Carrega variáveis de ambiente
 dotenv.config();

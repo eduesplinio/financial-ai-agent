@@ -1,5 +1,5 @@
-import { FinancialPatternAnalyzer } from '../financial-pattern-analyzer';
-import type { Transaction } from '../../../open-finance/src/types';
+import { FinancialPatternAnalyzer } from '../../financial/pattern-analyzer';
+import type { Transaction } from '../../../../open-finance/src/types';
 
 // Mock data
 const mockTransactions: Transaction[] = [

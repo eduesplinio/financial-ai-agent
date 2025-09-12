@@ -1,4 +1,4 @@
-import { chunkFinancialDocument } from '../chunking';
+import { chunkFinancialDocument } from '../rag/chunking';
 
 describe('chunkFinancialDocument', () => {
   it('should split a financial document into semantic chunks', () => {

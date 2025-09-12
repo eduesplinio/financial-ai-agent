@@ -3,7 +3,7 @@ import {
   extractTextFromHTML,
   extractTextFromMarkdown,
   extractTextFromTXT,
-} from '../document-format-processor';
+} from '../utils/document-format-processor';
 import fs from 'fs';
 
 describe('document-format-processor', () => {

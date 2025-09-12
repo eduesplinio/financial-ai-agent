@@ -1,4 +1,4 @@
-import { preprocessDescription } from './transaction-preprocess';
+import { preprocessDescription } from './preprocess';
 import { TfIdf, BayesClassifier } from 'natural';
 
 export interface TrainingSample {

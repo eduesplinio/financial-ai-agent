@@ -4,8 +4,8 @@
  * This component implements the core RAG functionality to generate responses
  * with factual grounding, citations, and fallback mechanisms.
  */
-import { LLMService, LLMMessage } from './llm';
-import { RAGService, RAGResponse, RelevantDocument } from './rag';
+import { LLMService, LLMMessage } from '../llm/llm-service';
+import { RAGService, RAGResponse, RelevantDocument } from './rag-service';
 import { KnowledgeDocument, UserProfile } from '@/shared/src/types';
 
 export interface SourceReference {

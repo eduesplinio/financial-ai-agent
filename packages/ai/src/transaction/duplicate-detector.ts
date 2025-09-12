@@ -1,4 +1,4 @@
-import { preprocessDescription } from './transaction-preprocess';
+import { preprocessDescription } from './preprocess';
 
 export interface Transaction {
   id: string;
