@@ -24,11 +24,11 @@ export class FinancialNLPPipeline {
   }
 
   async analyzeIntent(input: NLPPipelineInput): Promise<FinancialIntent> {
-    // Normalização de texto PT-BR
+    // Normalização de texto PT-BR para classificação e sentimento
     const tokens = normalizePTBR(input.text);
     const normalizedText = tokens.join(' ');
-    // Extração de entidades financeiras
-    const entities = extractFinancialEntities(normalizedText);
+    // Extração de entidades financeiras: usar texto original
+    const entities = extractFinancialEntities(input.text);
     // Classificação da consulta
     const { type, confidence } = classifyQuery(normalizedText);
     // Detecção de sentimento
