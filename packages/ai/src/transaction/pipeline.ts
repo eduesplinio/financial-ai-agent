@@ -1,4 +1,4 @@
-import { preprocessDescription } from './transaction-preprocess';
+import { preprocessDescription } from './preprocess';
 
 // Exemplo de pipeline para processar uma transação
 export function preprocessTransaction(transaction: { description: string }) {

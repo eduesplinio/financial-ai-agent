@@ -2,8 +2,8 @@ import {
   FinancialPatternAnalyzer,
   PatternChange,
   FinancialSummary,
-} from './financial-pattern-analyzer';
-import type { Transaction } from '../../open-finance/src/types';
+} from './pattern-analyzer';
+import type { Transaction } from '../../../open-finance/src/types';
 
 /**
  * Interface de configuração de alertas financeiros

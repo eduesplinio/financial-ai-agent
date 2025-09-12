@@ -1,4 +1,4 @@
-import { FinancialBenchmark } from './financial-pattern-analyzer';
+import { FinancialBenchmark } from './pattern-analyzer';
 
 /**
  * Interface para o provedor de dados de benchmarks financeiros

@@ -9,7 +9,7 @@ import {
   MessageRole,
 } from '@/shared/src/types';
 import { chunkFinancialDocument, DocumentChunk } from './chunking';
-import { LLMService } from './llm';
+import { LLMService } from '../llm/llm-service';
 
 export interface SearchFilters {
   categories?: string[];

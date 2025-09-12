@@ -5,8 +5,8 @@
  * for financial questions, ensuring they meet quality standards.
  */
 
-import { LLMService } from './llm';
-import { createFactCheckPrompt } from './financial-prompt-engineering';
+import { LLMService } from '../llm/llm-service';
+import { createFactCheckPrompt } from '../llm/prompt-engineering';
 import { KnowledgeDocument } from '@/shared/src/types';
 
 export interface ValidatedResponse {

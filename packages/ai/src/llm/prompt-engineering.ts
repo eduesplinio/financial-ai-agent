@@ -5,7 +5,7 @@
  * to improve the quality of responses related to financial topics.
  */
 
-import { LLMMessage } from './llm';
+import { LLMMessage } from './llm-service';
 import { UserProfile } from '@/shared/src/types';
 
 /**

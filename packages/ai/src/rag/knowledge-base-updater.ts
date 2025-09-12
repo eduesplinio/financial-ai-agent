@@ -1,9 +1,12 @@
 import fs from 'fs';
 import path from 'path';
-import { extractText } from './document-format-processor';
+import { extractText } from '../utils/document-format-processor';
 import { chunkFinancialDocument } from './chunking';
 import { OpenAIEmbeddingProvider } from './embedding-generator';
-import { calculateQualityMetrics, QualityMetrics } from './quality-metrics';
+import {
+  calculateQualityMetrics,
+  QualityMetrics,
+} from '../utils/quality-metrics';
 
 // Mock local temporário do DocumentIndexService
 // Este será substituído pelo import real quando @financial-ai/database estiver configurado corretamente

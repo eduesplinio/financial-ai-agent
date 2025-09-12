@@ -3,8 +3,8 @@ import {
   FinancialSummary,
   CategoryMetrics,
   FinancialBenchmark,
-} from './financial-pattern-analyzer';
-import type { Transaction } from '../../open-finance/src/types';
+} from './pattern-analyzer';
+import type { Transaction } from '../../../open-finance/src/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 

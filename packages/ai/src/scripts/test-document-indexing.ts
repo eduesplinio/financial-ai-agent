@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
-import { calculateQualityMetrics } from '../quality-metrics';
-import { chunkFinancialDocument } from '../chunking';
+import { calculateQualityMetrics } from '../utils/quality-metrics';
+import { chunkFinancialDocument } from '../rag/chunking';
 
 async function testDocumentIndexing() {
   try {

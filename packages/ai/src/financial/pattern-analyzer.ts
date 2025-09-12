@@ -1,4 +1,4 @@
-import type { Transaction } from '../../open-finance/src/types';
+import type { Transaction } from '../../../open-finance/src/types';
 import {
   differenceInDays,
   startOfMonth,

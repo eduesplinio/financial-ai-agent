@@ -1,5 +1,5 @@
-import { KnowledgeBaseUpdater } from '../knowledge-base-updater';
-import { calculateQualityMetrics } from '../quality-metrics';
+import { KnowledgeBaseUpdater } from '../rag/knowledge-base-updater';
+import { calculateQualityMetrics } from '../utils/quality-metrics';
 import path from 'path';
 
 describe('KnowledgeBaseUpdater - Quality Metrics', () => {

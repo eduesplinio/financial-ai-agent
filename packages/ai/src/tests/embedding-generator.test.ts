@@ -1,4 +1,4 @@
-import { OpenAIEmbeddingProvider } from '../embedding-generator';
+import { OpenAIEmbeddingProvider } from '../rag/embedding-generator';
 
 describe('OpenAIEmbeddingProvider', () => {
   it('should generate an embedding for a chunk of text (mocked)', async () => {
