@@ -113,14 +113,14 @@
     - _Requisitos: 3.1, 3.4, 3.5_
 
 - [ ] 7. Desenvolver agente conversacional
-  - [ ] 7.1 Implementar processamento de linguagem natural
+  - [✅] 7.1 Implementar processamento de linguagem natural
     - Configurar pipeline de NLP para compreensão de intenções financeiras
     - Implementar extração de entidades financeiras (valores, datas, categorias)
     - Criar sistema de classificação de consultas (informação, análise, recomendação)
     - Implementar normalização de texto em português brasileiro
     - Criar sistema de detecção de sentimento para personalização
     - _Requisitos: 3.1_
-  - [ ] 7.2 Implementar gerenciamento de contexto conversacional
+  - [✅] 7.2 Implementar gerenciamento de contexto conversacional
     - Criar sistema de memória de conversação com Redis
     - Implementar manutenção de contexto entre mensagens
     - Configurar personalização baseada no perfil financeiro do usuário
