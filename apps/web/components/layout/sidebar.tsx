@@ -64,7 +64,7 @@ interface SidebarProps {
 export function Sidebar({ className }: SidebarProps) {
   const { data: session } = useSession();
   const pathname = usePathname();
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { theme, setTheme } = useTheme();
