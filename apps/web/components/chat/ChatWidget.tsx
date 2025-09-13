@@ -377,7 +377,7 @@ export const ChatWidget: React.FC = () => {
                 <Bot className="h-4 w-4" />
               </div>
               <div>
-                <h3 className="font-medium text-sm">Agente Financeiro IA</h3>
+                <h3 className="font-medium text-sm">Agente Financeiro</h3>
               </div>
             </div>
 
