@@ -17,11 +17,13 @@
     "@langchain/anthropic": "^0.0.4",
     "@langchain/openai": "^0.0.14",
     "chromadb": "^1.7.3",
+    "ioredis": "^5.7.0",
     "langchain": "^0.0.212",
     "openai": "^4.20.1",
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@types/ioredis": "^5.0.0",
     "@types/node": "^20.10.4",
     "@types/pdf-parse": "^1.1.5",
     "cheerio": "^1.1.2",

@@ -21,3 +21,6 @@ export * from './financial/index';
 
 // Common utilities
 export * from './utils';
+
+// NLP pipeline
+export * from './nlp/pipeline';
