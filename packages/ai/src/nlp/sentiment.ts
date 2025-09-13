@@ -37,6 +37,7 @@ const negativeWords = [
   'dificuldade',
   'problema',
   'piorou',
+  'divida',
   'dívida',
   'gastei demais',
   'alerta',
@@ -47,6 +48,9 @@ const negativeWords = [
   'erro',
   'falha',
   'desvantagem',
+  'preocupado',
+  'preocupacao',
+  'preocupação',
 ];
 
 export function detectSentiment(text: string): {
