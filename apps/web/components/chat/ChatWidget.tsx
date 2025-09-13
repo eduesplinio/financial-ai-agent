@@ -10,6 +10,9 @@ import {
   Maximize2,
   Minimize2,
   Bot,
+  DollarSign,
+  TrendingUp,
+  Target,
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { ChatHistory } from './ChatHistory';
@@ -425,11 +428,11 @@ export const ChatWidget: React.FC = () => {
                 }`}
               >
                 <h3
-                  className={`font-medium mb-3 ${
-                    isFullscreen ? 'text-xl' : 'text-lg'
+                  className={`font-semibold mb-4 ${
+                    isFullscreen ? 'text-2xl' : 'text-xl'
                   }`}
                 >
-                  {getFirstName() ? `Olá, ${getFirstName()}` : 'Olá'}
+                  {getFirstName() ? `Olá, ${getFirstName()}!` : 'Olá!'}
                 </h3>
                 <p
                   className={`text-muted-foreground/80 mb-6 mx-auto ${
@@ -441,17 +444,22 @@ export const ChatWidget: React.FC = () => {
                 </p>
                 <div
                   className={`flex justify-center gap-3 mx-auto ${
-                    isFullscreen ? 'max-w-md flex-wrap' : 'max-w-xs gap-2'
+                    isFullscreen
+                      ? 'max-w-md flex-wrap mt-6'
+                      : 'max-w-xs gap-2 mt-5'
                   }`}
                 >
                   <button
                     onClick={() =>
                       handleSendMessage('Analise meus gastos do último mês')
                     }
-                    className={`bg-muted/30 hover:bg-muted/50 text-muted-foreground px-4 py-2 rounded-full transition-colors border border-border/20 ${
+                    className={`group bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 hover:from-blue-100 hover:to-blue-200 dark:hover:from-blue-800/30 dark:hover:to-blue-700/30 text-blue-700 dark:text-blue-300 px-3 py-2 rounded-lg transition-all duration-200 border border-blue-200/50 dark:border-blue-700/30 shadow-sm hover:shadow-md flex items-center gap-1.5 ${
                       isFullscreen ? 'text-sm' : 'text-xs'
                     }`}
                   >
+                    <DollarSign
+                      className={`${isFullscreen ? 'w-3.5 h-3.5' : 'w-3 h-3'} group-hover:scale-110 transition-transform`}
+                    />
                     Ver gastos
                   </button>
                   <button
@@ -460,22 +468,28 @@ export const ChatWidget: React.FC = () => {
                         'Como posso investir melhor meu dinheiro?'
                       )
                     }
-                    className={`bg-muted/30 hover:bg-muted/50 text-muted-foreground px-4 py-2 rounded-full transition-colors border border-border/20 ${
+                    className={`group bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 hover:from-green-100 hover:to-green-200 dark:hover:from-green-800/30 dark:hover:to-green-700/30 text-green-700 dark:text-green-300 px-3 py-2 rounded-lg transition-all duration-200 border border-green-200/50 dark:border-green-700/30 shadow-sm hover:shadow-md flex items-center gap-1.5 ${
                       isFullscreen ? 'text-sm' : 'text-xs'
                     }`}
                   >
+                    <TrendingUp
+                      className={`${isFullscreen ? 'w-3.5 h-3.5' : 'w-3 h-3'} group-hover:scale-110 transition-transform`}
+                    />
                     Investir
                   </button>
-                  {isFullscreen && (
-                    <button
-                      onClick={() =>
-                        handleSendMessage('Quais são minhas metas financeiras?')
-                      }
-                      className="text-sm bg-muted/30 hover:bg-muted/50 text-muted-foreground px-4 py-2 rounded-full transition-colors border border-border/20"
-                    >
-                      Metas
-                    </button>
-                  )}
+                  <button
+                    onClick={() =>
+                      handleSendMessage('Quais são minhas metas financeiras?')
+                    }
+                    className={`group bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 hover:from-purple-100 hover:to-purple-200 dark:hover:from-purple-800/30 dark:hover:to-purple-700/30 text-purple-700 dark:text-purple-300 px-3 py-2 rounded-lg transition-all duration-200 border border-purple-200/50 dark:border-purple-700/30 shadow-sm hover:shadow-md flex items-center gap-1.5 ${
+                      isFullscreen ? 'text-sm' : 'text-xs'
+                    }`}
+                  >
+                    <Target
+                      className={`${isFullscreen ? 'w-3.5 h-3.5' : 'w-3 h-3'} group-hover:scale-110 transition-transform`}
+                    />
+                    Metas
+                  </button>
                 </div>
               </div>
             ) : (
