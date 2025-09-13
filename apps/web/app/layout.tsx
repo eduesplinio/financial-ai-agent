@@ -4,6 +4,7 @@ import './globals.css';
 import './no-underline.css';
 import { Providers } from '@/components/providers';
 import { Sidebar } from '@/components/layout/sidebar';
+import { ChatWidget } from '@/components/chat/ChatWidget';
 import dynamic from 'next/dynamic';
 
 // Importação dinâmica do ErrorBoundary para evitar erros de SSR
@@ -39,6 +40,7 @@ export default function RootLayout({
             <main className="flex-1 overflow-y-auto p-4 lg:p-6 pt-20 lg:pt-6">
               <ErrorBoundary>{children}</ErrorBoundary>
             </main>
+            <ChatWidget />
           </div>
         </Providers>
       </body>
