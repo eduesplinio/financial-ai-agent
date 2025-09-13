@@ -100,7 +100,7 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
       <div className="bg-background border border-border rounded-xl shadow-2xl w-full max-w-4xl h-full max-h-[80vh] flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-4 rounded-t-xl flex items-center justify-between">
+        <div className="bg-[#11684A] text-white px-6 py-4 rounded-t-xl flex items-center justify-between">
           <div className="flex items-center gap-2">
             <MessageCircle className="h-5 w-5" />
             <h2 className="text-lg font-semibold">Histórico de Conversas</h2>
