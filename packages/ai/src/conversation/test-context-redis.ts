@@ -1,5 +1,5 @@
 // Teste de integração do contexto conversacional com Redis
-const { handleUserMessage } = require('./chat-handler');
+import { handleUserMessage } from './chat-handler';
 
 async function runTest() {
   const userId = 'user123';

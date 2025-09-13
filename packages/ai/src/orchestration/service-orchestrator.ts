@@ -92,7 +92,7 @@ export class ServiceOrchestrator {
     }
   }
 
-  private async handleInfoQuery(
+  protected async handleInfoQuery(
     nlpResult: any,
     userId: string
   ): Promise<ServiceResponse> {
