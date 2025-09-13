@@ -175,7 +175,11 @@ export class QualityMonitor {
     severity: 'low' | 'medium' | 'high';
   }> {
     const recent = this.metrics.slice(-100); // Últimas 100 consultas
-    const alerts = [];
+    const alerts: {
+      type: string;
+      message: string;
+      severity: 'low' | 'medium' | 'high';
+    }[] = [];
 
     if (recent.length === 0) return alerts;
 

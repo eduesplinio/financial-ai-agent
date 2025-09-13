@@ -5,7 +5,11 @@ const { ConversationMemoryRedis } = require('./context-redis');
 const pipeline = new FinancialNLPPipeline();
 const memory = new ConversationMemoryRedis();
 
-async function handleUserMessage(userId, text) {
+const { nlpPipeline } = require('../nlp/pipeline');
+const { RedisContextManager } = require('./context-redis');
+
+// Integração da pipeline NLP com o chat
+export async function handleUserMessage(userId: string, text: string) {
   // Processa mensagem com NLP
   const nlpResult = await pipeline.analyzeIntent({ text });
   // Adiciona mensagem e resultado NLP ao contexto (Redis)
@@ -19,4 +23,4 @@ async function handleUserMessage(userId, text) {
   };
 }
 
-module.exports = { handleUserMessage };
+// module.exports = { handleUserMessage };
