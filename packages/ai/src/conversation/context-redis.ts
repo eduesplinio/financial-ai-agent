@@ -14,7 +14,9 @@ export interface ConversationContext {
 export class ConversationMemoryRedis {
   private redis: Redis;
   constructor(redisUrl?: string) {
-    this.redis = new Redis(redisUrl || process.env.REDIS_URL);
+    this.redis = new Redis(
+      redisUrl || process.env.REDIS_URL || 'redis://localhost:6379'
+    );
   }
 
   async getContext(userId: string): Promise<ConversationContext> {
