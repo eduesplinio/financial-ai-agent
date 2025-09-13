@@ -143,16 +143,16 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
   return (
     <div className="space-y-6">
       {/* Header com controles */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
         <div>
           <h2 className="text-3xl font-bold">Dashboard</h2>
           <p className="text-muted-foreground">
             Acompanhe suas finanças em tempo real
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2 w-full md:w-auto">
           <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-            <SelectTrigger className="w-[150px] bg-background dark:bg-popover">
+            <SelectTrigger className="w-full sm:w-[150px] bg-white dark:bg-neutral-900">
               <SelectValue placeholder="Período" />
             </SelectTrigger>
             <SelectContent>
@@ -162,7 +162,7 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
               <SelectItem value="1y">Último ano</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline">
+          <Button variant="outline" className="w-full sm:w-auto">
             <FileDown className="mr-2" size={18} /> Exportar Relatório
           </Button>
         </div>
