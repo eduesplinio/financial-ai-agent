@@ -204,27 +204,41 @@ export function Sidebar({ className }: SidebarProps) {
         ))}
       </div>
 
-      {/* Toggle Button right before User Profile */}
+      {/* Toggle Button right before User Profile - aligns with nav buttons when expanded, centered when collapsed */}
       {!mobile && (
         <div
           className={cn(
-            'flex mb-3 px-3',
-            expanded ? 'justify-end' : 'justify-center'
+            'flex mb-3',
+            expanded ? 'px-3 justify-start' : 'px-0 justify-center'
           )}
         >
           <Tooltip>
             <TooltipTrigger asChild>
               <button
                 onClick={toggleSidebar}
-                className="py-3 min-w-[48px] flex items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors duration-200"
+                className={cn(
+                  'py-3 min-w-[48px] flex items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors duration-200',
+                  expanded ? 'justify-start px-0' : 'justify-center'
+                )}
                 aria-label={expanded ? 'Recolher' : 'Expandir'}
                 type="button"
+                style={expanded ? { marginLeft: 0 } : {}}
               >
-                {expanded ? (
-                  <ChevronLeft className="h-5 w-5" />
-                ) : (
-                  <ChevronRight className="h-5 w-5" />
-                )}
+                <div className="flex items-center justify-center min-w-[48px]">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M6 5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h2V5H6Zm4 0v14h8a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-8ZM3 6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6Z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
               </button>
             </TooltipTrigger>
             <TooltipContent
@@ -400,67 +414,65 @@ export function Sidebar({ className }: SidebarProps) {
         disableHoverableContent
         skipDelayDuration={0}
       >
-        <>
-          {/* Mobile Header */}
-          <div className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-background border-b h-16 flex items-center justify-between px-4">
-            <Link
-              href="/dashboard"
-              className="no-underline hover:no-underline flex items-center"
-              style={{ textDecoration: 'none' }}
+        {/* Mobile Header */}
+        <div className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-background border-b h-16 flex items-center justify-between px-4">
+          <Link
+            href="/dashboard"
+            className="no-underline hover:no-underline flex items-center"
+            style={{ textDecoration: 'none' }}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-6 w-6 text-primary"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-6 w-6 text-primary"
-              >
-                <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                <path d="M2 17l10 5 10-5" />
-                <path d="M2 12l10 5 10-5" />
-              </svg>
-              <span className="ml-2 text-xl font-bold">FinanceAI</span>
-            </Link>
+              <path d="M12 2L2 7l10 5 10-5-10-5z" />
+              <path d="M2 17l10 5 10-5" />
+              <path d="M2 12l10 5 10-5" />
+            </svg>
+            <span className="ml-2 text-xl font-bold">FinanceAI</span>
+          </Link>
 
-            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-6 w-6" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-64 p-0 overflow-x-hidden">
-                <SheetHeader className="border-b p-4">
-                  <SheetTitle className="text-left flex items-center">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-6 w-6 text-primary mr-2"
-                    >
-                      <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                      <path d="M2 17l10 5 10-5" />
-                      <path d="M2 12l10 5 10-5" />
-                    </svg>
-                    FinanceAI
-                  </SheetTitle>
-                </SheetHeader>
-                <div className="flex flex-col h-full overflow-x-hidden">
-                  <SidebarContent mobile />
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-64 p-0 overflow-x-hidden">
+              <SheetHeader className="border-b p-4">
+                <SheetTitle className="text-left flex items-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-6 w-6 text-primary mr-2"
+                  >
+                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                    <path d="M2 17l10 5 10-5" />
+                    <path d="M2 12l10 5 10-5" />
+                  </svg>
+                  FinanceAI
+                </SheetTitle>
+              </SheetHeader>
+              <div className="flex flex-col h-full overflow-x-hidden">
+                <SidebarContent mobile />
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
 
-          {/* Add padding to accommodate fixed header */}
-          <div className="h-16" />
-        </>
+        {/* Add padding to accommodate fixed header */}
+        <div className="h-16" />
       </TooltipProvider>
     );
   }
@@ -510,6 +522,7 @@ export function Sidebar({ className }: SidebarProps) {
           </Link>
         </div>
 
+        {/* Only SidebarContent, toggle button is inside SidebarContent above profile */}
         <SidebarContent />
       </div>
     </TooltipProvider>
