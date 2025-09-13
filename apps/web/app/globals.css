@@ -23,10 +23,10 @@
     --popover-foreground: 240 10% 3.9%;
 
     /* Cores primárias */
-    --primary: 221 83% 53%;
+    --primary: 142 76% 36%;
     --primary-foreground: 0 0% 100%;
-    --primary-light: 214 95% 93%;
-    --primary-dark: 221 83% 43%;
+    --primary-light: 142 76% 93%;
+    --primary-dark: 142 76% 26%;
 
     /* Cores secundárias */
     --secondary: 240 4.8% 95.9%;
@@ -51,7 +51,7 @@
     --muted-foreground: 240 3.8% 46.1%;
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
-    --ring: 221 83% 53%;
+    --ring: 142 76% 36%;
 
     /* Bordas e sombras */
     --radius: 0.5rem;
@@ -65,11 +65,11 @@
 
   .dark {
     /* Cores base */
-    --background: 240 10% 3.9%;
+    --background: 198 95% 9%;
     --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
+    --card: 198 70% 10%;
     --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
+    --popover: 198 70% 12%;
     --popover-foreground: 0 0% 98%;
 
     /* Cores primárias */
@@ -79,11 +79,11 @@
     --primary-dark: 217 91% 70%;
 
     /* Cores secundárias */
-    --secondary: 240 3.7% 15.9%;
+    --secondary: 198 60% 11%;
     --secondary-foreground: 0 0% 98%;
 
     /* Cores de destaque */
-    --accent: 240 3.7% 15.9%;
+    --accent: 198 60% 11%;
     --accent-foreground: 0 0% 98%;
 
     /* Cores de feedback */
@@ -97,10 +97,10 @@
     --info-foreground: 0 0% 100%;
 
     /* Cores de UI */
-    --muted: 240 3.7% 15.9%;
+    --muted: 198 50% 12%;
     --muted-foreground: 240 5% 64.9%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
+    --border: 198 40% 15%;
+    --input: 198 40% 15%;
     --ring: 217 91% 60%;
 
     /* Bordas e sombras */
