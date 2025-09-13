@@ -145,7 +145,7 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
       {/* Header com controles */}
       <div className="flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
         <div>
-          <h2 className="text-3xl font-bold">Dashboard</h2>
+          <h2 className="text-xl font-semibold">Dashboard</h2>
           <p className="text-muted-foreground">
             Acompanhe suas finanças em tempo real
           </p>

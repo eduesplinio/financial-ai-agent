@@ -26,9 +26,9 @@ export function GoalsContent() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="w-full px-4 lg:px-8 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Metas Financeiras</h1>
+        <h1 className="text-xl font-semibold">Metas Financeiras</h1>
         <p className="text-muted-foreground">
           Defina e acompanhe seus objetivos financeiros
         </p>

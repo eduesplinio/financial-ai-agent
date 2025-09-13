@@ -6,13 +6,8 @@ import { ChatInterface } from '@/components/chat/chat-interface';
 export default function DashboardPage() {
   return (
     <AuthGuard requireAuth={true}>
-      <div className="container mx-auto p-6">
-        <div className="grid grid-cols-1 gap-6">
-          {/* Dashboard principal ocupa todo o espaço */}
-          <div>
-            <FinancialDashboard />
-          </div>
-        </div>
+      <div className="w-full px-4 lg:px-8 py-6">
+        <FinancialDashboard />
       </div>
     </AuthGuard>
   );

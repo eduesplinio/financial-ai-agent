@@ -26,9 +26,9 @@ export function TransactionsContent() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="w-full px-4 lg:px-8 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Transações</h1>
+        <h1 className="text-xl font-semibold">Transações</h1>
         <p className="text-muted-foreground">
           Gerencie e visualize suas transações financeiras
         </p>
