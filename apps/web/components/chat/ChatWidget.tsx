@@ -349,32 +349,32 @@ export const ChatWidget: React.FC = () => {
     <>
       {/* Floating Button */}
       <button
-        className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-full shadow-lg p-3 flex items-center transition-all duration-200 hover:scale-105"
+        className="fixed bottom-6 right-6 z-50 bg-[#11684A] hover:bg-[#0d5039] text-white rounded-full shadow-lg p-3.5 flex items-center transition-all duration-200 hover:scale-105"
         onClick={() => setShowWidget(v => !v)}
         aria-label="Abrir Agente IA"
       >
-        <Bot className="h-5 w-5" />
+        <Bot className="h-6 w-6" />
       </button>
 
       {/* Chat Widget */}
       {showWidget && (
         <div
-          className={`fixed z-50 bg-background/95 backdrop-blur-sm border border-border/50 rounded-lg shadow-xl flex flex-col transition-all duration-200 ${
+          className={`fixed z-50 bg-background/95 backdrop-blur-sm border-2 border-border shadow-xl flex flex-col transition-all duration-200 ${
             isFullscreen
-              ? 'inset-4 md:inset-8'
-              : 'bottom-20 right-6 w-[380px] max-w-[calc(100vw-2rem)]'
+              ? 'inset-4 md:inset-8 rounded-lg'
+              : 'bottom-20 right-6 w-[420px] max-w-[calc(100vw-2rem)] rounded-xl'
           }`}
           style={
             !isFullscreen
-              ? { height: 'auto', maxHeight: 'calc(100vh - 10rem)' }
+              ? { height: 'auto', maxHeight: 'calc(100vh - 8rem)' }
               : {}
           }
         >
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-3 flex items-center justify-between">
+          <div className="bg-[#11684A] text-white px-4 py-3 flex items-center justify-between rounded-t-xl">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                <Bot className="h-4 w-4" />
+              <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center">
+                <Bot className="h-5 w-5" />
               </div>
               <div>
                 <h3 className="font-medium text-sm">Agente Financeiro</h3>
@@ -417,7 +417,7 @@ export const ChatWidget: React.FC = () => {
           {/* Messages */}
           <div
             className={`overflow-y-auto px-4 py-3 space-y-3 ${
-              isFullscreen ? 'flex-1' : 'h-80'
+              isFullscreen ? 'flex-1' : 'h-96'
             }`}
             ref={messagesEndRef}
           >
@@ -453,7 +453,7 @@ export const ChatWidget: React.FC = () => {
                     onClick={() =>
                       handleSendMessage('Analise meus gastos do último mês')
                     }
-                    className={`group bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 hover:from-red-100 hover:to-red-200 dark:hover:from-red-800/30 dark:hover:to-red-700/30 text-red-700 dark:text-red-300 px-3 py-2 rounded-lg transition-all duration-200 border border-red-200/50 dark:border-red-700/30 shadow-sm hover:shadow-md flex items-center gap-1.5 ${
+                    className={`group bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 text-red-700 dark:text-red-300 px-3 py-2 rounded-lg transition-colors duration-200 border border-red-200 dark:border-red-700/30 shadow-sm hover:shadow-md flex items-center gap-1.5 ${
                       isFullscreen ? 'text-sm' : 'text-xs'
                     }`}
                   >
@@ -468,7 +468,7 @@ export const ChatWidget: React.FC = () => {
                         'Como posso investir melhor meu dinheiro?'
                       )
                     }
-                    className={`group bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 hover:from-purple-100 hover:to-purple-200 dark:hover:from-purple-800/30 dark:hover:to-purple-700/30 text-purple-700 dark:text-purple-300 px-3 py-2 rounded-lg transition-all duration-200 border border-purple-200/50 dark:border-purple-700/30 shadow-sm hover:shadow-md flex items-center gap-1.5 ${
+                    className={`group bg-purple-50 dark:bg-purple-900/10 hover:bg-purple-100 dark:hover:bg-purple-900/20 text-purple-700 dark:text-purple-300 px-3 py-2 rounded-lg transition-colors duration-200 border border-purple-200 dark:border-purple-700/30 shadow-sm hover:shadow-md flex items-center gap-1.5 ${
                       isFullscreen ? 'text-sm' : 'text-xs'
                     }`}
                   >
@@ -481,7 +481,7 @@ export const ChatWidget: React.FC = () => {
                     onClick={() =>
                       handleSendMessage('Quais são minhas metas financeiras?')
                     }
-                    className={`group bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 hover:from-blue-100 hover:to-blue-200 dark:hover:from-blue-800/30 dark:hover:to-blue-700/30 text-blue-700 dark:text-blue-300 px-3 py-2 rounded-lg transition-all duration-200 border border-blue-200/50 dark:border-blue-700/30 shadow-sm hover:shadow-md flex items-center gap-1.5 ${
+                    className={`group bg-blue-50 dark:bg-blue-900/10 hover:bg-blue-100 dark:hover:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-3 py-2 rounded-lg transition-colors duration-200 border border-blue-200 dark:border-blue-700/30 shadow-sm hover:shadow-md flex items-center gap-1.5 ${
                       isFullscreen ? 'text-sm' : 'text-xs'
                     }`}
                   >
@@ -509,8 +509,8 @@ export const ChatWidget: React.FC = () => {
                     <div
                       className={`inline-block px-3 py-2 rounded-lg text-sm ${
                         message.role === 'user'
-                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
-                          : 'bg-muted/70 text-foreground border border-border/30'
+                          ? 'bg-[#11684A] text-white'
+                          : 'bg-muted text-foreground border border-border'
                       }`}
                     >
                       <div className="whitespace-pre-wrap">
@@ -579,12 +579,12 @@ export const ChatWidget: React.FC = () => {
 
           {/* Input Form */}
           <form
-            className="border-t border-border/50 px-4 py-3 bg-background"
+            className="border-t-2 border-border px-4 py-3 bg-background rounded-b-xl"
             onSubmit={sendMessage}
           >
             <div className="flex items-center gap-2">
               <input
-                className="flex-1 px-3 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all text-sm placeholder:text-muted-foreground/60"
+                className="flex-1 px-3 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-1 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all text-sm placeholder:text-muted-foreground/60"
                 type="text"
                 value={input}
                 onChange={e => setInput(e.target.value)}
@@ -594,7 +594,7 @@ export const ChatWidget: React.FC = () => {
               />
               <button
                 type="submit"
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-md px-3 py-2 flex items-center gap-1 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                className="bg-[#11684A] hover:bg-[#0d5039] text-white rounded-md px-3 py-2 flex items-center gap-1 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                 disabled={loading || streaming || !input.trim()}
               >
                 <Send className="h-3.5 w-3.5" />
