@@ -127,7 +127,7 @@
     - Implementar sistema de sessões com timeout automático
     - Criar histórico de conversas para análise e melhoria
     - _Requisitos: 3.3, 5.3, 7.2_
-  - [ ] 7.3 Desenvolver orquestrador de serviços
+  - [✅] 7.3 Desenvolver orquestrador de serviços
     - Implementar roteamento inteligente de consultas para serviços apropriados
     - Criar integração entre RAG, análise de transações e recomendações
     - Implementar sistema de priorização de respostas
@@ -136,20 +136,20 @@
     - _Requisitos: 3.1, 3.3, 3.5_
 
 - [ ] 8. Criar interface de usuário web
-  - [ ] 8.1 Desenvolver dashboard financeiro
+  - [✅] 8.1 Desenvolver dashboard financeiro
     - Criar componentes de visualização de dados com Chart.js/React-Chartjs-2
     - Implementar cards de métricas financeiras principais (saldo, gastos, receitas)
     - Criar filtros e controles de período (mensal, trimestral, anual)
     - Implementar gráficos de gastos por categoria e tendências
     - Criar componentes responsivos para mobile e desktop
     - _Requisitos: 5.1, 5.2_
-  - [ ] 8.2 Implementar interface de chat conversacional
-    - Criar componente de chat em tempo real com WebSocket ou Server-Sent Events
-    - Implementar streaming de respostas do LLM com indicador de digitação
-    - Criar sistema de citação de fontes na interface
-    - Implementar histórico de conversas com busca
-    - Criar interface para feedback de qualidade das respostas
-    - _Requisitos: 5.3, 3.4_
+  - [✅] 8.2 Implementar interface de chat conversacional
+  - [✅] Criar componente de chat em tempo real com WebSocket ou Server-Sent Events
+  - [✅] Implementar streaming de respostas do LLM com indicador de digitação
+  - [✅] Criar sistema de citação de fontes na interface
+  - [✅] Implementar histórico de conversas com busca
+  - [✅] Criar interface para feedback de qualidade das respostas
+  - _Requisitos: 5.3, 3.4_
   - [ ] 8.3 Desenvolver páginas de configuração e perfil
     - Criar formulários de configuração de preferências do usuário
     - Implementar interface para gerenciamento de contas conectadas
