@@ -245,14 +245,14 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
 
       {/* Gráfico de tendências */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <Card className="xl:col-span-2">
+        <Card className="xl:col-span-2 bg-muted/40">
           <CardHeader>
             <CardTitle>Tendência Mensal</CardTitle>
             <CardDescription>
               Evolução das receitas e gastos nos últimos meses
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="bg-muted/30 rounded-lg">
             <div className="h-[300px]">
               <Line data={trendChartData} options={chartOptions} />
             </div>
@@ -263,14 +263,14 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
       {/* Gráfico de categorias e detalhamento lado a lado */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Gráfico de gastos por categoria */}
-        <Card>
+        <Card className="bg-muted/40">
           <CardHeader>
             <CardTitle>Gastos por Categoria</CardTitle>
             <CardDescription>
               Distribuição dos seus gastos por categoria
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="bg-muted/30 rounded-lg">
             <div className="h-[300px]">
               <Doughnut data={categoryChartData} options={doughnutOptions} />
             </div>
@@ -289,7 +289,7 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
               {mockData.categoryExpenses.map((item, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                  className="flex items-center justify-between p-3 rounded-lg bg-muted/80"
                 >
                   <div className="flex items-center gap-3">
                     <div
