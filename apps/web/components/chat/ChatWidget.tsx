@@ -453,7 +453,7 @@ export const ChatWidget: React.FC = () => {
                     onClick={() =>
                       handleSendMessage('Analise meus gastos do último mês')
                     }
-                    className={`group bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 hover:from-blue-100 hover:to-blue-200 dark:hover:from-blue-800/30 dark:hover:to-blue-700/30 text-blue-700 dark:text-blue-300 px-3 py-2 rounded-lg transition-all duration-200 border border-blue-200/50 dark:border-blue-700/30 shadow-sm hover:shadow-md flex items-center gap-1.5 ${
+                    className={`group bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 hover:from-red-100 hover:to-red-200 dark:hover:from-red-800/30 dark:hover:to-red-700/30 text-red-700 dark:text-red-300 px-3 py-2 rounded-lg transition-all duration-200 border border-red-200/50 dark:border-red-700/30 shadow-sm hover:shadow-md flex items-center gap-1.5 ${
                       isFullscreen ? 'text-sm' : 'text-xs'
                     }`}
                   >
@@ -468,7 +468,7 @@ export const ChatWidget: React.FC = () => {
                         'Como posso investir melhor meu dinheiro?'
                       )
                     }
-                    className={`group bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 hover:from-green-100 hover:to-green-200 dark:hover:from-green-800/30 dark:hover:to-green-700/30 text-green-700 dark:text-green-300 px-3 py-2 rounded-lg transition-all duration-200 border border-green-200/50 dark:border-green-700/30 shadow-sm hover:shadow-md flex items-center gap-1.5 ${
+                    className={`group bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 hover:from-purple-100 hover:to-purple-200 dark:hover:from-purple-800/30 dark:hover:to-purple-700/30 text-purple-700 dark:text-purple-300 px-3 py-2 rounded-lg transition-all duration-200 border border-purple-200/50 dark:border-purple-700/30 shadow-sm hover:shadow-md flex items-center gap-1.5 ${
                       isFullscreen ? 'text-sm' : 'text-xs'
                     }`}
                   >
@@ -481,7 +481,7 @@ export const ChatWidget: React.FC = () => {
                     onClick={() =>
                       handleSendMessage('Quais são minhas metas financeiras?')
                     }
-                    className={`group bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 hover:from-purple-100 hover:to-purple-200 dark:hover:from-purple-800/30 dark:hover:to-purple-700/30 text-purple-700 dark:text-purple-300 px-3 py-2 rounded-lg transition-all duration-200 border border-purple-200/50 dark:border-purple-700/30 shadow-sm hover:shadow-md flex items-center gap-1.5 ${
+                    className={`group bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 hover:from-blue-100 hover:to-blue-200 dark:hover:from-blue-800/30 dark:hover:to-blue-700/30 text-blue-700 dark:text-blue-300 px-3 py-2 rounded-lg transition-all duration-200 border border-blue-200/50 dark:border-blue-700/30 shadow-sm hover:shadow-md flex items-center gap-1.5 ${
                       isFullscreen ? 'text-sm' : 'text-xs'
                     }`}
                   >
@@ -496,31 +496,20 @@ export const ChatWidget: React.FC = () => {
               messages.map(message => (
                 <div
                   key={message.id}
-                  className={`flex items-start gap-3 ${
-                    message.role === 'user' ? 'flex-row-reverse' : ''
-                  }`}
+                  className={`flex ${
+                    message.role === 'user' ? 'justify-end' : 'justify-start'
+                  } mb-4`}
                 >
-                  {/* Avatar */}
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold ${
-                      message.role === 'user'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gradient-to-br from-purple-500 to-blue-600 text-white'
-                    }`}
-                  >
-                    {message.role === 'user' ? 'U' : 'AI'}
-                  </div>
-
                   {/* Message Bubble */}
                   <div
-                    className={`flex-1 max-w-[80%] ${
+                    className={`max-w-[80%] ${
                       message.role === 'user' ? 'text-right' : ''
                     }`}
                   >
                     <div
                       className={`inline-block px-3 py-2 rounded-lg text-sm ${
                         message.role === 'user'
-                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white ml-auto'
+                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
                           : 'bg-muted/70 text-foreground border border-border/30'
                       }`}
                     >
