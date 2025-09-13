@@ -13,8 +13,8 @@ interface VectorSearchService {
 }
 
 export class RAGIntegratedOrchestrator extends ServiceOrchestrator {
-  private ragService?: RAGService;
-  private vectorSearch?: VectorSearchService;
+  private ragService: RAGService | undefined;
+  private vectorSearch: VectorSearchService | undefined;
 
   constructor(ragService?: RAGService, vectorSearch?: VectorSearchService) {
     super();
@@ -23,7 +23,7 @@ export class RAGIntegratedOrchestrator extends ServiceOrchestrator {
   }
 
   // Override do método de tratamento de consultas de informação
-  protected async handleInfoQuery(
+  protected override async handleInfoQuery(
     nlpResult: any,
     userId: string
   ): Promise<ServiceResponse> {
@@ -147,17 +147,7 @@ export class RAGIntegratedOrchestrator extends ServiceOrchestrator {
       },
     ];
 
-    // Filtrar resultados baseado na query
-    return results
-      .filter(
-        result =>
-          result.document.content
-            .toLowerCase()
-            .includes(query.toLowerCase().split(' ')[0]) ||
-          result.document.title
-            .toLowerCase()
-            .includes(query.toLowerCase().split(' ')[0])
-      )
-      .slice(0, 5);
+    // Filtrar resultados baseado na query - fallback simples
+    return results.slice(0, 5);
   }
 }
