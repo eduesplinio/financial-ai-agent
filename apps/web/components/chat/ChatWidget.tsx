@@ -11,6 +11,7 @@ import {
   Minimize2,
   Bot,
 } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import { ChatHistory } from './ChatHistory';
 
 export interface ChatMessage {
@@ -23,6 +24,7 @@ export interface ChatMessage {
 }
 
 export const ChatWidget: React.FC = () => {
+  const { data: session } = useSession();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -46,6 +48,145 @@ export const ChatWidget: React.FC = () => {
       setIsFullscreen(false);
     }
   }, [showWidget]);
+
+  // Brazilian nicknames mapping
+  const getNickname = (fullName: string): string => {
+    const firstNames = fullName.trim().split(' ')[0].toLowerCase();
+
+    // Common Brazilian nicknames
+    const nicknameMap: Record<string, string> = {
+      // Masculinos
+      eduardo: 'Edu',
+      alexandre: 'Alex',
+      fernando: 'Nando',
+      francisco: 'Chico',
+      antonio: 'Toni',
+      jose: 'Zé',
+      joao: 'João',
+      carlos: 'Carlinhos',
+      roberto: 'Beto',
+      luiz: 'Lu',
+      luis: 'Lu',
+      gabriel: 'Gabi',
+      rafael: 'Rafa',
+      leonardo: 'Leo',
+      ricardo: 'Rica',
+      marcelo: 'Marcelinho',
+      anderson: 'Ander',
+      wellington: 'Well',
+      alessandro: 'Ale',
+      fabricio: 'Fabi',
+      daniel: 'Dani',
+      marcos: 'Marquinhos',
+      paulo: 'Paulinho',
+      pedro: 'Pedrinho',
+      guilherme: 'Gui',
+      rodrigo: 'Rô',
+      thiago: 'Thi',
+      diego: 'Di',
+      vinicius: 'Vini',
+      matheus: 'Matheusinho',
+      felipe: 'Fê',
+      bruno: 'Bruninho',
+      andre: 'Dé',
+      gustavo: 'Gus',
+      renato: 'Renatinho',
+      sergio: 'Sérgio',
+      mauricio: 'Mauro',
+      henrique: 'Rique',
+      lucas: 'Lu',
+      victor: 'Vitinho',
+      caio: 'Cainho',
+      leandro: 'Léo',
+      adriano: 'Dri',
+      jefferson: 'Jeff',
+
+      // Femininos
+      maria: 'Mari',
+      ana: 'Aninha',
+      fernanda: 'Fê',
+      patricia: 'Pati',
+      juliana: 'Ju',
+      cristina: 'Cris',
+      monica: 'Mô',
+      sandra: 'San',
+      claudia: 'Clau',
+      adriana: 'Dri',
+      marcia: 'Má',
+      andrea: 'Dé',
+      luciana: 'Lu',
+      simone: 'Si',
+      daniela: 'Dani',
+      carolina: 'Carol',
+      gabriela: 'Gabi',
+      paula: 'Paulinha',
+      camila: 'Cami',
+      renata: 'Re',
+      priscila: 'Pri',
+      beatriz: 'Bia',
+      larissa: 'Lari',
+      amanda: 'Manda',
+      jessica: 'Jess',
+      bruna: 'Bruninha',
+      carla: 'Carlinha',
+      vanessa: 'Van',
+      isabela: 'Isa',
+      leticia: 'Lê',
+      natalia: 'Nat',
+      raquel: 'Raque',
+      sabrina: 'Sá',
+      thaís: 'Tha',
+      viviane: 'Vivi',
+      aline: 'Ali',
+      tatiana: 'Tati',
+      denise: 'Dê',
+      eliane: 'Eli',
+      karina: 'Ka',
+      michelle: 'Mi',
+      roberta: 'Rô',
+      silvia: 'Sil',
+      tereza: 'Tetê',
+      valeria: 'Val',
+    };
+
+    // Remove accents for matching
+    const removeAccents = (str: string) => {
+      return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    };
+
+    const cleanName = removeAccents(firstNames);
+    const nickname = nicknameMap[cleanName];
+
+    if (nickname) {
+      return nickname;
+    }
+
+    // Fallback strategies for names not in the map
+    const originalName = fullName.trim().split(' ')[0];
+
+    // If name is longer than 6 characters, try to shorten it
+    if (originalName.length > 6) {
+      // Try common patterns
+      if (originalName.endsWith('inho') || originalName.endsWith('inha')) {
+        return originalName; // Already a nickname
+      }
+
+      // Create a shortened version (first 3-4 chars + common endings)
+      const base = originalName.substring(0, Math.min(4, originalName.length));
+      return base.charAt(0).toUpperCase() + base.slice(1);
+    }
+
+    // For shorter names, return as is with proper capitalization
+    return (
+      originalName.charAt(0).toUpperCase() + originalName.slice(1).toLowerCase()
+    );
+  };
+
+  // Get user's nickname or first name
+  const getFirstName = () => {
+    if (!session?.user?.name) return '';
+    return getNickname(session.user.name);
+  };
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || loading || streaming) return;
@@ -75,7 +216,6 @@ export const ChatWidget: React.FC = () => {
       if (!response.ok) {
         throw new Error('Failed to send message');
       }
-
       const reader = response.body?.getReader();
       if (!reader) {
         throw new Error('No reader available');
@@ -279,29 +419,63 @@ export const ChatWidget: React.FC = () => {
             ref={messagesEndRef}
           >
             {messages.length === 0 ? (
-              <div className="text-center text-muted-foreground py-8">
-                <Bot className="h-10 w-10 mx-auto mb-3 opacity-60" />
-                <h3 className="font-medium mb-2">Agente Financeiro IA</h3>
-                <p className="text-sm max-w-xs mx-auto mb-4">
-                  Como posso ajudar com suas finanças hoje?
+              <div
+                className={`text-center text-muted-foreground ${
+                  isFullscreen ? 'py-16' : 'py-12'
+                }`}
+              >
+                <h3
+                  className={`font-medium mb-3 ${
+                    isFullscreen ? 'text-xl' : 'text-lg'
+                  }`}
+                >
+                  {getFirstName() ? `Olá, ${getFirstName()}` : 'Olá'}
+                </h3>
+                <p
+                  className={`text-muted-foreground/80 mb-6 mx-auto ${
+                    isFullscreen ? 'text-base max-w-md' : 'text-sm max-w-xs'
+                  }`}
+                >
+                  Sou seu agente financeiro pessoal. Te ajudo a economizar mais,
+                  investir melhor e alcançar suas metas financeiras.
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-sm mx-auto">
+                <div
+                  className={`flex justify-center gap-3 mx-auto ${
+                    isFullscreen ? 'max-w-md flex-wrap' : 'max-w-xs gap-2'
+                  }`}
+                >
                   <button
                     onClick={() =>
-                      handleSendMessage('Quais são minhas despesas do mês?')
+                      handleSendMessage('Analise meus gastos do último mês')
                     }
-                    className="text-left p-2 rounded-md bg-muted/50 hover:bg-muted transition-colors text-xs border border-border/50"
+                    className={`bg-muted/30 hover:bg-muted/50 text-muted-foreground px-4 py-2 rounded-full transition-colors border border-border/20 ${
+                      isFullscreen ? 'text-sm' : 'text-xs'
+                    }`}
                   >
-                    Quais são minhas despesas do mês?
+                    Ver gastos
                   </button>
                   <button
                     onClick={() =>
-                      handleSendMessage('Me ajude a criar um orçamento')
+                      handleSendMessage(
+                        'Como posso investir melhor meu dinheiro?'
+                      )
                     }
-                    className="text-left p-2 rounded-md bg-muted/50 hover:bg-muted transition-colors text-xs border border-border/50"
+                    className={`bg-muted/30 hover:bg-muted/50 text-muted-foreground px-4 py-2 rounded-full transition-colors border border-border/20 ${
+                      isFullscreen ? 'text-sm' : 'text-xs'
+                    }`}
                   >
-                    Me ajude a criar um orçamento
+                    Investir
                   </button>
+                  {isFullscreen && (
+                    <button
+                      onClick={() =>
+                        handleSendMessage('Quais são minhas metas financeiras?')
+                      }
+                      className="text-sm bg-muted/30 hover:bg-muted/50 text-muted-foreground px-4 py-2 rounded-full transition-colors border border-border/20"
+                    >
+                      Metas
+                    </button>
+                  )}
                 </div>
               </div>
             ) : (
@@ -411,7 +585,7 @@ export const ChatWidget: React.FC = () => {
                 type="text"
                 value={input}
                 onChange={e => setInput(e.target.value)}
-                placeholder="Sua pergunta sobre finanças..."
+                placeholder="Como posso ajudar você hoje?"
                 disabled={loading || streaming}
                 autoComplete="off"
               />
