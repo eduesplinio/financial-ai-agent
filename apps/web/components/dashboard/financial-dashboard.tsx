@@ -152,7 +152,7 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2 w-full md:w-auto">
           <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-            <SelectTrigger className="w-full sm:w-[150px] bg-white dark:bg-neutral-900">
+            <SelectTrigger className="w-full sm:w-[150px]">
               <SelectValue placeholder="Período" />
             </SelectTrigger>
             <SelectContent>
