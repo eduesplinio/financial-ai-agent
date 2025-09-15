@@ -150,7 +150,7 @@
   - [✅] Implementar histórico de conversas com busca
   - [✅] Criar interface para feedback de qualidade das respostas
   - _Requisitos: 5.3, 3.4_
-  - [ ] 8.3 Desenvolver páginas de configuração e perfil
+  - [✅] 8.3 Desenvolver páginas de configuração e perfil
     - Criar formulários de configuração de preferências do usuário
     - Implementar interface para gerenciamento de contas conectadas
     - Criar interface para definição e acompanhamento de metas financeiras
