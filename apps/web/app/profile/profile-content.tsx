@@ -76,8 +76,6 @@ export function ProfileContent() {
   const [saveMessage, setSaveMessage] = useState('');
   const [editingProfile, setEditingProfile] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
-  const [editingName, setEditingName] = useState(false);
-  const [userName, setUserName] = useState('');
 
   // Estado do perfil financeiro
   const [financialProfile, setFinancialProfile] = useState<FinancialProfile>({
@@ -106,7 +104,6 @@ export function ProfileContent() {
   useEffect(() => {
     if (session?.user?.id) {
       loadFinancialProfile();
-      setUserName(session.user.name || '');
     }
   }, [session]);
 
@@ -188,36 +185,7 @@ export function ProfileContent() {
     }
   };
 
-  // Função para salvar o nome do usuário
-  const saveUserName = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/user/profile', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: userName,
-          email: session?.user?.email || '',
-          profile: {}, // Enviar objeto vazio para cumprir com o schema
-        }),
-      });
-
-      if (response.ok) {
-        setSaveMessage('Nome atualizado com sucesso!');
-        setEditingName(false);
-      } else {
-        setSaveMessage('Erro ao atualizar o nome');
-      }
-      setTimeout(() => setSaveMessage(''), 3000);
-    } catch (error) {
-      console.error('Error saving user name:', error);
-      setSaveMessage('Erro ao salvar o nome');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Função para salvar o nome do usuário foi removida
 
   const handleCancelEdit = () => {
     setTempProfile(financialProfile);
@@ -307,7 +275,7 @@ export function ProfileContent() {
           <div className="flex flex-col md:flex-row items-center gap-6">
             <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center text-primary text-3xl font-bold border-2 border-primary/20">
               {session.user.name ? (
-                session.user.name.substring(0, 2).toUpperCase()
+                session.user.name.substring(0, 1).toUpperCase()
               ) : (
                 <User size={36} />
               )}
@@ -315,68 +283,11 @@ export function ProfileContent() {
 
             <div className="flex-1 space-y-3">
               <div className="flex items-center justify-between">
-                {editingName ? (
-                  <div className="flex-1 mr-2">
-                    <Input
-                      type="text"
-                      value={userName}
-                      onChange={e => setUserName(e.target.value)}
-                      placeholder="Digite seu nome"
-                      className="text-lg font-medium"
-                      autoFocus
-                    />
-                  </div>
-                ) : (
-                  <h2 className="text-xl font-bold text-foreground">
-                    {session.user.name || 'Nome não informado'}
-                  </h2>
-                )}
+                <h2 className="text-xl font-bold text-foreground">
+                  {session.user.name || 'Nome não informado'}
+                </h2>
 
-                <div>
-                  {editingName ? (
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={saveUserName}
-                        disabled={loading}
-                        className="bg-primary hover:bg-primary/90"
-                      >
-                        {loading ? (
-                          <span className="flex items-center">
-                            <span className="animate-spin h-4 w-4 mr-1 border-2 border-white border-t-transparent rounded-full"></span>
-                            Salvando
-                          </span>
-                        ) : (
-                          <span className="flex items-center">
-                            <Save className="h-4 w-4 mr-1" />
-                            Salvar
-                          </span>
-                        )}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setEditingName(false);
-                          setUserName(session.user.name || '');
-                        }}
-                      >
-                        <X className="h-4 w-4 mr-1" />
-                        Cancelar
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setEditingName(true)}
-                      className="text-primary border-primary/20 hover:bg-primary/10"
-                    >
-                      <Edit className="h-4 w-4 mr-1" />
-                      Editar nome
-                    </Button>
-                  )}
-                </div>
+                <div>{/* Edição de nome desativada */}</div>
               </div>
 
               <div className="text-muted-foreground">
@@ -478,8 +389,7 @@ export function ProfileContent() {
             <>
               {/* Informações Básicas - Visual melhorado com cards agrupados */}
               <div className="mb-8">
-                <h3 className="text-base font-medium mb-4 border-b pb-2 flex items-center">
-                  <DollarSign className="h-4 w-4 mr-2 text-primary" />
+                <h3 className="text-base font-medium mb-4 border-b pb-2">
                   Informações Financeiras Básicas
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -521,7 +431,7 @@ export function ProfileContent() {
                       htmlFor="emergencyFund"
                       className="text-sm block mb-2"
                     >
-                      Reserva de Emergência
+                      Reserva
                     </Label>
                     {editingProfile ? (
                       <div className="mt-1 relative rounded-md shadow-sm">
@@ -588,8 +498,7 @@ export function ProfileContent() {
 
               {/* Conhecimento Financeiro */}
               <div className="mb-8">
-                <h3 className="text-base font-medium mb-4 border-b pb-2 flex items-center">
-                  <FileText className="h-4 w-4 mr-2 text-primary" />
+                <h3 className="text-base font-medium mb-4 border-b pb-2">
                   Conhecimento e Experiência
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
