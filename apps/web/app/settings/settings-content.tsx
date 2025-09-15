@@ -78,18 +78,74 @@ export function SettingsContent() {
     try {
       setInitialLoading(true);
 
-      // Carregar configurações de notificação
-      const notifResponse = await fetch('/api/user/notifications');
-      if (notifResponse.ok) {
-        const notifData = await notifResponse.json();
-        setNotifications(notifData);
-      }
+      // Carregar configurações do usuário usando a preferencies do usuário
+      const response = await fetch('/api/user/preferences');
+      if (response.ok) {
+        const userData = await response.json();
+        const preferences = userData.preferences || {};
 
-      // Carregar consentimentos
-      const consentsResponse = await fetch('/api/user/consents');
-      if (consentsResponse.ok) {
-        const consentsData = await consentsResponse.json();
-        setConsents(consentsData);
+        // Configurar notificações usando os campos corretos
+        if (preferences.notifications) {
+          setNotifications({
+            // Campos básicos
+            email:
+              preferences.notifications.email !== undefined
+                ? preferences.notifications.email
+                : true,
+            push:
+              preferences.notifications.push !== undefined
+                ? preferences.notifications.push
+                : true,
+            marketing:
+              preferences.notifications.marketing !== undefined
+                ? preferences.notifications.marketing
+                : false,
+
+            // Usar os campos específicos quando disponíveis, caso contrário usar os campos genéricos
+            largeTransactions:
+              preferences.notifications.largeTransactions !== undefined
+                ? preferences.notifications.largeTransactions
+                : preferences.notifications.budgetAlerts !== undefined
+                  ? preferences.notifications.budgetAlerts
+                  : true,
+
+            unusualSpending:
+              preferences.notifications.unusualSpending !== undefined
+                ? preferences.notifications.unusualSpending
+                : preferences.notifications.anomalyDetection !== undefined
+                  ? preferences.notifications.anomalyDetection
+                  : true,
+
+            goalProgress:
+              preferences.notifications.goalProgress !== undefined
+                ? preferences.notifications.goalProgress
+                : preferences.notifications.goalReminders !== undefined
+                  ? preferences.notifications.goalReminders
+                  : true,
+
+            budgetExceeded:
+              preferences.notifications.budgetExceeded !== undefined
+                ? preferences.notifications.budgetExceeded
+                : preferences.notifications.budgetAlerts !== undefined
+                  ? preferences.notifications.budgetAlerts
+                  : true,
+          });
+        }
+
+        // Configurar consentimentos de privacidade
+        if (preferences.privacy) {
+          setConsents({
+            dataProcessing: true, // Sempre true
+            analytics:
+              preferences.privacy.analytics !== undefined
+                ? preferences.privacy.analytics
+                : false,
+            marketing:
+              preferences.privacy.marketing !== undefined
+                ? preferences.privacy.marketing
+                : false,
+          });
+        }
       }
     } catch (error) {
       console.error('Error loading user settings:', error);
@@ -98,27 +154,62 @@ export function SettingsContent() {
     }
   };
 
+  const [isSaving, setIsSaving] = useState(false);
+
   const handleSaveNotifications = async () => {
-    setLoading(true);
+    setIsSaving(true);
     try {
-      const response = await fetch('/api/user/notifications', {
+      // Cria um payload explícito com todos os valores para evitar problemas de undefined
+      const updatedNotifications = {
+        notifications: {
+          // Campos básicos
+          email: notifications.email,
+          push: notifications.push,
+          marketing: notifications.marketing,
+
+          // Campos principais - usar valores específicos, não undefined
+          largeTransactions: notifications.largeTransactions === true,
+          unusualSpending: notifications.unusualSpending === true,
+          goalProgress: notifications.goalProgress === true,
+          budgetExceeded: notifications.budgetExceeded === true,
+
+          // Campos legados - sincronizar explicitamente com os campos principais
+          budgetAlerts: notifications.largeTransactions === true,
+          anomalyDetection: notifications.unusualSpending === true,
+          goalReminders: notifications.goalProgress === true,
+
+          // Outros campos opcionais
+          sms: false, // valor padrão explícito
+        },
+      };
+
+      // Log para debug
+      console.log(
+        'Enviando payload de notificações:',
+        JSON.stringify(updatedNotifications, null, 2)
+      );
+
+      const response = await fetch('/api/user/preferences', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(notifications),
+        body: JSON.stringify(updatedNotifications),
       });
 
       if (response.ok) {
         setSaveMessage('Configurações de notificação salvas com sucesso!');
+        console.log('Notificações salvas:', updatedNotifications);
       } else {
-        setSaveMessage('Erro ao salvar configurações de notificação');
+        setSaveMessage('Erro ao salvar configurações');
+        console.error('Erro ao salvar notificações:', response.statusText);
       }
       setTimeout(() => setSaveMessage(''), 3000);
     } catch (error) {
+      console.error('Erro ao salvar notificações:', error);
       setSaveMessage('Erro ao salvar configurações');
     } finally {
-      setLoading(false);
+      setIsSaving(false);
     }
   };
 
@@ -136,17 +227,28 @@ export function SettingsContent() {
     setLoading(true);
     try {
       const updatedConsents = { ...consents, [type]: value };
+      setConsents(updatedConsents);
 
-      const response = await fetch('/api/user/consents', {
+      // Mapear todos os consentimentos para o formato do preferences no banco de dados
+      const preferencesPayload = {
+        privacy: {
+          // Usar os valores atualizados no estado local
+          analytics: updatedConsents.analytics,
+          marketing: updatedConsents.marketing,
+          // Manter dataSharing como false ou conforme o valor atual no banco
+          dataSharing: false,
+        },
+      };
+
+      const response = await fetch('/api/user/preferences', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(updatedConsents),
+        body: JSON.stringify(preferencesPayload),
       });
 
       if (response.ok) {
-        setConsents(updatedConsents);
         setSaveMessage(
           `Consentimento ${value ? 'concedido' : 'revogado'} com sucesso!`
         );
@@ -210,10 +312,12 @@ export function SettingsContent() {
 
   if (!session?.user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Carregando configurações...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">
+            Carregando configurações...
+          </p>
         </div>
       </div>
     );
@@ -221,57 +325,254 @@ export function SettingsContent() {
 
   if (initialLoading) {
     return (
-      <div className="container mx-auto py-8 px-4 max-w-4xl">
+      <div className="w-full px-4 lg:px-8 py-6">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Settings className="h-8 w-8" />
-            Configurações
-          </h1>
+          <h1 className="text-xl font-semibold">Configurações</h1>
+          <p className="text-muted-foreground">
+            Gerencie suas preferências e configurações da conta
+          </p>
         </div>
-        <div className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="flex justify-center py-16">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-blue-500"></div>
         </div>
       </div>
     );
   }
 
+  // Debug function para inspecionar o estado local e dados da API
+  const debugState = async () => {
+    console.log('--- DEBUG ESTADO LOCAL ---');
+    console.log('Notificações locais:', notifications);
+    console.log('Privacidade local:', consents);
+
+    // Buscar dados atuais da API para comparação
+    try {
+      const response = await fetch('/api/user/preferences');
+      if (response.ok) {
+        const apiData = await response.json();
+        console.log('--- DADOS DA API ---');
+        console.log('Objeto completo:', apiData);
+
+        if (apiData.notifications) {
+          console.log('Notificações da API:');
+          // Campos originais
+          console.log(
+            '  largeTransactions:',
+            typeof apiData.notifications.largeTransactions,
+            apiData.notifications.largeTransactions
+          );
+          console.log(
+            '  unusualSpending:',
+            typeof apiData.notifications.unusualSpending,
+            apiData.notifications.unusualSpending
+          );
+          console.log(
+            '  goalProgress:',
+            typeof apiData.notifications.goalProgress,
+            apiData.notifications.goalProgress
+          );
+          console.log(
+            '  budgetExceeded:',
+            typeof apiData.notifications.budgetExceeded,
+            apiData.notifications.budgetExceeded
+          );
+
+          // Campos legados
+          console.log(
+            '  budgetAlerts:',
+            typeof apiData.notifications.budgetAlerts,
+            apiData.notifications.budgetAlerts
+          );
+          console.log(
+            '  goalReminders:',
+            typeof apiData.notifications.goalReminders,
+            apiData.notifications.goalReminders
+          );
+          console.log(
+            '  anomalyDetection:',
+            typeof apiData.notifications.anomalyDetection,
+            apiData.notifications.anomalyDetection
+          );
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao buscar dados da API para debug:', error);
+    }
+  };
+
   return (
-    <div className="container mx-auto py-8 px-4 max-w-4xl">
+    <div className="w-full px-4 lg:px-8 py-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Settings className="h-8 w-8" />
-          Configurações
-        </h1>
-        <p className="text-muted-foreground mt-2">
+        <h1 className="text-xl font-semibold">Configurações</h1>
+        <p className="text-muted-foreground">
           Gerencie suas preferências e configurações da conta
         </p>
+        {/* Botão de debug visível apenas em desenvolvimento */}
+        {process.env.NODE_ENV === 'development' && (
+          <button
+            onClick={debugState}
+            className="text-xs mt-2 text-gray-500 hover:text-gray-700"
+          >
+            Debug Estado
+          </button>
+        )}
       </div>
 
       {saveMessage && (
-        <Alert className="mb-6">
-          <CheckCircle className="h-4 w-4" />
-          <AlertDescription>{saveMessage}</AlertDescription>
-        </Alert>
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50">
+          <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md shadow-lg flex items-center">
+            <CheckCircle className="h-5 w-5 mr-2 text-green-500" />
+            <span className="font-medium">{saveMessage}</span>
+          </div>
+        </div>
       )}
 
       <div className="space-y-8">
-        {/* Configurações de Notificações */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5" />
-              Notificações
-            </CardTitle>
-            <CardDescription>
-              Configure como e quando receber notificações
-            </CardDescription>
+        {/* Privacidade e LGPD - Movido para o início por relevância */}
+        <Card className="mb-8 shadow-md overflow-hidden">
+          <CardHeader className="bg-primary/5 border-b border-border">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg font-medium flex items-center">
+                  <Shield className="h-5 w-5 mr-2 text-primary" />
+                  Privacidade e Dados Pessoais
+                </CardTitle>
+                <CardDescription className="mt-1">
+                  Gerencie seus dados pessoais e consentimentos conforme a LGPD
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="pt-6 pb-8">
+            <Alert className="mb-6">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Seus direitos pela LGPD:</strong> Acesso, correção,
+                exclusão, portabilidade e informação sobre o uso dos seus dados
+                pessoais.{' '}
+                <a href="/privacy" className="underline font-medium">
+                  Ver Política de Privacidade completa
+                </a>
+              </AlertDescription>
+            </Alert>
+
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="bg-card p-4 rounded-lg border border-border hover:shadow-sm transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="font-medium">Dados Essenciais</Label>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Dados necessários para funcionamento básico (login,
+                      transações)
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={true} disabled={true} />
+                    <span className="text-xs text-green-600 font-medium">
+                      Obrigatório
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-card p-4 rounded-lg border border-border hover:shadow-sm transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="font-medium">Analytics e Melhorias</Label>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Dados anônimos para melhorar a experiência do usuário
+                    </p>
+                  </div>
+                  <Switch
+                    checked={consents.analytics}
+                    onCheckedChange={value =>
+                      handleConsentChange('analytics', value)
+                    }
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+
+              <div className="bg-card p-4 rounded-lg border border-border hover:shadow-sm transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="font-medium">
+                      Comunicações de Marketing
+                    </Label>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Ofertas personalizadas e comunicações promocionais
+                    </p>
+                  </div>
+                  <Switch
+                    checked={consents.marketing}
+                    onCheckedChange={value =>
+                      handleConsentChange('marketing', value)
+                    }
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-6 mt-2">
+              <h3 className="text-base font-medium mb-4 border-b pb-2">
+                Gerenciar Seus Dados
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2 bg-card border-border hover:bg-primary/10 text-primary"
+                  onClick={() => handleDataAction('export')}
+                  disabled={loading}
+                >
+                  <Download className="h-4 w-4" />
+                  Baixar Dados
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2 bg-card border-border hover:bg-primary/10 text-primary"
+                  onClick={() => window.open('/privacy', '_blank')}
+                >
+                  <Eye className="h-4 w-4" />
+                  Ver Política
+                </Button>
+
+                <Button
+                  variant="destructive"
+                  className="flex items-center gap-2"
+                  onClick={() => handleDataAction('delete')}
+                  disabled={loading}
+                >
+                  <Trash className="h-4 w-4" />
+                  Excluir Conta
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Configurações de Notificações */}
+        <Card className="mb-8 shadow-md overflow-hidden">
+          <CardHeader className="bg-primary/5 border-b border-border">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg font-medium flex items-center">
+                  <Bell className="h-5 w-5 mr-2 text-primary" />
+                  Notificações
+                </CardTitle>
+                <CardDescription className="mt-1">
+                  Configure como e quando receber notificações
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6 pb-8">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between bg-card p-4 rounded-lg border border-border hover:shadow-sm transition-shadow">
                 <div className="space-y-0.5">
                   <Label className="flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
+                    <Mail className="h-4 w-4 text-primary" />
                     Notificações por Email
                   </Label>
                   <p className="text-sm text-muted-foreground">
@@ -286,12 +587,10 @@ export function SettingsContent() {
                 />
               </div>
 
-              <Separator />
-
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between bg-card p-4 rounded-lg border border-border hover:shadow-sm transition-shadow">
                 <div className="space-y-0.5">
                   <Label className="flex items-center gap-2">
-                    <Smartphone className="h-4 w-4" />
+                    <Smartphone className="h-4 w-4 text-primary" />
                     Notificações Push
                   </Label>
                   <p className="text-sm text-muted-foreground">
@@ -306,9 +605,7 @@ export function SettingsContent() {
                 />
               </div>
 
-              <Separator />
-
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between bg-card p-4 rounded-lg border border-border hover:shadow-sm transition-shadow">
                 <div className="space-y-0.5">
                   <Label>Emails Promocionais</Label>
                   <p className="text-sm text-muted-foreground">
@@ -324,12 +621,16 @@ export function SettingsContent() {
               </div>
             </div>
 
-            <div className="pt-4">
-              <h4 className="text-sm font-medium mb-3">Alertas Específicos</h4>
+            <div className="pt-6 mt-2">
+              <h3 className="text-base font-medium mb-4 border-b pb-2">
+                Alertas Específicos
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-3">
-                  <Label className="text-sm font-medium">Transações</Label>
-                  <div className="space-y-2">
+                <div className="bg-card p-4 rounded-lg border border-border hover:shadow-sm transition-shadow">
+                  <Label className="text-sm font-medium mb-3 block">
+                    Transações
+                  </Label>
+                  <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <label className="text-sm">
                         Transações grandes (&gt;R$ 1.000)
@@ -359,11 +660,11 @@ export function SettingsContent() {
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <Label className="text-sm font-medium">
+                <div className="bg-card p-4 rounded-lg border border-border hover:shadow-sm transition-shadow">
+                  <Label className="text-sm font-medium mb-3 block">
                     Metas e Orçamento
                   </Label>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <label className="text-sm">Progresso das metas</label>
                       <Switch
@@ -393,142 +694,32 @@ export function SettingsContent() {
               </div>
             </div>
 
-            <div className="pt-4 border-t">
-              <Button onClick={handleSaveNotifications} disabled={loading}>
-                {loading
-                  ? 'Salvando...'
-                  : 'Salvar Configurações de Notificação'}
+            <div className="pt-6 mt-2">
+              <Button
+                onClick={handleSaveNotifications}
+                disabled={loading}
+                className="bg-primary hover:bg-primary/90"
+              >
+                {loading ? (
+                  <span className="flex items-center">
+                    <span className="animate-spin h-4 w-4 mr-1 border-2 border-white border-t-transparent rounded-full"></span>
+                    Salvando
+                  </span>
+                ) : (
+                  'Salvar Configurações de Notificação'
+                )}
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        {/* Privacidade e LGPD */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              Privacidade e Dados Pessoais
-            </CardTitle>
-            <CardDescription>
-              Gerencie seus dados pessoais e consentimentos conforme a LGPD
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <Alert>
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                <strong>Seus direitos pela LGPD:</strong> Acesso, correção,
-                exclusão, portabilidade e informação sobre o uso dos seus dados
-                pessoais.{' '}
-                <a href="/privacy" className="underline font-medium">
-                  Ver Política de Privacidade completa
-                </a>
-              </AlertDescription>
-            </Alert>
-
-            <div className="space-y-4">
-              <div className="border rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="font-medium">Dados Essenciais</Label>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Dados necessários para funcionamento básico (login,
-                      transações)
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Switch checked={true} disabled={true} />
-                    <span className="text-xs text-green-600 font-medium">
-                      Obrigatório
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="font-medium">Analytics e Melhorias</Label>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Dados anônimos para melhorar a experiência do usuário
-                    </p>
-                  </div>
-                  <Switch
-                    checked={consents.analytics}
-                    onCheckedChange={value =>
-                      handleConsentChange('analytics', value)
-                    }
-                    disabled={loading}
-                  />
-                </div>
-              </div>
-
-              <div className="border rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="font-medium">
-                      Comunicações de Marketing
-                    </Label>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Ofertas personalizadas e comunicações promocionais
-                    </p>
-                  </div>
-                  <Switch
-                    checked={consents.marketing}
-                    onCheckedChange={value =>
-                      handleConsentChange('marketing', value)
-                    }
-                    disabled={loading}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            <div className="space-y-4">
-              <h4 className="font-medium">Gerenciar Seus Dados</h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <Button
-                  variant="outline"
-                  className="flex items-center gap-2"
-                  onClick={() => handleDataAction('export')}
-                  disabled={loading}
-                >
-                  <Download className="h-4 w-4" />
-                  Baixar Dados
-                </Button>
-
-                <Button
-                  variant="outline"
-                  className="flex items-center gap-2"
-                  onClick={() => window.open('/privacy', '_blank')}
-                >
-                  <Eye className="h-4 w-4" />
-                  Ver Política
-                </Button>
-
-                <Button
-                  variant="destructive"
-                  className="flex items-center gap-2"
-                  onClick={() => handleDataAction('delete')}
-                  disabled={loading}
-                >
-                  <Trash className="h-4 w-4" />
-                  Excluir Conta
-                </Button>
-              </div>
-            </div>
-
-            <div className="text-xs text-muted-foreground pt-4 border-t">
-              <p>
-                <strong>Encarregado de Dados:</strong> privacy@financial-ai.com
-                | <strong>Última atualização:</strong> Janeiro 2025
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Adicionado rodapé com encarregado de dados */}
+        <div className="text-xs text-muted-foreground py-4 border-t mt-8">
+          <p>
+            <strong>Encarregado de Dados:</strong> privacy@financial-ai.com |{' '}
+            <strong>Última atualização:</strong> Janeiro 2025
+          </p>
+        </div>
       </div>
     </div>
   );
