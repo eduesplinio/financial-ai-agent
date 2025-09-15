@@ -1,35 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { MongoClient, ObjectId } from 'mongodb';
 import { z } from 'zod';
 
 const client = new MongoClient(process.env.MONGODB_URI!);
 
 const preferencesSchema = z.object({
-  theme: z.enum(['light', 'dark', 'system']),
-  language: z.enum(['pt-BR', 'en-US']),
-  notifications: z.object({
-    email: z.boolean(),
-    push: z.boolean(),
-    marketing: z.boolean(),
-    largeTransactions: z.boolean().optional(),
-    unusualSpending: z.boolean().optional(),
-    goalProgress: z.boolean().optional(),
-    budgetExceeded: z.boolean().optional(),
-    // Migrar campos antigos para novos
-    sms: z.boolean().optional(),
-    budgetAlerts: z.boolean().optional(),
-    goalReminders: z.boolean().optional(),
-    anomalyDetection: z.boolean().optional(),
-  }),
-  // Campos adicionais compatíveis com estrutura antiga
+  theme: z.enum(['light', 'dark', 'system']).optional(),
+  language: z.enum(['pt-BR', 'en-US']).optional(),
+  notifications: z
+    .object({
+      email: z.boolean().optional(),
+      push: z.boolean().optional(),
+      marketing: z.boolean().optional(),
+      largeTransactions: z.boolean().optional(),
+      unusualSpending: z.boolean().optional(),
+      goalProgress: z.boolean().optional(),
+      budgetExceeded: z.boolean().optional(),
+      // Campos do modelo de dados atual
+      sms: z.boolean().optional(),
+      budgetAlerts: z.boolean().optional(),
+      goalReminders: z.boolean().optional(),
+      anomalyDetection: z.boolean().optional(),
+    })
+    .optional(),
+  // Campos adicionais compatíveis com estrutura atual
   currency: z.string().optional(),
   timezone: z.string().optional(),
+  privacy: z
+    .object({
+      dataSharing: z.boolean().optional(),
+      analytics: z.boolean().optional(),
+      marketing: z.boolean().optional(),
+    })
+    .optional(),
 });
 
 export async function PUT(request: NextRequest) {
   try {
-    const session = await auth();
+    const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
       return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
@@ -65,19 +75,77 @@ export async function PUT(request: NextRequest) {
     );
 
     // Atualizar o documento do usuário
+    // Buscar dados atuais para fazer merge
+    const currentUser = await users.findOne({ _id: new ObjectId(userId) });
+    const currentPreferences = currentUser?.preferences || {};
+
+    // Fazer merge dos dados atuais com os novos, com tratamento adequado para valores booleanos
+    const mergedPreferences = {
+      ...currentPreferences,
+      // Não mesclar a raiz do objeto para evitar perda de estrutura
+      // Se notifications foi fornecido no payload
+      notifications: validatedData.notifications
+        ? {
+            // Mesclar com os valores existentes
+            ...(currentPreferences.notifications || {}),
+            // Sobrescrever com os novos valores, preservando valores false explícitos
+            ...Object.entries(validatedData.notifications).reduce(
+              (acc, [key, value]) => {
+                // Apenas definir se o valor não for undefined
+                if (value !== undefined) {
+                  acc[key] = value;
+                }
+                return acc;
+              },
+              {}
+            ),
+          }
+        : currentPreferences.notifications,
+
+      // Se privacy foi fornecido no payload
+      privacy: validatedData.privacy
+        ? {
+            // Mesclar com os valores existentes
+            ...(currentPreferences.privacy || {}),
+            // Sobrescrever com os novos valores, preservando valores false explícitos
+            ...Object.entries(validatedData.privacy).reduce(
+              (acc, [key, value]) => {
+                // Apenas definir se o valor não for undefined
+                if (value !== undefined) {
+                  acc[key] = value;
+                }
+                return acc;
+              },
+              {}
+            ),
+          }
+        : currentPreferences.privacy,
+
+      // Preservar outros campos que possam ter sido fornecidos
+      theme:
+        validatedData.theme !== undefined
+          ? validatedData.theme
+          : currentPreferences.theme,
+      language:
+        validatedData.language !== undefined
+          ? validatedData.language
+          : currentPreferences.language,
+      currency:
+        validatedData.currency !== undefined
+          ? validatedData.currency
+          : currentPreferences.currency,
+      timezone:
+        validatedData.timezone !== undefined
+          ? validatedData.timezone
+          : currentPreferences.timezone,
+    };
+
     const updateResult = await users.updateOne(
       { _id: new ObjectId(userId) },
       {
         $set: {
-          preferences: validatedData,
+          preferences: mergedPreferences,
           updatedAt: new Date(),
-        },
-        // Remover campos antigos de preferências caso existam
-        $unset: {
-          'preferences.currency': '',
-          'preferences.timezone': '',
-          'preferences.privacy': '',
-          privacy: '',
         },
       }
     );
@@ -92,10 +160,74 @@ export async function PUT(request: NextRequest) {
         ? `ID: ${updatedUser._id}, Email: ${updatedUser.email}`
         : 'Não encontrado'
     );
-    console.log(
-      '[API Preferences] Preferências após atualização:',
-      updatedUser?.preferences
-    );
+
+    // Log detalhado das preferências atualizadas, focando em valores booleanos
+    console.log('[API Preferences] Preferências após atualização:');
+    console.log('- Objeto completo:', updatedUser?.preferences);
+
+    if (updatedUser?.preferences?.notifications) {
+      const notifications = updatedUser.preferences.notifications;
+      console.log('- Notificações (detalhadas):');
+      console.log('  email:', typeof notifications.email, notifications.email);
+      console.log('  push:', typeof notifications.push, notifications.push);
+      console.log(
+        '  marketing:',
+        typeof notifications.marketing,
+        notifications.marketing
+      );
+
+      // Campos originais
+      console.log(
+        '  largeTransactions:',
+        typeof notifications.largeTransactions,
+        notifications.largeTransactions
+      );
+      console.log(
+        '  unusualSpending:',
+        typeof notifications.unusualSpending,
+        notifications.unusualSpending
+      );
+      console.log(
+        '  goalProgress:',
+        typeof notifications.goalProgress,
+        notifications.goalProgress
+      );
+      console.log(
+        '  budgetExceeded:',
+        typeof notifications.budgetExceeded,
+        notifications.budgetExceeded
+      );
+
+      // Campos legados
+      console.log(
+        '  budgetAlerts:',
+        typeof notifications.budgetAlerts,
+        notifications.budgetAlerts
+      );
+      console.log(
+        '  goalReminders:',
+        typeof notifications.goalReminders,
+        notifications.goalReminders
+      );
+      console.log(
+        '  anomalyDetection:',
+        typeof notifications.anomalyDetection,
+        notifications.anomalyDetection
+      );
+      console.log('  sms:', typeof notifications.sms, notifications.sms);
+    }
+
+    if (updatedUser?.preferences?.privacy) {
+      const privacy = updatedUser.preferences.privacy;
+      console.log('- Privacy (detalhada):');
+      console.log('  analytics:', typeof privacy.analytics, privacy.analytics);
+      console.log('  marketing:', typeof privacy.marketing, privacy.marketing);
+      console.log(
+        '  dataSharing:',
+        typeof privacy.dataSharing,
+        privacy.dataSharing
+      );
+    }
 
     // Para compatibilidade, manter a atualização na tabela antiga também
     const preferences = db.collection('user_preferences');
@@ -146,7 +278,7 @@ export async function PUT(request: NextRequest) {
 
 export async function GET() {
   try {
-    const session = await auth();
+    const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
       return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
@@ -154,6 +286,7 @@ export async function GET() {
 
     const userId = session.user.id;
     console.log('[API Preferences GET] ID do usuário:', userId);
+    console.log('[API Preferences GET] Sessão do usuário:', session);
 
     await client.connect();
     console.log('[API Preferences GET] Conexão com MongoDB estabelecida');
@@ -174,6 +307,51 @@ export async function GET() {
         '[API Preferences GET] Preferências encontradas no documento do usuário:',
         user.preferences
       );
+
+      // Log detalhado para debug
+      if (user.preferences.notifications) {
+        const notifications = user.preferences.notifications;
+        console.log('[API Preferences GET] Notificações (detalhadas):');
+        // Campos originais
+        console.log(
+          '  largeTransactions:',
+          typeof notifications.largeTransactions,
+          notifications.largeTransactions
+        );
+        console.log(
+          '  unusualSpending:',
+          typeof notifications.unusualSpending,
+          notifications.unusualSpending
+        );
+        console.log(
+          '  goalProgress:',
+          typeof notifications.goalProgress,
+          notifications.goalProgress
+        );
+        console.log(
+          '  budgetExceeded:',
+          typeof notifications.budgetExceeded,
+          notifications.budgetExceeded
+        );
+
+        // Campos legados
+        console.log(
+          '  budgetAlerts:',
+          typeof notifications.budgetAlerts,
+          notifications.budgetAlerts
+        );
+        console.log(
+          '  goalReminders:',
+          typeof notifications.goalReminders,
+          notifications.goalReminders
+        );
+        console.log(
+          '  anomalyDetection:',
+          typeof notifications.anomalyDetection,
+          notifications.anomalyDetection
+        );
+      }
+
       return NextResponse.json(user.preferences, { status: 200 });
     }
 
