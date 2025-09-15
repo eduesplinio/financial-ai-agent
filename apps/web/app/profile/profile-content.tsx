@@ -38,13 +38,17 @@ import {
   FileText,
   BarChart,
   Shield,
+  Plus,
   Settings,
   ArrowRight,
 } from 'lucide-react';
 import Link from 'next/link';
 
 interface FinancialProfile {
-  userName: string; // Added userName property
+  // User info (comes from session)
+  userName: string;
+
+  // Financial data (stored in MongoDB profile field)
   monthlyIncome: number;
   spendingCategories: {
     housing: number;
@@ -55,10 +59,15 @@ interface FinancialProfile {
     education: number;
     other: number;
   };
-  riskProfile: 'conservative' | 'moderate' | 'aggressive';
-  financialGoals: string[];
   emergencyFund: number;
-  investmentExperience: 'beginner' | 'intermediate' | 'advanced';
+
+  // Risk and knowledge
+  riskProfile: 'conservative' | 'moderate' | 'aggressive'; // maps to riskTolerance in DB
+  financialKnowledgeLevel: 'beginner' | 'intermediate' | 'advanced';
+  investmentExperience?: 'beginner' | 'intermediate' | 'advanced'; // might be redundant with financialKnowledgeLevel
+
+  // Goals
+  financialGoals: string[];
 }
 
 export function ProfileContent() {
@@ -87,6 +96,7 @@ export function ProfileContent() {
     financialGoals: [],
     emergencyFund: 0,
     investmentExperience: 'beginner',
+    financialKnowledgeLevel: 'intermediate',
   });
 
   // Estados temporários para edição
@@ -105,16 +115,33 @@ export function ProfileContent() {
       setInitialLoading(true);
       const response = await fetch('/api/user/financial-profile');
       if (response.ok) {
-        const data = await response.json();
-        // Garante que os dados vêm do campo financialProfile
-        setFinancialProfile({
-          ...data,
+        const apiData = await response.json();
+
+        // Map backend data to frontend model
+        const profileData: FinancialProfile = {
           userName: session?.user?.name || '',
-        });
-        setTempProfile({
-          ...data,
-          userName: session?.user?.name || '',
-        });
+          monthlyIncome: apiData.monthlyIncome || 0,
+          spendingCategories: apiData.spendingCategories || {
+            housing: 0,
+            food: 0,
+            transport: 0,
+            entertainment: 0,
+            healthcare: 0,
+            education: 0,
+            other: 0,
+          },
+          emergencyFund: apiData.emergencyFund || 0,
+          // Map backend riskTolerance to frontend riskProfile
+          riskProfile: apiData.riskProfile || 'moderate',
+          financialGoals: apiData.financialGoals || [],
+          // Map backend investmentExperience to frontend financialKnowledgeLevel
+          // and keep investmentExperience as a duplicate (might need to be removed later)
+          financialKnowledgeLevel: apiData.investmentExperience || 'beginner',
+          investmentExperience: apiData.investmentExperience || 'beginner',
+        };
+
+        setFinancialProfile(profileData);
+        setTempProfile(profileData);
       }
     } catch (error) {
       console.error('Error loading financial profile:', error);
@@ -126,12 +153,24 @@ export function ProfileContent() {
   const handleSaveProfile = async () => {
     setLoading(true);
     try {
+      // Map frontend fields to backend fields
+      const apiPayload = {
+        monthlyIncome: tempProfile.monthlyIncome,
+        spendingCategories: tempProfile.spendingCategories,
+        emergencyFund: tempProfile.emergencyFund,
+        // Map frontend riskProfile to backend riskTolerance
+        riskProfile: tempProfile.riskProfile,
+        financialGoals: tempProfile.financialGoals,
+        // Map frontend financialKnowledgeLevel to backend investmentExperience
+        investmentExperience: tempProfile.financialKnowledgeLevel,
+      };
+
       const response = await fetch('/api/user/financial-profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(tempProfile),
+        body: JSON.stringify(apiPayload),
       });
 
       if (response.ok) {
@@ -158,7 +197,11 @@ export function ProfileContent() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name: userName }),
+        body: JSON.stringify({
+          name: userName,
+          email: session?.user?.email || '',
+          profile: {}, // Enviar objeto vazio para cumprir com o schema
+        }),
       });
 
       if (response.ok) {
@@ -197,7 +240,7 @@ export function ProfileContent() {
       case 'aggressive':
         return 'bg-red-100 text-red-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-secondary text-secondary-foreground';
     }
   };
 
@@ -229,22 +272,20 @@ export function ProfileContent() {
 
   if (!session?.user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Carregando perfil...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Carregando perfil...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-4xl bg-slate-50 min-h-screen rounded-lg shadow-sm">
-      <div className="mb-10">
-        <h1 className="text-3xl font-bold text-center text-blue-700 mb-4">
-          Meu Perfil
-        </h1>
-        <p className="text-center text-gray-600 max-w-xl mx-auto">
+    <div className="w-full px-4 lg:px-8 py-6">
+      <div className="mb-8">
+        <h1 className="text-xl font-semibold">Meu Perfil</h1>
+        <p className="text-muted-foreground">
           Visualize e personalize seu perfil financeiro para uma experiência
           personalizada
         </p>
@@ -261,10 +302,10 @@ export function ProfileContent() {
       )}
 
       {/* Profile Header Card with User Info */}
-      <Card className="mb-8 border-none shadow-md bg-white">
+      <Card className="mb-8 border-none shadow-md">
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row items-center gap-6">
-            <div className="w-24 h-24 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 text-3xl font-bold border-2 border-blue-200">
+            <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center text-primary text-3xl font-bold border-2 border-primary/20">
               {session.user.name ? (
                 session.user.name.substring(0, 2).toUpperCase()
               ) : (
@@ -286,7 +327,7 @@ export function ProfileContent() {
                     />
                   </div>
                 ) : (
-                  <h2 className="text-xl font-bold text-gray-800">
+                  <h2 className="text-xl font-bold text-foreground">
                     {session.user.name || 'Nome não informado'}
                   </h2>
                 )}
@@ -298,7 +339,7 @@ export function ProfileContent() {
                         size="sm"
                         onClick={saveUserName}
                         disabled={loading}
-                        className="bg-blue-500 hover:bg-blue-600"
+                        className="bg-primary hover:bg-primary/90"
                       >
                         {loading ? (
                           <span className="flex items-center">
@@ -329,7 +370,7 @@ export function ProfileContent() {
                       size="sm"
                       variant="outline"
                       onClick={() => setEditingName(true)}
-                      className="text-blue-500 border-blue-200 hover:bg-blue-50"
+                      className="text-primary border-primary/20 hover:bg-primary/10"
                     >
                       <Edit className="h-4 w-4 mr-1" />
                       Editar nome
@@ -338,7 +379,7 @@ export function ProfileContent() {
                 </div>
               </div>
 
-              <div className="text-gray-500">
+              <div className="text-muted-foreground">
                 <div className="flex items-center">
                   <Mail className="h-4 w-4 mr-2" />
                   {session.user.email}
@@ -346,11 +387,17 @@ export function ProfileContent() {
               </div>
 
               <div className="flex flex-wrap gap-2 pt-2">
-                <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200 border-none">
+                <Badge
+                  variant="outline"
+                  className="border-primary/20 text-primary hover:bg-primary/10"
+                >
                   <User className="h-3 w-3 mr-1" />
-                  Membro desde 2023
+                  Membro desde 2025
                 </Badge>
-                <Badge className="bg-green-100 text-green-700 hover:bg-green-200 border-none">
+                <Badge
+                  variant="outline"
+                  className="border-green-500/20 text-green-500 hover:bg-green-500/10"
+                >
                   <CheckCircle className="h-3 w-3 mr-1" />
                   Perfil Completo
                 </Badge>
@@ -360,140 +407,31 @@ export function ProfileContent() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
-        {/* Financial Summary Card */}
-        <Card className="lg:col-span-5 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center gap-2 text-gray-800">
-              <DollarSign className="h-5 w-5 text-green-500" />
-              Resumo Financeiro
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {initialLoading ? (
-              <div className="flex justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              </div>
-            ) : (
-              <>
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <Label className="text-sm font-medium text-green-700">
-                    Renda Mensal
-                  </Label>
-                  <p className="text-2xl font-semibold text-green-600">
-                    {formatCurrency(financialProfile.monthlyIncome)}
-                  </p>
-                </div>
+      {/* Financial Goals have been removed - accessible through /goals page */}
 
-                <div className="flex flex-col gap-2">
-                  <div className="flex justify-between items-center">
-                    <Label className="text-sm font-medium text-gray-700">
-                      Perfil de Risco
-                    </Label>
-                    <Badge
-                      className={
-                        getRiskProfileColor(financialProfile.riskProfile) +
-                        ' ml-auto'
-                      }
-                    >
-                      {getRiskProfileLabel(financialProfile.riskProfile)}
-                    </Badge>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <Label className="text-sm font-medium text-gray-700">
-                      Experiência em Investimentos
-                    </Label>
-                    <span className="text-sm font-medium text-gray-600">
-                      {getExperienceLabel(
-                        financialProfile.investmentExperience
-                      )}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <Label className="text-sm font-medium text-gray-700">
-                      Reserva de Emergência
-                    </Label>
-                    <span className="text-sm font-semibold text-blue-600">
-                      {formatCurrency(financialProfile.emergencyFund)}
-                    </span>
-                  </div>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Financial Goals Card */}
-        <Card className="lg:col-span-7 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center gap-2 text-gray-800">
-              <Target className="h-5 w-5 text-blue-500" />
-              Metas Financeiras
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {initialLoading ? (
-              <div className="flex justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              </div>
-            ) : financialProfile.financialGoals &&
-              financialProfile.financialGoals.length > 0 ? (
-              <ul className="space-y-2">
-                {financialProfile.financialGoals.map((goal, index) => (
-                  <li
-                    key={index}
-                    className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-md"
-                  >
-                    <div className="h-2 w-2 rounded-full bg-blue-500"></div>
-                    <span>{goal}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="text-center py-6 text-gray-500">
-                <Target className="h-10 w-10 mx-auto mb-2 text-gray-300" />
-                <p>Você ainda não definiu metas financeiras</p>
-                <Button variant="link" className="mt-2 text-blue-500">
-                  Definir metas
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Análise do Perfil */}
+      {/* Separator */}
       <div className="mt-6 mb-10">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-          <TrendingUp className="h-5 w-5 mr-2 text-blue-500" />
-          Análise do Perfil Financeiro
-        </h2>
-        <p className="text-gray-600 mb-6">
-          Visualize e configure seu perfil financeiro para receber análises
-          personalizadas
-        </p>
+        <Separator />
       </div>
 
       {/* Detalhes do Perfil */}
-      <Card className="mb-8 border border-gray-100 shadow-md overflow-hidden">
-        <CardHeader className="bg-gradient-to-r from-blue-50 to-white border-b border-gray-100">
+      <Card className="mb-8 shadow-md overflow-hidden">
+        <CardHeader className="bg-primary/5 border-b border-border">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-lg text-gray-800 flex items-center">
-                <PiggyBank className="h-5 w-5 mr-2 text-blue-500" />
-                Perfil Financeiro Detalhado
+              <CardTitle className="text-lg font-medium flex items-center">
+                <PiggyBank className="h-5 w-5 mr-2 text-primary" />
+                Detalhes do Perfil Financeiro
               </CardTitle>
-              <CardDescription>
-                Configure suas preferências e informações financeiras
+              <CardDescription className="mt-1">
+                Informações importantes sobre seu perfil financeiro
               </CardDescription>
             </div>
             {!editingProfile ? (
               <Button
                 variant="outline"
                 onClick={() => setEditingProfile(true)}
-                className="bg-white hover:bg-blue-50 text-blue-600 border-blue-200"
+                className="bg-background hover:bg-primary/10 text-primary border-primary/20"
               >
                 <Edit className="h-4 w-4 mr-2" />
                 Personalizar Perfil
@@ -503,7 +441,7 @@ export function ProfileContent() {
                 <Button
                   onClick={handleSaveProfile}
                   disabled={loading}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-primary hover:bg-primary/90"
                 >
                   <Save className="h-4 w-4 mr-2" />
                   {loading ? (
@@ -518,7 +456,7 @@ export function ProfileContent() {
                 <Button
                   variant="outline"
                   onClick={handleCancelEdit}
-                  className="border-gray-200"
+                  className="border-border"
                 >
                   <X className="h-4 w-4 mr-2" />
                   Cancelar
@@ -540,14 +478,15 @@ export function ProfileContent() {
             <>
               {/* Informações Básicas - Visual melhorado com cards agrupados */}
               <div className="mb-8">
-                <h3 className="text-md font-medium text-gray-700 mb-4 border-b pb-2">
-                  Informações Principais
+                <h3 className="text-base font-medium mb-4 border-b pb-2 flex items-center">
+                  <DollarSign className="h-4 w-4 mr-2 text-primary" />
+                  Informações Financeiras Básicas
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div className="bg-white p-4 rounded-lg border border-gray-100 hover:shadow-sm transition-shadow">
+                  <div className="bg-card p-4 rounded-lg border border-border hover:shadow-sm transition-shadow">
                     <Label
                       htmlFor="monthlyIncome"
-                      className="text-sm text-gray-600 block mb-2"
+                      className="text-sm block mb-2"
                     >
                       Renda Mensal
                     </Label>
@@ -577,10 +516,10 @@ export function ProfileContent() {
                     )}
                   </div>
 
-                  <div className="bg-white p-4 rounded-lg border border-gray-100 hover:shadow-sm transition-shadow">
+                  <div className="bg-card p-4 rounded-lg border border-border hover:shadow-sm transition-shadow">
                     <Label
                       htmlFor="emergencyFund"
-                      className="text-sm text-gray-600 block mb-2"
+                      className="text-sm block mb-2"
                     >
                       Reserva de Emergência
                     </Label>
@@ -610,11 +549,8 @@ export function ProfileContent() {
                     )}
                   </div>
 
-                  <div className="bg-white p-4 rounded-lg border border-gray-100 hover:shadow-sm transition-shadow">
-                    <Label
-                      htmlFor="riskProfile"
-                      className="text-sm text-gray-600 block mb-2"
-                    >
+                  <div className="bg-card p-4 rounded-lg border border-border hover:shadow-sm transition-shadow">
+                    <Label htmlFor="riskProfile" className="text-sm block mb-2">
                       Perfil de Risco
                     </Label>
                     {editingProfile ? (
@@ -650,22 +586,64 @@ export function ProfileContent() {
                 </div>
               </div>
 
-              {/* Experiência em Investimentos */}
+              {/* Conhecimento Financeiro */}
               <div className="mb-8">
-                <h3 className="text-md font-medium text-gray-700 mb-4 border-b pb-2">
-                  Experiência e Objetivos
+                <h3 className="text-base font-medium mb-4 border-b pb-2 flex items-center">
+                  <FileText className="h-4 w-4 mr-2 text-primary" />
+                  Conhecimento e Experiência
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-white p-4 rounded-lg border border-gray-100 hover:shadow-sm transition-shadow">
+                  <div className="bg-card p-4 rounded-lg border border-border hover:shadow-sm transition-shadow">
+                    <Label
+                      htmlFor="financialKnowledgeLevel"
+                      className="text-sm block mb-2"
+                    >
+                      Nível de Conhecimento Financeiro
+                    </Label>
+                    {editingProfile ? (
+                      <Select
+                        value={tempProfile.financialKnowledgeLevel}
+                        onValueChange={(
+                          value: 'beginner' | 'intermediate' | 'advanced'
+                        ) =>
+                          setTempProfile({
+                            ...tempProfile,
+                            financialKnowledgeLevel: value,
+                          })
+                        }
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="beginner">Iniciante</SelectItem>
+                          <SelectItem value="intermediate">
+                            Intermediário
+                          </SelectItem>
+                          <SelectItem value="advanced">Avançado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="flex items-center">
+                        <span className="px-2 py-1 rounded-md text-sm font-medium bg-primary/10 text-primary">
+                          {getExperienceLabel(
+                            financialProfile.financialKnowledgeLevel
+                          )}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="bg-card p-4 rounded-lg border border-border hover:shadow-sm transition-shadow">
                     <Label
                       htmlFor="investmentExperience"
-                      className="text-sm text-gray-600 block mb-2"
+                      className="text-sm block mb-2"
                     >
                       Experiência em Investimentos
                     </Label>
                     {editingProfile ? (
                       <Select
-                        value={tempProfile.investmentExperience}
+                        value={tempProfile.investmentExperience || 'beginner'}
                         onValueChange={(
                           value: 'beginner' | 'intermediate' | 'advanced'
                         ) =>
@@ -688,226 +666,22 @@ export function ProfileContent() {
                       </Select>
                     ) : (
                       <div className="flex items-center">
-                        <span className="px-2 py-1 rounded-md text-sm font-medium bg-blue-50 text-blue-700">
+                        <span className="px-2 py-1 rounded-md text-sm font-medium bg-primary/10 text-primary">
                           {getExperienceLabel(
-                            financialProfile.investmentExperience
+                            financialProfile.investmentExperience || 'beginner'
                           )}
                         </span>
                       </div>
                     )}
                   </div>
-
-                  <div className="bg-white p-4 rounded-lg border border-gray-100 hover:shadow-sm transition-shadow">
-                    <Label className="text-sm text-gray-600 block mb-2">
-                      Metas Financeiras
-                    </Label>
-                    {editingProfile ? (
-                      <div className="text-sm text-gray-500">
-                        Edite suas metas na seção de Metas Financeiras
-                      </div>
-                    ) : (
-                      <div className="text-sm">
-                        {financialProfile.financialGoals &&
-                        financialProfile.financialGoals.length > 0 ? (
-                          <ul className="list-disc list-inside text-gray-700">
-                            {financialProfile.financialGoals
-                              .slice(0, 3)
-                              .map((goal, index) => (
-                                <li key={index}>{goal}</li>
-                              ))}
-                            {financialProfile.financialGoals.length > 3 && (
-                              <li className="text-blue-600">
-                                + {financialProfile.financialGoals.length - 3}{' '}
-                                mais
-                              </li>
-                            )}
-                          </ul>
-                        ) : (
-                          <p className="text-gray-500 italic">
-                            Nenhuma meta definida
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
                 </div>
               </div>
 
-              {/* Distribuição de Gastos */}
-              <div className="mb-8">
-                <h3 className="text-md font-medium text-gray-700 mb-4 border-b pb-2">
-                  Distribuição de Gastos Mensais
-                </h3>
-                <div className="bg-white p-4 rounded-lg border border-gray-100">
-                  {editingProfile ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {Object.entries(tempProfile.spendingCategories).map(
-                        ([category, value]) => (
-                          <div key={category} className="mb-2">
-                            <Label
-                              htmlFor={`spending-${category}`}
-                              className="capitalize text-sm text-gray-600 block mb-1"
-                            >
-                              {category === 'housing'
-                                ? 'Moradia'
-                                : category === 'food'
-                                  ? 'Alimentação'
-                                  : category === 'transport'
-                                    ? 'Transporte'
-                                    : category === 'entertainment'
-                                      ? 'Lazer'
-                                      : category === 'healthcare'
-                                        ? 'Saúde'
-                                        : category === 'education'
-                                          ? 'Educação'
-                                          : 'Outros'}
-                            </Label>
-                            <div className="relative rounded-md shadow-sm">
-                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <span className="text-gray-500 sm:text-sm">
-                                  R$
-                                </span>
-                              </div>
-                              <Input
-                                id={`spending-${category}`}
-                                type="number"
-                                value={value}
-                                onChange={e => {
-                                  const newValue = Number(e.target.value);
-                                  setTempProfile({
-                                    ...tempProfile,
-                                    spendingCategories: {
-                                      ...tempProfile.spendingCategories,
-                                      [category]: newValue,
-                                    },
-                                  });
-                                }}
-                                className="pl-10"
-                                placeholder="0,00"
-                              />
-                            </div>
-                          </div>
-                        )
-                      )}
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {Object.entries(financialProfile.spendingCategories).map(
-                        ([category, value]) => {
-                          const total = Object.values(
-                            financialProfile.spendingCategories
-                          ).reduce((a, b) => a + b, 0);
-                          const percentage =
-                            total > 0 ? Math.round((value / total) * 100) : 0;
-
-                          return (
-                            <div key={category} className="space-y-1">
-                              <div className="flex justify-between items-center text-sm">
-                                <span className="capitalize text-gray-700">
-                                  {category === 'housing'
-                                    ? 'Moradia'
-                                    : category === 'food'
-                                      ? 'Alimentação'
-                                      : category === 'transport'
-                                        ? 'Transporte'
-                                        : category === 'entertainment'
-                                          ? 'Lazer'
-                                          : category === 'healthcare'
-                                            ? 'Saúde'
-                                            : category === 'education'
-                                              ? 'Educação'
-                                              : 'Outros'}
-                                </span>
-                                <span className="text-gray-600">
-                                  {formatCurrency(value)} ({percentage}%)
-                                </span>
-                              </div>
-                              <div className="w-full bg-gray-100 rounded-full h-2">
-                                <div
-                                  className={`h-2 rounded-full ${
-                                    category === 'housing'
-                                      ? 'bg-blue-500'
-                                      : category === 'food'
-                                        ? 'bg-green-500'
-                                        : category === 'transport'
-                                          ? 'bg-purple-500'
-                                          : category === 'entertainment'
-                                            ? 'bg-yellow-500'
-                                            : category === 'healthcare'
-                                              ? 'bg-red-500'
-                                              : category === 'education'
-                                                ? 'bg-indigo-500'
-                                                : 'bg-gray-500'
-                                  }`}
-                                  style={{ width: `${percentage}%` }}
-                                ></div>
-                              </div>
-                            </div>
-                          );
-                        }
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
+              {/* Seção de Distribuição de Gastos Mensais removida - já existe no dashboard */}
             </>
           )}
         </CardContent>
       </Card>
-
-      {/* Links Rápidos */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <Link href="/dashboard" passHref>
-          <Card className="cursor-pointer hover:shadow-md transition-shadow border-gray-100">
-            <CardContent className="p-4 flex gap-3 items-center">
-              <div className="bg-blue-100 p-2 rounded-full">
-                <BarChart className="h-5 w-5 text-blue-600" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-medium text-gray-800">Dashboard</h3>
-                <p className="text-sm text-gray-500">
-                  Visualize seu panorama financeiro
-                </p>
-              </div>
-              <ArrowRight className="h-4 w-4 text-gray-400" />
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link href="/goals" passHref>
-          <Card className="cursor-pointer hover:shadow-md transition-shadow border-gray-100">
-            <CardContent className="p-4 flex gap-3 items-center">
-              <div className="bg-green-100 p-2 rounded-full">
-                <Target className="h-5 w-5 text-green-600" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-medium text-gray-800">Metas</h3>
-                <p className="text-sm text-gray-500">
-                  Gerencie suas metas financeiras
-                </p>
-              </div>
-              <ArrowRight className="h-4 w-4 text-gray-400" />
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link href="/settings" passHref>
-          <Card className="cursor-pointer hover:shadow-md transition-shadow border-gray-100">
-            <CardContent className="p-4 flex gap-3 items-center">
-              <div className="bg-purple-100 p-2 rounded-full">
-                <Settings className="h-5 w-5 text-purple-600" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-medium text-gray-800">Configurações</h3>
-                <p className="text-sm text-gray-500">
-                  Ajuste preferências e privacidade
-                </p>
-              </div>
-              <ArrowRight className="h-4 w-4 text-gray-400" />
-            </CardContent>
-          </Card>
-        </Link>
-      </div>
     </div>
   );
 }
