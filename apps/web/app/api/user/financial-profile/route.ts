@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 import { z } from 'zod';
 
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -39,13 +39,12 @@ export async function GET(request: NextRequest) {
     await client.connect();
 
     const db = client.db();
-    const collection = db.collection('financial_profiles');
-
-    const profile = await collection.findOne({ userId: session.user.id });
-
+    const users = db.collection('users');
+    const user = await users.findOne({ _id: new ObjectId(session.user.id) });
     await client.close();
 
-    if (!profile) {
+    // Verificar se o usuário tem o perfil financeiro no campo profile
+    if (!user || !user.profile) {
       // Retornar perfil padrão se não existir
       return NextResponse.json({
         monthlyIncome: 0,
@@ -64,10 +63,26 @@ export async function GET(request: NextRequest) {
         investmentExperience: 'beginner',
       });
     }
+    // Extrair e transformar os dados financeiros do profile
+    const profile = user.profile;
+    const financialData = {
+      monthlyIncome: profile.monthlyIncome || 0,
+      spendingCategories: profile.spendingCategories || {
+        housing: 0,
+        food: 0,
+        transport: 0,
+        entertainment: 0,
+        healthcare: 0,
+        education: 0,
+        other: 0,
+      },
+      riskProfile: profile.riskTolerance || 'moderate',
+      financialGoals: profile.financialGoals || [],
+      emergencyFund: profile.emergencyFund || 0,
+      investmentExperience: profile.financialKnowledgeLevel || 'beginner',
+    };
 
-    // Remove campos internos do MongoDB
-    const { _id, userId, ...profileData } = profile;
-    return NextResponse.json(profileData);
+    return NextResponse.json(financialData);
   } catch (error) {
     console.error('Error fetching financial profile:', error);
     return NextResponse.json(
@@ -84,11 +99,16 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const userId = session.user.id;
+    console.log('[API] ID do usuário para atualização:', userId);
+
     const body = await request.json();
+    console.log('[API] Payload recebido para financialProfile:', body);
 
     // Validar dados de entrada
     const validationResult = financialProfileSchema.safeParse(body);
     if (!validationResult.success) {
+      console.log('[API] Dados inválidos:', validationResult.error.errors);
       return NextResponse.json(
         { error: 'Invalid data', details: validationResult.error.errors },
         { status: 400 }
@@ -97,27 +117,68 @@ export async function PUT(request: NextRequest) {
 
     const client = new MongoClient(MONGODB_URI);
     await client.connect();
+    console.log('[API] Conexão com MongoDB estabelecida');
 
     const db = client.db();
-    const collection = db.collection('financial_profiles');
+    const users = db.collection('users');
 
-    const profileData = {
-      ...validationResult.data,
-      userId: session.user.id,
-      updatedAt: new Date(),
-    };
+    // Buscar usuário antes da atualização
+    const userBefore = await users.findOne({ _id: new ObjectId(userId) });
+    console.log(
+      '[API] Usuário antes da atualização:',
+      userBefore
+        ? `ID: ${userBefore._id}, Email: ${userBefore.email}`
+        : 'Não encontrado'
+    );
+    console.log('[API] financialProfile antes:', userBefore?.financialProfile);
 
-    await collection.replaceOne({ userId: session.user.id }, profileData, {
-      upsert: true,
-    });
+    // Migrar todos os dados apenas para o campo profile
+    const updateResult = await users.updateOne(
+      { _id: new ObjectId(userId) },
+      {
+        $set: {
+          profile: {
+            // Manter dados do profile existente
+            ...(userBefore?.profile || {}),
+            // Adicionar dados financeiros atualizados
+            monthlyIncome: validationResult.data.monthlyIncome,
+            spendingCategories: validationResult.data.spendingCategories,
+            emergencyFund: validationResult.data.emergencyFund,
+            // Converter os campos específicos do perfil financeiro
+            riskTolerance: validationResult.data.riskProfile,
+            financialGoals: validationResult.data.financialGoals,
+            financialKnowledgeLevel: validationResult.data.investmentExperience,
+          },
+          updatedAt: new Date(),
+        },
+        // Remover o campo perfil se existir
+        $unset: {
+          perfil: '',
+        },
+      }
+    );
+
+    console.log('[API] Resultado da atualização:', updateResult);
+
+    // Buscar o valor salvo para conferência
+    const updatedUser = await users.findOne({ _id: new ObjectId(userId) });
+    console.log(
+      '[API] Usuário após atualização:',
+      updatedUser
+        ? `ID: ${updatedUser._id}, Email: ${updatedUser.email}`
+        : 'Não encontrado'
+    );
+    console.log(
+      '[API] financialProfile após atualização:',
+      updatedUser?.financialProfile
+    );
 
     await client.close();
+    console.log('[API] Conexão com MongoDB fechada');
 
-    // Remove campos internos antes de retornar
-    const { userId, updatedAt, ...responseData } = profileData;
-    return NextResponse.json(responseData);
+    return NextResponse.json({ success: true, data: validationResult.data });
   } catch (error) {
-    console.error('Error updating financial profile:', error);
+    console.error('[API] Erro ao atualizar financialProfile:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 import { z } from 'zod';
 
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -32,13 +32,11 @@ export async function GET(request: NextRequest) {
     await client.connect();
 
     const db = client.db();
-    const collection = db.collection('notification_settings');
-
-    const settings = await collection.findOne({ userId: session.user.id });
-
+    const users = db.collection('users');
+    const user = await users.findOne({ _id: new ObjectId(session.user.id) });
     await client.close();
 
-    if (!settings) {
+    if (!user || !user.preferences || !user.preferences.notifications) {
       // Retornar configurações padrão se não existir
       const defaultSettings = {
         email: true,
@@ -52,9 +50,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(defaultSettings);
     }
 
-    // Remove campos internos do MongoDB
-    const { _id, userId, ...settingsData } = settings;
-    return NextResponse.json(settingsData);
+    return NextResponse.json(user.preferences.notifications);
   } catch (error) {
     console.error('Error fetching notification settings:', error);
     return NextResponse.json(
@@ -71,11 +67,19 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const userId = session.user.id;
+    console.log('[API Notifications] ID do usuário para atualização:', userId);
+
     const body = await request.json();
+    console.log('[API Notifications] Payload recebido:', body);
 
     // Validar dados de entrada
     const validationResult = notificationSettingsSchema.safeParse(body);
     if (!validationResult.success) {
+      console.log(
+        '[API Notifications] Dados inválidos:',
+        validationResult.error.errors
+      );
       return NextResponse.json(
         { error: 'Invalid data', details: validationResult.error.errors },
         { status: 400 }
@@ -84,25 +88,57 @@ export async function PUT(request: NextRequest) {
 
     const client = new MongoClient(MONGODB_URI);
     await client.connect();
+    console.log('[API Notifications] Conexão com MongoDB estabelecida');
 
     const db = client.db();
-    const collection = db.collection('notification_settings');
+    const users = db.collection('users');
 
-    const settingsData = {
-      ...validationResult.data,
-      userId: session.user.id,
-      updatedAt: new Date(),
-    };
+    // Buscar usuário antes da atualização
+    const userBefore = await users.findOne({ _id: new ObjectId(userId) });
+    console.log(
+      '[API Notifications] Usuário antes da atualização:',
+      userBefore
+        ? `ID: ${userBefore._id}, Email: ${userBefore.email}`
+        : 'Não encontrado'
+    );
+    console.log(
+      '[API Notifications] Preferências de notificação antes:',
+      userBefore?.preferences?.notifications
+    );
 
-    await collection.replaceOne({ userId: session.user.id }, settingsData, {
-      upsert: true,
-    });
+    // Fazer o update
+    const updateResult = await users.updateOne(
+      { _id: new ObjectId(userId) },
+      {
+        $set: {
+          'preferences.notifications': validationResult.data,
+          'preferences.updatedAt': new Date(),
+        },
+      }
+    );
+
+    console.log('[API Notifications] Resultado da atualização:', updateResult);
+
+    // Buscar usuário após atualização para conferência
+    const updatedUser = await users.findOne({ _id: new ObjectId(userId) });
+    console.log(
+      '[API Notifications] Usuário após atualização:',
+      updatedUser
+        ? `ID: ${updatedUser._id}, Email: ${updatedUser.email}`
+        : 'Não encontrado'
+    );
+    console.log(
+      '[API Notifications] Preferências de notificação após:',
+      updatedUser?.preferences?.notifications
+    );
 
     await client.close();
+    console.log('[API Notifications] Conexão com MongoDB fechada');
 
-    // Remove campos internos antes de retornar
-    const { userId, updatedAt, ...responseData } = settingsData;
-    return NextResponse.json(responseData);
+    return NextResponse.json({
+      success: true,
+      data: validationResult.data,
+    });
   } catch (error) {
     console.error('Error updating notification settings:', error);
     return NextResponse.json(

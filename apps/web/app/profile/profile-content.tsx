@@ -83,7 +83,7 @@ export function ProfileContent() {
   const [tempProfile, setTempProfile] =
     useState<FinancialProfile>(financialProfile);
 
-  // Carregar perfil financeiro
+  // Carregar perfil financeiro SEMPRE do campo financialProfile do usuário
   useEffect(() => {
     if (session?.user?.id) {
       loadFinancialProfile();
@@ -96,6 +96,7 @@ export function ProfileContent() {
       const response = await fetch('/api/user/financial-profile');
       if (response.ok) {
         const data = await response.json();
+        // Garante que os dados vêm do campo financialProfile
         setFinancialProfile(data);
         setTempProfile(data);
       }

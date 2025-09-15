@@ -25,14 +25,60 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
     }
 
+    const userId = session.user.id;
+    console.log('[API Consents] ID do usuário para atualização:', userId);
+
     const body = await request.json();
+    console.log('[API Consents] Payload recebido:', body);
+
     const validatedData = consentSchema.parse(body);
 
     const client = new MongoClient(MONGODB_URI);
     await client.connect();
+    console.log('[API Consents] Conexão com MongoDB estabelecida');
+
     const db = client.db();
 
-    // Salvar em duas coleções: consentimentos atuais e histórico de auditoria
+    // Atualizar no documento do usuário principal
+    const users = db.collection('users');
+
+    // Buscar usuário antes da atualização
+    const userBefore = await users.findOne({ _id: new ObjectId(userId) });
+    console.log(
+      '[API Consents] Usuário antes da atualização:',
+      userBefore
+        ? `ID: ${userBefore._id}, Email: ${userBefore.email}`
+        : 'Não encontrado'
+    );
+    console.log('[API Consents] Consentimentos antes:', userBefore?.consents);
+
+    // Atualizar o documento do usuário
+    const updateResult = await users.updateOne(
+      { _id: new ObjectId(userId) },
+      {
+        $set: {
+          consents: validatedData,
+          updatedAt: new Date(),
+        },
+      }
+    );
+
+    console.log('[API Consents] Resultado da atualização:', updateResult);
+
+    // Buscar usuário após atualização para conferência
+    const updatedUser = await users.findOne({ _id: new ObjectId(userId) });
+    console.log(
+      '[API Consents] Usuário após atualização:',
+      updatedUser
+        ? `ID: ${updatedUser._id}, Email: ${updatedUser.email}`
+        : 'Não encontrado'
+    );
+    console.log(
+      '[API Consents] Consentimentos após atualização:',
+      updatedUser?.consents
+    );
+
+    // Salvar em duas coleções para compatibilidade: consentimentos atuais e histórico de auditoria
     const consents = db.collection('user_consents');
     const consentHistory = db.collection('user_consent_history');
 
@@ -127,14 +173,46 @@ export async function GET() {
       return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
     }
 
+    const userId = session.user.id;
+    console.log('[API Consents GET] ID do usuário:', userId);
+
     const client = new MongoClient(MONGODB_URI);
     await client.connect();
-    const db = client.db();
-    const consents = db.collection('user_consents');
+    console.log('[API Consents GET] Conexão com MongoDB estabelecida');
 
+    const db = client.db();
+
+    // Primeiro buscar no documento do usuário
+    const users = db.collection('users');
+    const user = await users.findOne({ _id: new ObjectId(userId) });
+
+    console.log(
+      '[API Consents GET] Usuário encontrado:',
+      user ? `ID: ${user._id}, Email: ${user.email}` : 'Não encontrado'
+    );
+
+    if (user && user.consents) {
+      console.log(
+        '[API Consents GET] Consentimentos encontrados no documento do usuário:',
+        user.consents
+      );
+      await client.close();
+      return NextResponse.json(user.consents, { status: 200 });
+    }
+
+    // Se não encontrar no documento principal, buscar na collection antiga
+    console.log(
+      '[API Consents GET] Consentimentos não encontrados no documento do usuário, buscando na collection antiga'
+    );
+    const consents = db.collection('user_consents');
     const userConsents = await consents.findOne(
-      { userId: session.user.id },
+      { userId: userId },
       { projection: { _id: 0, userId: 0, ipAddress: 0, userAgent: 0 } }
+    );
+
+    console.log(
+      '[API Consents GET] Resultado da busca na collection antiga:',
+      userConsents ? 'Encontrado' : 'Não encontrado'
     );
 
     await client.close();
@@ -149,9 +227,13 @@ export async function GET() {
         updatedAt: new Date(),
       };
 
+      console.log('[API Consents GET] Retornando consentimentos padrão');
       return NextResponse.json(defaultConsents, { status: 200 });
     }
 
+    console.log(
+      '[API Consents GET] Retornando consentimentos da collection antiga'
+    );
     return NextResponse.json(userConsents, { status: 200 });
   } catch (error) {
     console.error('Consents fetch error:', error);

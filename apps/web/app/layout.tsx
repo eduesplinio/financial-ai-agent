@@ -3,14 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import './no-underline.css';
 import { Providers } from '@/components/providers';
-import { Sidebar } from '@/components/layout/sidebar';
-import { ChatWidget } from '@/components/chat/ChatWidget';
-import dynamic from 'next/dynamic';
-
-// Importação dinâmica do ErrorBoundary para evitar erros de SSR
-const ErrorBoundary = dynamic(() => import('@/components/error-boundary'), {
-  ssr: false,
-});
+import { AppShell } from '@/components/layout/app-shell';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -35,13 +28,7 @@ export default function RootLayout({
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
         <Providers>
-          <div className="flex h-screen overflow-hidden bg-background">
-            <Sidebar />
-            <main className="flex-1 min-h-0 overflow-y-auto p-0 lg:p-0">
-              <ErrorBoundary>{children}</ErrorBoundary>
-            </main>
-            <ChatWidget />
-          </div>
+          <AppShell>{children}</AppShell>
         </Providers>
       </body>
     </html>

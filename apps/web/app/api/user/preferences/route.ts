@@ -16,7 +16,15 @@ const preferencesSchema = z.object({
     unusualSpending: z.boolean().optional(),
     goalProgress: z.boolean().optional(),
     budgetExceeded: z.boolean().optional(),
+    // Migrar campos antigos para novos
+    sms: z.boolean().optional(),
+    budgetAlerts: z.boolean().optional(),
+    goalReminders: z.boolean().optional(),
+    anomalyDetection: z.boolean().optional(),
   }),
+  // Campos adicionais compatíveis com estrutura antiga
+  currency: z.string().optional(),
+  timezone: z.string().optional(),
 });
 
 export async function PUT(request: NextRequest) {
@@ -27,22 +35,79 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
     }
 
+    const userId = session.user.id;
+    console.log('[API Preferences] ID do usuário para atualização:', userId);
+
     const body = await request.json();
+    console.log('[API Preferences] Payload recebido:', body);
+
     const validatedData = preferencesSchema.parse(body);
 
     await client.connect();
-    const db = client.db();
-    const preferences = db.collection('user_preferences');
+    console.log('[API Preferences] Conexão com MongoDB estabelecida');
 
+    const db = client.db();
+
+    // Atualizar diretamente na collection de usuários
+    const users = db.collection('users');
+
+    // Buscar usuário antes da atualização
+    const userBefore = await users.findOne({ _id: new ObjectId(userId) });
+    console.log(
+      '[API Preferences] Usuário antes da atualização:',
+      userBefore
+        ? `ID: ${userBefore._id}, Email: ${userBefore.email}`
+        : 'Não encontrado'
+    );
+    console.log(
+      '[API Preferences] Preferências antes:',
+      userBefore?.preferences
+    );
+
+    // Atualizar o documento do usuário
+    const updateResult = await users.updateOne(
+      { _id: new ObjectId(userId) },
+      {
+        $set: {
+          preferences: validatedData,
+          updatedAt: new Date(),
+        },
+        // Remover campos antigos de preferências caso existam
+        $unset: {
+          'preferences.currency': '',
+          'preferences.timezone': '',
+          'preferences.privacy': '',
+          privacy: '',
+        },
+      }
+    );
+
+    console.log('[API Preferences] Resultado da atualização:', updateResult);
+
+    // Buscar usuário após atualização para conferência
+    const updatedUser = await users.findOne({ _id: new ObjectId(userId) });
+    console.log(
+      '[API Preferences] Usuário após atualização:',
+      updatedUser
+        ? `ID: ${updatedUser._id}, Email: ${updatedUser.email}`
+        : 'Não encontrado'
+    );
+    console.log(
+      '[API Preferences] Preferências após atualização:',
+      updatedUser?.preferences
+    );
+
+    // Para compatibilidade, manter a atualização na tabela antiga também
+    const preferences = db.collection('user_preferences');
     const result = await preferences.findOneAndUpdate(
-      { userId: session.user.id },
+      { userId: userId },
       {
         $set: {
           ...validatedData,
           updatedAt: new Date(),
         },
         $setOnInsert: {
-          userId: session.user.id,
+          userId: userId,
           createdAt: new Date(),
         },
       },
@@ -52,8 +117,12 @@ export async function PUT(request: NextRequest) {
       }
     );
 
+    console.log('[API Preferences] Preferências salvas com sucesso');
     return NextResponse.json(
-      { message: 'Preferências salvas com sucesso', preferences: result },
+      {
+        message: 'Preferências salvas com sucesso',
+        preferences: validatedData,
+      },
       { status: 200 }
     );
   } catch (error) {
@@ -83,13 +152,44 @@ export async function GET() {
       return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
     }
 
-    await client.connect();
-    const db = client.db();
-    const preferences = db.collection('user_preferences');
+    const userId = session.user.id;
+    console.log('[API Preferences GET] ID do usuário:', userId);
 
+    await client.connect();
+    console.log('[API Preferences GET] Conexão com MongoDB estabelecida');
+
+    const db = client.db();
+
+    // Primeiro buscar no documento do usuário
+    const users = db.collection('users');
+    const user = await users.findOne({ _id: new ObjectId(userId) });
+
+    console.log(
+      '[API Preferences GET] Usuário encontrado:',
+      user ? `ID: ${user._id}, Email: ${user.email}` : 'Não encontrado'
+    );
+
+    if (user && user.preferences) {
+      console.log(
+        '[API Preferences GET] Preferências encontradas no documento do usuário:',
+        user.preferences
+      );
+      return NextResponse.json(user.preferences, { status: 200 });
+    }
+
+    // Se não encontrar no documento principal, buscar na collection antiga
+    console.log(
+      '[API Preferences GET] Preferências não encontradas no documento do usuário, buscando na collection antiga'
+    );
+    const preferences = db.collection('user_preferences');
     const userPreferences = await preferences.findOne({
-      userId: session.user.id,
+      userId: userId,
     });
+
+    console.log(
+      '[API Preferences GET] Resultado da busca na collection antiga:',
+      userPreferences ? 'Encontrado' : 'Não encontrado'
+    );
 
     if (!userPreferences) {
       // Retorna preferências padrão
@@ -107,9 +207,13 @@ export async function GET() {
         },
       };
 
+      console.log('[API Preferences GET] Retornando preferências padrão');
       return NextResponse.json(defaultPreferences, { status: 200 });
     }
 
+    console.log(
+      '[API Preferences GET] Retornando preferências da collection antiga'
+    );
     return NextResponse.json(userPreferences, { status: 200 });
   } catch (error) {
     console.error('Preferences fetch error:', error);
