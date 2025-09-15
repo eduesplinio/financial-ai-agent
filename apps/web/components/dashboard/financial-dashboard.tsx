@@ -16,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PiggyBank, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
 // ...existing code...
 import { useState } from 'react';
 import {
@@ -133,6 +132,7 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
   const doughnutOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    cutout: '90%', // borda fina
     plugins: {
       legend: {
         position: 'bottom' as const,
@@ -170,73 +170,77 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
 
       {/* Cards de métricas principais */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
+        <Card className="bg-green-100 dark:bg-green-900/20 border-green-200 dark:border-green-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Saldo Total</CardTitle>
-            <Wallet className="text-green-600" size={28} />
+            <CardTitle className="text-sm font-medium text-green-800 dark:text-green-300">
+              Saldo Total
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400">
               R${' '}
               {mockData.balance.toLocaleString('pt-BR', {
                 minimumFractionDigits: 2,
               })}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-green-700/70 dark:text-green-300/70">
               +5.2% em relação ao mês passado
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-blue-100 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Receitas</CardTitle>
-            <TrendingUp className="text-blue-600" size={28} />
+            <CardTitle className="text-sm font-medium text-blue-800 dark:text-blue-300">
+              Receitas
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
               R${' '}
               {mockData.income.toLocaleString('pt-BR', {
                 minimumFractionDigits: 2,
               })}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-blue-700/70 dark:text-blue-300/70">
               +2.1% em relação ao mês passado
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-red-100 dark:bg-red-900/20 border-red-200 dark:border-red-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Gastos</CardTitle>
-            <TrendingDown className="text-red-600" size={28} />
+            <CardTitle className="text-sm font-medium text-red-800 dark:text-red-300">
+              Gastos
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">
+            <div className="text-2xl font-bold text-red-600 dark:text-red-400">
               R${' '}
               {mockData.expenses.toLocaleString('pt-BR', {
                 minimumFractionDigits: 2,
               })}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-red-700/70 dark:text-red-300/70">
               -3.4% em relação ao mês passado
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-purple-100 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Investimentos</CardTitle>
-            <PiggyBank className="text-purple-600" size={28} />
+            <CardTitle className="text-sm font-medium text-purple-800 dark:text-purple-300">
+              Investimentos
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600">
+            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
               R${' '}
               {mockData.savings.toLocaleString('pt-BR', {
                 minimumFractionDigits: 2,
               })}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-purple-700/70 dark:text-purple-300/70">
               +8.7% em relação ao mês passado
             </p>
           </CardContent>
@@ -289,23 +293,22 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
               {mockData.categoryExpenses.map((item, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between p-3 rounded-lg bg-muted/80"
+                  className="flex items-center justify-between p-3 rounded-lg"
+                  style={{ background: `${item.color}22` }}
                 >
                   <div className="flex items-center gap-3">
-                    <div
-                      className="w-4 h-4 rounded-full"
-                      style={{ backgroundColor: item.color }}
-                    />
-                    <span className="font-medium">{item.category}</span>
+                    <span className="font-medium text-gray-800 dark:text-gray-200">
+                      {item.category}
+                    </span>
                   </div>
                   <div className="text-right">
-                    <div className="font-bold">
+                    <div className="font-bold text-gray-800 dark:text-gray-200">
                       R${' '}
                       {item.amount.toLocaleString('pt-BR', {
                         minimumFractionDigits: 2,
                       })}
                     </div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-xs opacity-90 text-gray-700 dark:text-gray-300">
                       {((item.amount / mockData.expenses) * 100).toFixed(1)}% do
                       total
                     </div>
