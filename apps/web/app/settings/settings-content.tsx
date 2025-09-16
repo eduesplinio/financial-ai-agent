@@ -341,7 +341,6 @@ export function SettingsContent() {
 
   // Debug function para inspecionar o estado local e dados da API
   const debugState = async () => {
-    console.log('--- DEBUG ESTADO LOCAL ---');
     console.log('Notificações locais:', notifications);
     console.log('Privacidade local:', consents);
 
@@ -407,15 +406,6 @@ export function SettingsContent() {
         <p className="text-muted-foreground">
           Gerencie suas preferências e configurações da conta
         </p>
-        {/* Botão de debug visível apenas em desenvolvimento */}
-        {process.env.NODE_ENV === 'development' && (
-          <button
-            onClick={debugState}
-            className="text-xs mt-2 text-gray-500 hover:text-gray-700"
-          >
-            Debug Estado
-          </button>
-        )}
       </div>
 
       {saveMessage && (
@@ -444,17 +434,14 @@ export function SettingsContent() {
             </div>
           </CardHeader>
           <CardContent className="pt-6 pb-8">
-            <Alert className="mb-6">
+            {/* <Alert className="mb-6">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
                 <strong>Seus direitos pela LGPD:</strong> Acesso, correção,
                 exclusão, portabilidade e informação sobre o uso dos seus dados
                 pessoais.{' '}
-                <a href="/privacy" className="underline font-medium">
-                  Ver Política de Privacidade completa
-                </a>
               </AlertDescription>
-            </Alert>
+            </Alert> */}
 
             <div className="space-y-4">
               <div className="bg-card p-4 rounded-lg border border-border hover:shadow-sm transition-shadow">
@@ -532,7 +519,7 @@ export function SettingsContent() {
                 <Button
                   variant="outline"
                   className="flex items-center gap-2 bg-card border-border hover:bg-primary/10 text-primary"
-                  onClick={() => window.open('/privacy', '_blank')}
+                  onClick={() => (window.location.href = '/privacy')}
                 >
                   <Eye className="h-4 w-4" />
                   Ver Política
@@ -540,7 +527,7 @@ export function SettingsContent() {
 
                 <Button
                   variant="destructive"
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 bg-red-500 border-red-500 hover:bg-red-600 text-white"
                   onClick={() => handleDataAction('delete')}
                   disabled={loading}
                 >
@@ -716,8 +703,8 @@ export function SettingsContent() {
         {/* Adicionado rodapé com encarregado de dados */}
         <div className="text-xs text-muted-foreground py-4 border-t mt-8">
           <p>
-            <strong>Encarregado de Dados:</strong> privacy@financial-ai.com |{' '}
-            <strong>Última atualização:</strong> Janeiro 2025
+            {/* <strong>Encarregado de Dados:</strong> privacy@financial-ai.com |{' '}
+            <strong>Última atualização:</strong> Setembro 2025 */}
           </p>
         </div>
       </div>
