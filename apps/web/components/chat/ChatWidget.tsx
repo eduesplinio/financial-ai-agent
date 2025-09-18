@@ -37,6 +37,7 @@ export const ChatWidget: React.FC = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Load messages from localStorage on component mount
   useEffect(() => {
@@ -83,10 +84,29 @@ export const ChatWidget: React.FC = () => {
   // Function to scroll to bottom
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
-      // Force scroll to absolute bottom
+      // Force scroll to absolute bottom immediately
       messagesContainerRef.current.scrollTop =
-        messagesContainerRef.current.scrollHeight + 1000;
+        messagesContainerRef.current.scrollHeight;
     }
+  };
+
+  // Function to smooth scroll to bottom
+  const smoothScrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'end',
+      });
+    }
+  };
+
+  // Function to focus input field
+  const focusInput = () => {
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 100);
   };
 
   // Scroll to bottom when messages change (backup for any missed cases)
@@ -108,11 +128,14 @@ export const ChatWidget: React.FC = () => {
   useEffect(() => {
     if (showWidget) {
       setIsFullscreen(false);
-      // Scroll to bottom when widget opens - multiple attempts
-      setTimeout(() => scrollToBottom(), 100);
+      // Scroll to bottom immediately when widget opens
+      scrollToBottom();
+      // Additional scroll attempts to ensure it works
+      setTimeout(() => scrollToBottom(), 50);
+      setTimeout(() => scrollToBottom(), 150);
       setTimeout(() => scrollToBottom(), 300);
-      setTimeout(() => scrollToBottom(), 500);
-      setTimeout(() => scrollToBottom(), 1000);
+      // Focus input when widget opens
+      focusInput();
     }
   }, [showWidget]);
 
@@ -271,6 +294,8 @@ export const ChatWidget: React.FC = () => {
 
     // Scroll to bottom immediately after sending message
     scrollToBottom();
+    // Focus input to continue typing
+    focusInput();
 
     try {
       // Use Server-Sent Events for streaming
@@ -353,10 +378,10 @@ export const ChatWidget: React.FC = () => {
                       : msg
                   )
                 );
-                // Scroll to bottom when streaming completes - multiple attempts
-                setTimeout(() => scrollToBottom(), 100);
-                setTimeout(() => scrollToBottom(), 300);
-                setTimeout(() => scrollToBottom(), 500);
+                // Smooth scroll to bottom when streaming completes
+                setTimeout(() => smoothScrollToBottom(), 100);
+                // Focus input to continue typing
+                setTimeout(() => focusInput(), 200);
               }
             } catch (err) {
               // Error parsing SSE data
@@ -672,6 +697,7 @@ export const ChatWidget: React.FC = () => {
           >
             <div className="flex items-center gap-2">
               <input
+                ref={inputRef}
                 className="flex-1 px-3 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-1 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all text-sm placeholder:text-muted-foreground/60"
                 type="text"
                 value={input}
