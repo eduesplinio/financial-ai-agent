@@ -574,6 +574,35 @@ export const ChatWidget: React.FC = () => {
                 </div>
               ))
             )}
+
+            {/* Thinking animation when AI is processing */}
+            {loading && (
+              <div className="flex justify-start mb-4">
+                <div className="max-w-[80%]">
+                  <div className="inline-block px-3 py-2 rounded-lg text-sm bg-muted text-foreground border border-border">
+                    <div className="flex items-center gap-2">
+                      <Bot className="w-4 h-4 animate-pulse" />
+                      <span>Pensando</span>
+                      <div className="flex gap-1">
+                        <div
+                          className="w-1.5 h-1.5 bg-current rounded-full animate-bounce"
+                          style={{ animationDelay: '0ms' }}
+                        ></div>
+                        <div
+                          className="w-1.5 h-1.5 bg-current rounded-full animate-bounce"
+                          style={{ animationDelay: '200ms' }}
+                        ></div>
+                        <div
+                          className="w-1.5 h-1.5 bg-current rounded-full animate-bounce"
+                          style={{ animationDelay: '400ms' }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div ref={messagesEndRef} />
           </div>
 

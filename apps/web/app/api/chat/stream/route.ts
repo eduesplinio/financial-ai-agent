@@ -44,13 +44,17 @@ export async function GET(request: NextRequest) {
           controller.enqueue(
             `data: ${JSON.stringify({
               type: 'typing',
-              content: 'Assistente está processando sua pergunta...',
+              content:
+                '🤖 Analisando sua pergunta e preparando uma resposta personalizada...',
             })}\n\n`
           );
         } catch (error) {
           cleanup();
           return;
         }
+
+        // Small delay to show thinking animation
+        await new Promise(resolve => setTimeout(resolve, 800));
 
         // Get real AI response using ChatService
         try {
