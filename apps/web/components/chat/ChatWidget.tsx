@@ -16,6 +16,9 @@ import {
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { ChatHistory } from './ChatHistory';
+import ReactMarkdown from 'react-markdown';
+import { remark } from 'remark';
+import remarkGfm from 'remark-gfm';
 
 export interface ChatMessage {
   id: string;
@@ -25,6 +28,114 @@ export interface ChatMessage {
   streaming?: boolean;
   feedback?: 'positive' | 'negative' | null;
 }
+
+// Função para renderizar Markdown customizado
+const renderMarkdown = (content: string) => {
+  const processor = remark().use(remarkGfm);
+  const tree = processor.parse(content);
+
+  const renderNode = (node: any, index: number = 0): React.ReactNode => {
+    if (node.type === 'text') {
+      return node.value;
+    }
+
+    if (node.type === 'paragraph') {
+      return (
+        <p key={index} className="mb-2 last:mb-0">
+          {node.children.map((child: any, i: number) => renderNode(child, i))}
+        </p>
+      );
+    }
+
+    if (node.type === 'strong') {
+      return (
+        <strong key={index} className="font-semibold text-foreground">
+          {node.children.map((child: any, i: number) => renderNode(child, i))}
+        </strong>
+      );
+    }
+
+    if (node.type === 'emphasis') {
+      return (
+        <em key={index} className="italic">
+          {node.children.map((child: any, i: number) => renderNode(child, i))}
+        </em>
+      );
+    }
+
+    if (node.type === 'list') {
+      const ListTag = node.ordered ? 'ol' : 'ul';
+      const listClass = node.ordered
+        ? 'mb-2 space-y-1 pl-6 list-decimal'
+        : 'mb-2 space-y-1 pl-6 list-disc';
+
+      return (
+        <ListTag key={index} className={listClass}>
+          {node.children.map((child: any, i: number) => renderNode(child, i))}
+        </ListTag>
+      );
+    }
+
+    if (node.type === 'listItem') {
+      return (
+        <li key={index} className="text-sm leading-relaxed">
+          {node.children.map((child: any, i: number) => renderNode(child, i))}
+        </li>
+      );
+    }
+
+    if (node.type === 'heading') {
+      const HeadingTag = `h${node.depth}` as keyof JSX.IntrinsicElements;
+      const headingClass =
+        {
+          1: 'text-lg font-bold mb-2',
+          2: 'text-base font-bold mb-2',
+          3: 'text-sm font-bold mb-1',
+        }[node.depth] || 'text-sm font-bold mb-1';
+
+      return (
+        <HeadingTag key={index} className={headingClass}>
+          {node.children.map((child: any, i: number) => renderNode(child, i))}
+        </HeadingTag>
+      );
+    }
+
+    if (node.type === 'code') {
+      return (
+        <code
+          key={index}
+          className="bg-muted px-1 py-0.5 rounded text-xs font-mono"
+        >
+          {node.value}
+        </code>
+      );
+    }
+
+    if (node.type === 'blockquote') {
+      return (
+        <blockquote
+          key={index}
+          className="border-l-2 border-border pl-2 italic"
+        >
+          {node.children.map((child: any, i: number) => renderNode(child, i))}
+        </blockquote>
+      );
+    }
+
+    // Para outros tipos de nó, renderizar filhos
+    if (node.children) {
+      return node.children.map((child: any, i: number) => renderNode(child, i));
+    }
+
+    return null;
+  };
+
+  return (
+    <div className="prose prose-sm max-w-none dark:prose-invert">
+      {renderNode(tree)}
+    </div>
+  );
+};
 
 export const ChatWidget: React.FC = () => {
   const { data: session } = useSession();
@@ -598,7 +709,9 @@ export const ChatWidget: React.FC = () => {
                       }`}
                     >
                       <div className="whitespace-pre-wrap">
-                        {message.content}
+                        {message.role === 'assistant'
+                          ? renderMarkdown(message.content)
+                          : message.content}
                       </div>
 
                       {/* Citations */}
