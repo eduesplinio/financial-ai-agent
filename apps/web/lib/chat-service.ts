@@ -4,6 +4,8 @@
  * Service layer for handling chat conversations with the AI agent
  */
 
+// Removed direct database imports to avoid Mongoose model conflicts
+
 // Define types locally to avoid bundling issues
 export interface ConversationMessage {
   id: string;
