@@ -36,19 +36,83 @@ export const ChatWidget: React.FC = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  // Load messages from localStorage on component mount
+  useEffect(() => {
+    if (session?.user?.id) {
+      // Check if this is a page reload (F5)
+      const isPageReload = sessionStorage.getItem('page-reloaded');
+      if (isPageReload) {
+        // Clear chat history on page reload
+        localStorage.removeItem(`chat-messages-${session.user.id}`);
+        sessionStorage.removeItem('page-reloaded');
+        setMessages([]);
+        return;
+      }
+
+      const savedMessages = localStorage.getItem(
+        `chat-messages-${session.user.id}`
+      );
+      if (savedMessages) {
+        try {
+          const parsedMessages = JSON.parse(savedMessages);
+          setMessages(parsedMessages);
+        } catch (error) {
+          // Error loading saved messages
+        }
+      }
+    }
+  }, [session?.user?.id]);
+
+  // Mark page as reloaded when component mounts
+  useEffect(() => {
+    sessionStorage.setItem('page-reloaded', 'true');
+  }, []);
+
+  // Save messages to localStorage whenever messages change
+  useEffect(() => {
+    if (session?.user?.id && messages.length > 0) {
+      localStorage.setItem(
+        `chat-messages-${session.user.id}`,
+        JSON.stringify(messages)
+      );
+    }
+  }, [messages, session?.user?.id]);
+
+  // Function to scroll to bottom
+  const scrollToBottom = () => {
+    if (messagesContainerRef.current) {
+      // Force scroll to absolute bottom
+      messagesContainerRef.current.scrollTop =
+        messagesContainerRef.current.scrollHeight + 1000;
+    }
+  };
 
   // Scroll to bottom when messages change (backup for any missed cases)
   useEffect(() => {
-    const timer = setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 50);
-    return () => clearTimeout(timer);
+    // Multiple attempts to ensure scroll to bottom
+    setTimeout(() => scrollToBottom(), 50);
+    setTimeout(() => scrollToBottom(), 200);
+    setTimeout(() => scrollToBottom(), 500);
   }, [messages.length]); // Only trigger on new messages, not content updates
+
+  // Scroll when loading state changes (when thinking animation appears)
+  useEffect(() => {
+    if (loading) {
+      scrollToBottom();
+    }
+  }, [loading]);
 
   // Reset to windowed mode when widget opens
   useEffect(() => {
     if (showWidget) {
       setIsFullscreen(false);
+      // Scroll to bottom when widget opens - multiple attempts
+      setTimeout(() => scrollToBottom(), 100);
+      setTimeout(() => scrollToBottom(), 300);
+      setTimeout(() => scrollToBottom(), 500);
+      setTimeout(() => scrollToBottom(), 1000);
     }
   }, [showWidget]);
 
@@ -203,12 +267,10 @@ export const ChatWidget: React.FC = () => {
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setLoading(true);
-    setStreaming(true);
+    setStreaming(false); // Don't set streaming to true until we start receiving chunks
 
     // Scroll to bottom immediately after sending message
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
+    scrollToBottom();
 
     try {
       // Use Server-Sent Events for streaming
@@ -240,6 +302,10 @@ export const ChatWidget: React.FC = () => {
               const data = JSON.parse(line.slice(6));
 
               if (data.type === 'chunk' || data.type === 'stream') {
+                // Stop loading animation immediately when any chunk arrives
+                setLoading(false);
+                setStreaming(true);
+
                 if (data.type === 'chunk') {
                   currentContent += data.content;
                 } else {
@@ -270,13 +336,10 @@ export const ChatWidget: React.FC = () => {
                   }
                 });
 
-                // Scroll to bottom during streaming (like Claude.ai)
-                setTimeout(() => {
-                  messagesEndRef.current?.scrollIntoView({
-                    behavior: 'smooth',
-                  });
-                }, 10);
+                // Scroll to bottom during streaming (like Claude.ai) - immediate
+                scrollToBottom();
               } else if (data.type === 'complete') {
+                setLoading(false); // Ensure loading is stopped
                 setMessages(prev =>
                   prev.map(msg =>
                     msg.id === assistantMsgId
@@ -290,21 +353,18 @@ export const ChatWidget: React.FC = () => {
                       : msg
                   )
                 );
-                // Scroll to bottom when streaming completes
-                setTimeout(() => {
-                  messagesEndRef.current?.scrollIntoView({
-                    behavior: 'smooth',
-                  });
-                }, 100);
+                // Scroll to bottom when streaming completes - multiple attempts
+                setTimeout(() => scrollToBottom(), 100);
+                setTimeout(() => scrollToBottom(), 300);
+                setTimeout(() => scrollToBottom(), 500);
               }
             } catch (err) {
-              console.error('Error parsing SSE data:', err);
+              // Error parsing SSE data
             }
           }
         }
       }
     } catch (error) {
-      console.error('Error sending message:', error);
       const errorMsg: ChatMessage = {
         id: (Date.now() + 2).toString(),
         role: 'assistant',
@@ -327,7 +387,6 @@ export const ChatWidget: React.FC = () => {
     );
 
     // TODO: Send feedback to API
-    console.log('Feedback submitted:', { messageId, feedback });
   };
 
   const handleSendMessage = async (message: string) => {
@@ -419,7 +478,7 @@ export const ChatWidget: React.FC = () => {
             className={`overflow-y-auto px-4 py-3 space-y-3 ${
               isFullscreen ? 'flex-1' : 'h-96'
             }`}
-            ref={messagesEndRef}
+            ref={messagesContainerRef}
           >
             {messages.length === 0 ? (
               <div
@@ -576,7 +635,7 @@ export const ChatWidget: React.FC = () => {
             )}
 
             {/* Thinking animation when AI is processing */}
-            {loading && (
+            {loading && !streaming && (
               <div className="flex justify-start mb-4">
                 <div className="max-w-[80%]">
                   <div className="inline-block px-3 py-2 rounded-lg text-sm bg-muted text-foreground border border-border">

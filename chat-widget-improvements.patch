@@ -1,0 +1,13 @@
+diff --git a/.gitignore b/.gitignore
+index dfad616..2d59364 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -146,4 +146,6 @@ logs
+ 
+ # Temporary files
+ tmp/
+-temp/
+\ No newline at end of file
++temp/# Next.js build output
++.next/
++*.pack
