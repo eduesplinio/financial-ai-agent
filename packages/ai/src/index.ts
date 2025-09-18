@@ -24,3 +24,6 @@ export * from './utils';
 
 // NLP pipeline
 export * from './nlp/pipeline';
+
+// Conversational AI
+export * from './conversation/conversational-agent';

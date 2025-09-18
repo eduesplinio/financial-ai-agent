@@ -121,8 +121,54 @@ db.users.updateOne(
 - **Login**: `/auth/signin` - Página de login
 - **Cadastro**: `/auth/signup` - Página de cadastro
 - **Dashboard**: `/dashboard` - Dashboard principal (requer login)
+- **Chat IA**: `/chat` - Assistente financeiro conversacional (requer login)
 - **Perfil**: `/profile` - Página de perfil do usuário
 - **Admin**: `/admin` - Painel administrativo (apenas admins)
+
+## 🤖 Chat IA - Assistente Financeiro
+
+### Configuração Rápida
+
+1. **Configure a chave da OpenAI**:
+
+   ```bash
+   # Crie o arquivo .env.local na pasta apps/web/
+   echo "OPENAI_API_KEY=sk-your-openai-api-key-here" > apps/web/.env.local
+   ```
+
+2. **Inicie o servidor**:
+
+   ```bash
+   npm run dev
+   ```
+
+3. **Acesse o chat**:
+   - Faça login na aplicação
+   - Vá para `/chat`
+   - Comece a conversar com o assistente!
+
+### Funcionalidades do Chat
+
+- **Conversação Natural**: Interface intuitiva para perguntas financeiras
+- **Respostas Contextualizadas**: Baseadas em conhecimento financeiro especializado
+- **Citações de Fontes**: Referências aos documentos utilizados
+- **Gerenciamento de Sessão**: Mantém contexto da conversa
+- **Tratamento de Erros**: Fallbacks e mensagens amigáveis
+
+### Exemplos de Perguntas
+
+- "Como posso começar a investir?"
+- "Qual a diferença entre CDB e Tesouro Direto?"
+- "Como calcular minha reserva de emergência?"
+- "Quais são os tipos de investimento em renda fixa?"
+- "Como funciona o sistema de juros compostos?"
+
+### Teste Rápido
+
+```bash
+# Teste a integração sem interface
+node scripts/test-chat-ai.js
+```
 
 ## 🧪 Executando Testes
 
@@ -238,10 +284,16 @@ docker-compose --profile tools up -d
 
 - [ ] Integração Open Finance
 - [ ] Processador de transações com ML
-- [ ] Sistema RAG completo
-- [ ] Agente conversacional
 - [ ] Dashboard financeiro avançado
 - [ ] Sistema de metas e notificações
+
+### ✅ Chat IA Implementado
+
+- [x] **Agente Conversacional**: Integração real com OpenAI GPT-4
+- [x] **Sistema RAG**: Busca semântica em base de conhecimento
+- [x] **Interface de Chat**: Componente React responsivo
+- [x] **Gerenciamento de Sessões**: Contexto conversacional
+- [x] **Citações de Fontes**: Referências às fontes utilizadas
 
 ## 📝 Próximos Passos
 

@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { getChatService } from '@/lib/chat-service';
 
 export async function GET(request: NextRequest) {
   try {
@@ -28,7 +29,7 @@ export async function GET(request: NextRequest) {
 
     // Create a readable stream for SSE
     const stream = new ReadableStream({
-      start(controller) {
+      async start(controller) {
         let isClosed = false;
         const timeouts: NodeJS.Timeout[] = [];
 
@@ -51,59 +52,135 @@ export async function GET(request: NextRequest) {
           return;
         }
 
-        // Simulate streaming response
-        const response = `Recebi sua pergunta: "${message}". Esta é uma resposta simulada que será substituída pela integração real com o sistema RAG e LLM. A resposta está sendo transmitida em tempo real via Server-Sent Events.`;
+        // Get real AI response using ChatService
+        try {
+          const chatService = getChatService();
 
-        // Stream response word by word
-        const words = response.split(' ');
-        let currentResponse = '';
+          // Create or get session for the user
+          let sessionId = `widget_${session.user.id}`;
+          let conversationSession = chatService.getSession(sessionId);
 
-        words.forEach((word, index) => {
-          const timeout = setTimeout(() => {
-            if (isClosed) return;
+          if (!conversationSession) {
+            conversationSession = chatService.createSession(session.user.id);
+            sessionId = conversationSession.sessionId;
+          }
 
-            try {
-              currentResponse += (index > 0 ? ' ' : '') + word;
-
-              controller.enqueue(
-                `data: ${JSON.stringify({
-                  type: 'chunk',
-                  content: word + (index < words.length - 1 ? ' ' : ''),
-                  isComplete: index === words.length - 1,
-                })}\n\n`
-              );
-
-              // Send final message with sources when complete
-              if (index === words.length - 1) {
-                const finalTimeout = setTimeout(() => {
-                  if (isClosed) return;
-
-                  try {
-                    controller.enqueue(
-                      `data: ${JSON.stringify({
-                        type: 'complete',
-                        content: currentResponse,
-                        sources: [
-                          { title: 'Documento Financeiro 1', url: '#' },
-                          { title: 'Regulamentação Bancária', url: '#' },
-                        ],
-                      })}\n\n`
-                    );
-
-                    controller.close();
-                    isClosed = true;
-                  } catch (error) {
-                    cleanup();
-                  }
-                }, 100);
-                timeouts.push(finalTimeout);
-              }
-            } catch (error) {
-              cleanup();
+          // Process the message with AI
+          const aiResponse = await chatService.processMessage(
+            sessionId,
+            message,
+            {
+              riskTolerance: 'moderate',
+              financialKnowledgeLevel: 'intermediate',
+              ageGroup: 'adult',
             }
-          }, index * 100);
-          timeouts.push(timeout);
-        });
+          );
+
+          const response = aiResponse.message.content;
+          const sources = aiResponse.message.sources || [];
+
+          // Stream response word by word
+          const words = response.split(' ');
+          let currentResponse = '';
+
+          words.forEach((word, index) => {
+            const timeout = setTimeout(() => {
+              if (isClosed) return;
+
+              try {
+                currentResponse += (index > 0 ? ' ' : '') + word;
+
+                controller.enqueue(
+                  `data: ${JSON.stringify({
+                    type: 'chunk',
+                    content: word + (index < words.length - 1 ? ' ' : ''),
+                    isComplete: index === words.length - 1,
+                  })}\n\n`
+                );
+
+                // Send final message with sources when complete
+                if (index === words.length - 1) {
+                  const finalTimeout = setTimeout(() => {
+                    if (isClosed) return;
+
+                    try {
+                      controller.enqueue(
+                        `data: ${JSON.stringify({
+                          type: 'complete',
+                          content: currentResponse,
+                          sources: sources.map(source => ({
+                            title: source.title,
+                            url: source.url || '#',
+                          })),
+                        })}\n\n`
+                      );
+
+                      controller.close();
+                      isClosed = true;
+                    } catch (error) {
+                      cleanup();
+                    }
+                  }, 100);
+                  timeouts.push(finalTimeout);
+                }
+              } catch (error) {
+                cleanup();
+              }
+            }, index * 50); // Faster streaming for better UX
+            timeouts.push(timeout);
+          });
+        } catch (aiError) {
+          console.error('AI processing error:', aiError);
+
+          // Fallback to error message
+          const errorResponse =
+            'Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente.';
+          const words = errorResponse.split(' ');
+          let currentResponse = '';
+
+          words.forEach((word, index) => {
+            const timeout = setTimeout(() => {
+              if (isClosed) return;
+
+              try {
+                currentResponse += (index > 0 ? ' ' : '') + word;
+
+                controller.enqueue(
+                  `data: ${JSON.stringify({
+                    type: 'chunk',
+                    content: word + (index < words.length - 1 ? ' ' : ''),
+                    isComplete: index === words.length - 1,
+                  })}\n\n`
+                );
+
+                if (index === words.length - 1) {
+                  const finalTimeout = setTimeout(() => {
+                    if (isClosed) return;
+
+                    try {
+                      controller.enqueue(
+                        `data: ${JSON.stringify({
+                          type: 'complete',
+                          content: currentResponse,
+                          sources: [],
+                        })}\n\n`
+                      );
+
+                      controller.close();
+                      isClosed = true;
+                    } catch (error) {
+                      cleanup();
+                    }
+                  }, 100);
+                  timeouts.push(finalTimeout);
+                }
+              } catch (error) {
+                cleanup();
+              }
+            }, index * 50);
+            timeouts.push(timeout);
+          });
+        }
       },
       cancel() {
         // This will be called when the stream is cancelled (e.g., user navigates away)
