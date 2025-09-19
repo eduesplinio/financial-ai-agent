@@ -35,6 +35,7 @@ export const ChatWidget: React.FC = () => {
   const [showWidget, setShowWidget] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Scroll to bottom when messages change (backup for any missed cases)
@@ -212,9 +213,13 @@ export const ChatWidget: React.FC = () => {
 
     try {
       // Use Server-Sent Events for streaming
-      const response = await fetch(
-        `/api/chat/stream?message=${encodeURIComponent(userMessage.content)}`
-      );
+      const url = new URL('/api/chat/stream', window.location.origin);
+      url.searchParams.set('message', userMessage.content);
+      if (sessionId) {
+        url.searchParams.set('sessionId', sessionId);
+      }
+      
+      const response = await fetch(url.toString());
 
       if (!response.ok) {
         throw new Error('Failed to send message');
@@ -277,6 +282,11 @@ export const ChatWidget: React.FC = () => {
                   });
                 }, 10);
               } else if (data.type === 'complete') {
+                // Store sessionId from response
+                if (data.sessionId && !sessionId) {
+                  setSessionId(data.sessionId);
+                }
+                
                 setMessages(prev =>
                   prev.map(msg =>
                     msg.id === assistantMsgId

@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { getChatService } from '@/lib/chat-service';
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,6 +13,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const message = searchParams.get('message');
+    const sessionId = searchParams.get('sessionId');
 
     if (!message) {
       return new Response('Message is required', { status: 400 });
@@ -28,82 +30,96 @@ export async function GET(request: NextRequest) {
 
     // Create a readable stream for SSE
     const stream = new ReadableStream({
-      start(controller) {
+      async start(controller) {
         let isClosed = false;
-        const timeouts: NodeJS.Timeout[] = [];
 
         // Handle controller close
         const cleanup = () => {
           isClosed = true;
-          timeouts.forEach(timeout => clearTimeout(timeout));
         };
 
-        // Send initial typing indicator
         try {
+          // Send initial typing indicator
           controller.enqueue(
             `data: ${JSON.stringify({
               type: 'typing',
               content: 'Assistente está processando sua pergunta...',
             })}\n\n`
           );
-        } catch (error) {
-          cleanup();
-          return;
-        }
 
-        // Simulate streaming response
-        const response = `Recebi sua pergunta: "${message}". Esta é uma resposta simulada que será substituída pela integração real com o sistema RAG e LLM. A resposta está sendo transmitida em tempo real via Server-Sent Events.`;
-
-        // Stream response word by word
-        const words = response.split(' ');
-        let currentResponse = '';
-
-        words.forEach((word, index) => {
-          const timeout = setTimeout(() => {
-            if (isClosed) return;
-
-            try {
-              currentResponse += (index > 0 ? ' ' : '') + word;
-
-              controller.enqueue(
-                `data: ${JSON.stringify({
-                  type: 'chunk',
-                  content: word + (index < words.length - 1 ? ' ' : ''),
-                  isComplete: index === words.length - 1,
-                })}\n\n`
-              );
-
-              // Send final message with sources when complete
-              if (index === words.length - 1) {
-                const finalTimeout = setTimeout(() => {
-                  if (isClosed) return;
-
-                  try {
-                    controller.enqueue(
-                      `data: ${JSON.stringify({
-                        type: 'complete',
-                        content: currentResponse,
-                        sources: [
-                          { title: 'Documento Financeiro 1', url: '#' },
-                          { title: 'Regulamentação Bancária', url: '#' },
-                        ],
-                      })}\n\n`
-                    );
-
-                    controller.close();
-                    isClosed = true;
-                  } catch (error) {
-                    cleanup();
-                  }
-                }, 100);
-                timeouts.push(finalTimeout);
-              }
-            } catch (error) {
-              cleanup();
+          const chatService = getChatService();
+          const userId = session.user?.id || session.user?.email || 'anonymous';
+          
+          let chatSession;
+          
+          if (sessionId) {
+            chatSession = chatService.getSession(sessionId);
+            if (!chatSession) {
+              chatSession = chatService.createSession(userId);
             }
-          }, index * 100);
-          timeouts.push(timeout);
-        });
+          } else {
+            chatSession = chatService.createSession(userId);
+          }
+
+          // Process the message with the chat service
+          const result = await chatService.processMessage(
+            chatSession.sessionId,
+            message
+          );
+
+          if (isClosed) return;
+
+          const responseContent = result.message.content;
+          
+          // Stream response word by word
+          const words = responseContent.split(' ');
+          let currentResponse = '';
+
+          for (let index = 0; index < words.length; index++) {
+            if (isClosed) break;
+
+            const word = words[index];
+            currentResponse += (index > 0 ? ' ' : '') + word;
+
+            controller.enqueue(
+              `data: ${JSON.stringify({
+                type: 'chunk',
+                content: word + (index < words.length - 1 ? ' ' : ''),
+                isComplete: index === words.length - 1,
+              })}\n\n`
+            );
+
+            // Add delay between words for streaming effect
+            await new Promise(resolve => setTimeout(resolve, 50));
+          }
+
+          if (!isClosed) {
+            // Send final message with sources when complete
+            controller.enqueue(
+              `data: ${JSON.stringify({
+                type: 'complete',
+                content: responseContent,
+                sources: result.message.sources || [],
+                sessionId: chatSession.sessionId,
+                metadata: result.message.metadata,
+              })}\n\n`
+            );
+
+            controller.close();
+          }
+        } catch (error) {
+          console.error('Error in chat stream:', error);
+          if (!isClosed) {
+            controller.enqueue(
+              `data: ${JSON.stringify({
+                type: 'error',
+                content: 'Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente.',
+              })}\n\n`
+            );
+            controller.close();
+          }
+          cleanup();
+        }
       },
       cancel() {
         // This will be called when the stream is cancelled (e.g., user navigates away)

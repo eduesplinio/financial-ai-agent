@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { getChatService } from '@/lib/chat-service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,7 +11,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { message } = await request.json();
+    const { message, sessionId } = await request.json();
 
     if (!message) {
       return NextResponse.json(
@@ -19,16 +20,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Placeholder for chat processing
-    // TODO: Integrate with RAG system and LLM
+    const chatService = getChatService();
+    const userId = session.user?.id || session.user?.email || 'anonymous';
+    
+    let chatSession;
+    
+    if (sessionId) {
+      chatSession = chatService.getSession(sessionId);
+      if (!chatSession) {
+        chatSession = chatService.createSession(userId);
+      }
+    } else {
+      chatSession = chatService.createSession(userId);
+    }
+
+    // Process the message with the chat service
+    const result = await chatService.processMessage(
+      chatSession.sessionId,
+      message
+    );
+
     const response = {
-      id: Date.now().toString(),
-      role: 'assistant',
-      content: `Olá! Recebi sua mensagem: "${message}". Este é um placeholder que será conectado ao sistema RAG e LLM em breve.`,
-      sources: [
-        { title: 'Documento Financeiro 1', url: '#' },
-        { title: 'Regulamentação Bancária', url: '#' },
-      ],
+      id: result.message.id,
+      role: result.message.role,
+      content: result.message.content,
+      sources: result.message.sources || [],
+      sessionId: chatSession.sessionId,
+      metadata: result.message.metadata,
     };
 
     return NextResponse.json(response);
