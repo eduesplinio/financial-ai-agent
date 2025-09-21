@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileDown } from 'lucide-react';
+import { FileDown, TrendingUp, TrendingDown } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -16,8 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-// ...existing code...
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -49,47 +48,188 @@ interface FinancialDashboardProps {
   userId?: string;
 }
 
+interface DashboardData {
+  balance: number;
+  income: number;
+  expenses: number;
+  savings: number;
+  monthlyTrend: Array<{ month: string; income: number; expenses: number }>;
+  categoryExpenses: Array<{ category: string; amount: number; color: string }>;
+  connectedAccounts: Array<{
+    id: string;
+    institutionName: string;
+    balance: number;
+    accountType: string;
+  }>;
+  recentTransactions: Array<{
+    id: string;
+    description: string;
+    amount: number;
+    date: string;
+    category: string;
+  }>;
+}
+
 export function FinancialDashboard({ userId }: FinancialDashboardProps) {
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
+    null
+  );
+  const [loading, setLoading] = useState(true);
 
-  // Mock de dados financeiros
+  // Buscar dados reais do dashboard
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+
+        // Buscar dados das contas conectadas
+        const accountsResponse = await fetch('/api/open-finance/accounts');
+        const accountsData = await accountsResponse.json();
+
+        // Buscar transações
+        const transactionsResponse = await fetch(
+          '/api/open-finance/transactions-sandbox'
+        );
+        const transactionsData = await transactionsResponse.json();
+
+        if (accountsData.success && transactionsData.success) {
+          const accounts = accountsData.data || [];
+          const transactions = transactionsData.data || [];
+
+          // Calcular métricas
+          const totalBalance = accounts.reduce(
+            (sum: number, acc: any) => sum + (acc.balance || 0),
+            0
+          );
+          const income = transactions
+            .filter((tx: any) => tx.amount > 0)
+            .reduce((sum: number, tx: any) => sum + tx.amount, 0);
+          const expenses = Math.abs(
+            transactions
+              .filter((tx: any) => tx.amount < 0)
+              .reduce((sum: number, tx: any) => sum + tx.amount, 0)
+          );
+
+          // Agrupar gastos por categoria
+          const categoryMap = new Map();
+          transactions
+            .filter((tx: any) => tx.amount < 0)
+            .forEach((tx: any) => {
+              const category = tx.category?.primary || 'Outros';
+              const amount = Math.abs(tx.amount);
+              categoryMap.set(
+                category,
+                (categoryMap.get(category) || 0) + amount
+              );
+            });
+
+          const categoryExpenses = Array.from(categoryMap.entries()).map(
+            ([category, amount], index) => ({
+              category,
+              amount,
+              color: [
+                '#FF6384',
+                '#36A2EB',
+                '#FFCE56',
+                '#4BC0C0',
+                '#9966FF',
+                '#FF9F40',
+              ][index % 6],
+            })
+          );
+
+          // Dados de tendência mensal (simulados baseados nos dados atuais)
+          const monthlyTrend = [
+            { month: 'Abr', income: income * 0.95, expenses: expenses * 1.1 },
+            { month: 'Mai', income: income * 0.98, expenses: expenses * 1.05 },
+            { month: 'Jun', income: income * 1.02, expenses: expenses * 0.95 },
+            { month: 'Jul', income: income * 0.99, expenses: expenses * 1.08 },
+            { month: 'Ago', income: income * 1.01, expenses: expenses * 0.97 },
+            { month: 'Set', income: income, expenses: expenses },
+          ];
+
+          // Transações recentes
+          const recentTransactions = transactions
+            .sort(
+              (a: any, b: any) =>
+                new Date(b.date).getTime() - new Date(a.date).getTime()
+            )
+            .slice(0, 5)
+            .map((tx: any) => ({
+              id: tx.id,
+              description: tx.description,
+              amount: tx.amount,
+              date: new Date(tx.date).toLocaleDateString('pt-BR'),
+              category: tx.category?.primary || 'Outros',
+            }));
+
+          setDashboardData({
+            balance: totalBalance,
+            income,
+            expenses,
+            savings: totalBalance * 0.6, // Simulado
+            monthlyTrend,
+            categoryExpenses,
+            connectedAccounts: accounts.map((acc: any) => ({
+              id: acc.id,
+              institutionName: acc.institutionName,
+              balance: acc.balance || 0,
+              accountType: acc.accountType,
+            })),
+            recentTransactions,
+          });
+        }
+      } catch (error) {
+        console.error('Erro ao buscar dados do dashboard:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [selectedPeriod]);
+
+  // Dados mock como fallback
   const mockData = {
-    balance: 12450.75,
-    income: 8500.0,
-    expenses: 3200.5,
-    savings: 9250.25,
+    balance: 2847.5,
+    income: 10200.0,
+    expenses: 7372.5,
+    savings: 1500.0,
     monthlyTrend: [
-      { month: 'Jan', income: 8000, expenses: 3500 },
-      { month: 'Fev', income: 8200, expenses: 3200 },
-      { month: 'Mar', income: 8500, expenses: 3000 },
-      { month: 'Abr', income: 8300, expenses: 3400 },
-      { month: 'Mai', income: 8700, expenses: 3100 },
-      { month: 'Jun', income: 8500, expenses: 3200 },
+      { month: 'Abr', income: 9690, expenses: 8109 },
+      { month: 'Mai', income: 9996, expenses: 7737 },
+      { month: 'Jun', income: 10404, expenses: 6998 },
+      { month: 'Jul', income: 10098, expenses: 7962 },
+      { month: 'Ago', income: 10302, expenses: 7151 },
+      { month: 'Set', income: 10200, expenses: 7372 },
     ],
     categoryExpenses: [
-      { category: 'Alimentação', amount: 850, color: '#FF6384' },
-      { category: 'Transporte', amount: 420, color: '#36A2EB' },
-      { category: 'Moradia', amount: 1200, color: '#FFCE56' },
-      { category: 'Saúde', amount: 300, color: '#4BC0C0' },
-      { category: 'Lazer', amount: 280, color: '#9966FF' },
-      { category: 'Outros', amount: 150, color: '#FF9F40' },
+      { category: 'ALIMENTACAO', amount: 570, color: '#FF6384' },
+      { category: 'TRANSPORTE', amount: 365, color: '#36A2EB' },
+      { category: 'MORADIA', amount: 1200, color: '#FFCE56' },
+      { category: 'SAUDE', amount: 320, color: '#4BC0C0' },
+      { category: 'ENTRETENIMENTO', amount: 109, color: '#9966FF' },
+      { category: 'UTILIDADES', amount: 530, color: '#FF9F40' },
     ],
   };
 
+  const data = dashboardData || mockData;
+
   // Configuração do gráfico de tendências
   const trendChartData = {
-    labels: mockData.monthlyTrend.map(item => item.month),
+    labels: data.monthlyTrend.map(item => item.month),
     datasets: [
       {
         label: 'Receitas',
-        data: mockData.monthlyTrend.map(item => item.income),
+        data: data.monthlyTrend.map(item => item.income),
         borderColor: '#10B981',
         backgroundColor: 'rgba(16, 185, 129, 0.1)',
         tension: 0.4,
       },
       {
         label: 'Gastos',
-        data: mockData.monthlyTrend.map(item => item.expenses),
+        data: data.monthlyTrend.map(item => item.expenses),
         borderColor: '#EF4444',
         backgroundColor: 'rgba(239, 68, 68, 0.1)',
         tension: 0.4,
@@ -99,11 +239,11 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
 
   // Configuração do gráfico de gastos por categoria
   const categoryChartData = {
-    labels: mockData.categoryExpenses.map(item => item.category),
+    labels: data.categoryExpenses.map(item => item.category),
     datasets: [
       {
-        data: mockData.categoryExpenses.map(item => item.amount),
-        backgroundColor: mockData.categoryExpenses.map(item => item.color),
+        data: data.categoryExpenses.map(item => item.amount),
+        backgroundColor: data.categoryExpenses.map(item => item.color),
         borderWidth: 0,
       },
     ],
@@ -179,7 +319,7 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
           <CardContent>
             <div className="text-2xl font-bold text-green-600 dark:text-green-400">
               R${' '}
-              {mockData.balance.toLocaleString('pt-BR', {
+              {data.balance.toLocaleString('pt-BR', {
                 minimumFractionDigits: 2,
               })}
             </div>
@@ -198,7 +338,7 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
           <CardContent>
             <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
               R${' '}
-              {mockData.income.toLocaleString('pt-BR', {
+              {data.income.toLocaleString('pt-BR', {
                 minimumFractionDigits: 2,
               })}
             </div>
@@ -217,7 +357,7 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
           <CardContent>
             <div className="text-2xl font-bold text-red-600 dark:text-red-400">
               R${' '}
-              {mockData.expenses.toLocaleString('pt-BR', {
+              {data.expenses.toLocaleString('pt-BR', {
                 minimumFractionDigits: 2,
               })}
             </div>
@@ -236,7 +376,7 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
           <CardContent>
             <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
               R${' '}
-              {mockData.savings.toLocaleString('pt-BR', {
+              {data.savings.toLocaleString('pt-BR', {
                 minimumFractionDigits: 2,
               })}
             </div>
@@ -290,7 +430,7 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {mockData.categoryExpenses.map((item, index) => (
+              {data.categoryExpenses.map((item, index) => (
                 <div
                   key={index}
                   className="flex items-center justify-between p-3 rounded-lg"
@@ -309,9 +449,103 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
                       })}
                     </div>
                     <div className="text-xs opacity-90 text-gray-700 dark:text-gray-300">
-                      {((item.amount / mockData.expenses) * 100).toFixed(1)}% do
+                      {((item.amount / data.expenses) * 100).toFixed(1)}% do
                       total
                     </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Contas Conectadas e Transações Recentes */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Contas Conectadas */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Contas Conectadas</CardTitle>
+            <CardDescription>Suas contas bancárias integradas</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {data.connectedAccounts?.map(account => (
+                <div
+                  key={account.id}
+                  className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-lg border border-purple-100 dark:border-purple-800"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg">
+                      <span className="text-white font-bold text-sm">N</span>
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-800 dark:text-gray-200">
+                        {account.institutionName}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        {account.accountType}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold text-gray-800 dark:text-gray-200">
+                      R${' '}
+                      {account.balance.toLocaleString('pt-BR', {
+                        minimumFractionDigits: 2,
+                      })}
+                    </div>
+                    <div className="text-xs text-green-600 dark:text-green-400">
+                      Ativo
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Transações Recentes */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Transações Recentes</CardTitle>
+            <CardDescription>
+              Últimas movimentações da sua conta
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {data.recentTransactions?.map(transaction => (
+                <div
+                  key={transaction.id}
+                  className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-800"
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`p-2 rounded-full ${transaction.amount > 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}
+                    >
+                      {transaction.amount > 0 ? (
+                        <TrendingUp className="h-4 w-4" />
+                      ) : (
+                        <TrendingDown className="h-4 w-4" />
+                      )}
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-800 dark:text-gray-200">
+                        {transaction.description}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        {transaction.category} • {transaction.date}
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    className={`font-bold ${transaction.amount > 0 ? 'text-green-600' : 'text-red-600'}`}
+                  >
+                    {transaction.amount > 0 ? '+' : ''}R${' '}
+                    {Math.abs(transaction.amount).toLocaleString('pt-BR', {
+                      minimumFractionDigits: 2,
+                    })}
                   </div>
                 </div>
               ))}
