@@ -7,41 +7,7 @@ import {
   realisticSandboxService,
   RealisticAccount,
 } from '@/lib/realistic-sandbox';
-
-// Armazenamento temporário em memória para demonstração
-// Em produção, isso seria feito no banco de dados
-const connectedAccountsStore = new Map<string, any[]>();
-
-// Inicializar com apenas o Nubank conectado
-const initializeConnectedAccounts = () => {
-  const institutions = ['nubank'];
-
-  institutions.forEach(institutionId => {
-    const mockAccount = {
-      accountId: `acc_${institutionId}_001`,
-      institutionId,
-      institutionName: getInstitutionName(institutionId),
-      accountType: institutionId === 'nubank' ? 'CHECKING' : 'CHECKING',
-      nickname:
-        institutionId === 'nubank'
-          ? 'Conta Nubank'
-          : `Conta Corrente ${getInstitutionName(institutionId)}`,
-      connectedAt: new Date().toISOString(),
-      status: 'ACTIVE',
-      lastSyncAt: new Date().toISOString(),
-    };
-
-    if (!connectedAccountsStore.has('demo_user')) {
-      connectedAccountsStore.set('demo_user', []);
-    }
-
-    const userAccounts = connectedAccountsStore.get('demo_user') || [];
-    if (!userAccounts.find(acc => acc.institutionId === institutionId)) {
-      userAccounts.push(mockAccount);
-      connectedAccountsStore.set('demo_user', userAccounts);
-    }
-  });
-};
+import { UserService } from '@financial-ai/database';
 
 const getInstitutionName = (institutionId: string): string => {
   const names: Record<string, string> = {
@@ -49,16 +15,6 @@ const getInstitutionName = (institutionId: string): string => {
   };
   return names[institutionId] || institutionId;
 };
-
-// Inicializar contas conectadas
-initializeConnectedAccounts();
-
-// Função para adicionar conta conectada
-export function addConnectedAccount(userId: string, account: any) {
-  const userAccounts = connectedAccountsStore.get(userId) || [];
-  userAccounts.push(account);
-  connectedAccountsStore.set(userId, userAccounts);
-}
 
 /**
  * API para gerenciar contas bancárias conectadas do Open Finance
@@ -81,25 +37,41 @@ export async function GET(request: NextRequest) {
     const accountType = searchParams.get('account_type');
     const includeBalances = searchParams.get('include_balances') === 'true';
 
-    // Buscar contas conectadas do usuário
-    const userAccounts = connectedAccountsStore.get(session.user.id) || [];
+    // Buscar usuário do banco de dados
+    const user = await UserService.findByEmail(session.user.email || '');
 
-    // Dados simulados iniciais (apenas Nubank)
-    const mockConnectedAccounts = [
-      {
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Buscar contas conectadas do usuário do banco de dados
+    let userAccounts = user.connectedAccounts || [];
+
+    // Se não há contas conectadas, criar conta Nubank padrão
+    if (userAccounts.length === 0) {
+      const defaultNubankAccount = {
         id: 'conn_nubank_001',
         institutionId: 'nubank',
-        accountId: 'acc_nubank_001',
-        nickname: 'Conta Nubank',
-        connectedAt: '2024-01-10T09:15:00Z',
-        status: 'CONNECTED' as const,
-        lastSyncAt: '2024-01-20T14:22:00Z',
-      },
-    ];
+        institutionName: 'Nubank',
+        accountType: 'checking' as const,
+        accountNumber: 'acc_nubank_001',
+        balance: 0,
+        currency: 'BRL',
+        consentId: 'consent_nubank_demo',
+        consentExpiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 ano
+        lastSyncAt: new Date(),
+        isActive: true,
+        metadata: {
+          nickname: 'Conta Nubank',
+          connectedAt: '2024-01-10T09:15:00Z',
+        },
+      };
 
-    // Se não há contas conectadas, usar dados de demonstração
-    if (userAccounts.length === 0) {
-      userAccounts.push(...mockConnectedAccounts);
+      // Adicionar conta padrão ao usuário
+      user.connectedAccounts.push(defaultNubankAccount);
+      await user.save();
+
+      userAccounts = user.connectedAccounts;
     }
 
     // Para contas conectadas, buscar dados reais do sandbox
@@ -116,35 +88,76 @@ export async function GET(request: NextRequest) {
               mockToken
             );
           const realisticAccount = realisticAccounts.find(
-            acc => acc.accountId === account.accountId
+            acc => acc.accountId === account.accountNumber
           );
 
           if (realisticAccount) {
             return {
-              ...account,
-              // Adicionar dados realistas do sandbox
-              balance: realisticAccount.balance,
-              available: realisticAccount.available,
-              blocked: realisticAccount.blocked,
+              id: account.id,
+              institutionId: account.institutionId,
+              institutionName: account.institutionName,
+              accountId: account.accountNumber,
+              nickname:
+                account.metadata?.nickname ||
+                `Conta ${account.institutionName}`,
               accountType: realisticAccount.accountType,
+              balance: realisticAccount.balance,
               currency: realisticAccount.currency,
-              status: realisticAccount.status,
+              isActive: account.isActive,
+              connectedAt:
+                account.metadata?.connectedAt ||
+                account.lastSyncAt?.toISOString(),
               lastSyncAt: new Date().toISOString(),
               // Dados adicionais realistas
               customer: realisticAccount.customer,
               monthlyAverageBalance: realisticAccount.monthlyAverageBalance,
               transactionCount: realisticAccount.transactionCount,
               overdraftLimit: realisticAccount.overdraftLimit,
+              available: realisticAccount.available,
+              blocked: realisticAccount.blocked,
+              status: realisticAccount.status,
             };
           }
 
-          return account;
+          // Retornar dados básicos se não encontrar no sandbox
+          return {
+            id: account.id,
+            institutionId: account.institutionId,
+            institutionName: account.institutionName,
+            accountId: account.accountNumber,
+            nickname:
+              account.metadata?.nickname || `Conta ${account.institutionName}`,
+            accountType: account.accountType,
+            balance: account.balance || 0,
+            currency: account.currency,
+            isActive: account.isActive,
+            connectedAt:
+              account.metadata?.connectedAt ||
+              account.lastSyncAt?.toISOString(),
+            lastSyncAt: account.lastSyncAt?.toISOString(),
+          };
         } catch (error) {
           console.error(
             `Error fetching sandbox data for ${account.institutionId}:`,
             error
           );
-          return account;
+          // Retornar dados básicos em caso de erro
+          return {
+            id: account.id,
+            institutionId: account.institutionId,
+            institutionName: account.institutionName,
+            accountId: account.accountNumber,
+            nickname:
+              account.metadata?.nickname || `Conta ${account.institutionName}`,
+            accountType: account.accountType,
+            balance: account.balance || 0,
+            currency: account.currency,
+            isActive: account.isActive,
+            connectedAt:
+              account.metadata?.connectedAt ||
+              account.lastSyncAt?.toISOString(),
+            lastSyncAt: account.lastSyncAt?.toISOString(),
+          };
         }
       })
     );
@@ -195,7 +208,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { institutionId, accountId, nickname } = body;
+    const {
+      institutionId,
+      accountId,
+      nickname,
+      accessToken,
+      refreshToken,
+      consentId,
+    } = body;
 
     if (!institutionId || !accountId) {
       return NextResponse.json(
@@ -204,23 +224,63 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Em uma implementação real, conectaríamos a conta através do fluxo OAuth2
-    // Por enquanto, apenas simulamos a conexão
+    // Buscar usuário do banco de dados
+    const user = await UserService.findByEmail(session.user.email || '');
 
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Verificar se a conta já existe
+    const existingAccount = user.connectedAccounts.find(
+      acc =>
+        acc.institutionId === institutionId && acc.accountNumber === accountId
+    );
+
+    if (existingAccount) {
+      return NextResponse.json(
+        { error: 'Account already connected' },
+        { status: 409 }
+      );
+    }
+
+    // Criar nova conta conectada
     const connectedAccount = {
       id: `conn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      userId: session.user.id,
       institutionId,
-      accountId,
-      nickname: nickname || `Conta ${institutionId}`,
-      connectedAt: new Date().toISOString(),
-      status: 'CONNECTED',
-      lastSyncAt: new Date().toISOString(),
+      institutionName: getInstitutionName(institutionId),
+      accountType: 'checking' as const,
+      accountNumber: accountId,
+      balance: 0,
+      currency: 'BRL',
+      consentId: consentId || `consent_${institutionId}_${Date.now()}`,
+      consentExpiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 ano
+      lastSyncAt: new Date(),
+      isActive: true,
+      metadata: {
+        nickname: nickname || `Conta ${getInstitutionName(institutionId)}`,
+        connectedAt: new Date().toISOString(),
+        accessToken,
+        refreshToken,
+      },
     };
+
+    // Adicionar conta ao usuário
+    user.connectedAccounts.push(connectedAccount);
+    await user.save();
 
     return NextResponse.json({
       success: true,
-      data: connectedAccount,
+      data: {
+        id: connectedAccount.id,
+        institutionId: connectedAccount.institutionId,
+        institutionName: connectedAccount.institutionName,
+        accountId: connectedAccount.accountNumber,
+        nickname: connectedAccount.metadata.nickname,
+        connectedAt: connectedAccount.metadata.connectedAt,
+        status: 'CONNECTED',
+        lastSyncAt: connectedAccount.lastSyncAt.toISOString(),
+      },
       message: 'Account connected successfully',
     });
   } catch (error) {

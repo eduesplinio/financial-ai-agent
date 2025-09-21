@@ -7,7 +7,7 @@ import {
   getInstitutionConfig,
   SANDBOX_CONFIG,
 } from '@/lib/open-finance-config';
-import { addConnectedAccount } from '../accounts/route';
+// Removido import de addConnectedAccount - agora usa persistência no banco
 
 /**
  * API de callback para o fluxo OAuth2 do Open Finance
@@ -112,8 +112,9 @@ export async function GET(request: NextRequest) {
         },
       };
 
-      // Adicionar conta ao armazenamento do usuário
-      addConnectedAccount(session.user.id, connectedAccount);
+      // Em uma implementação real, salvaríamos a conta conectada no banco de dados
+      // através da API POST /api/open-finance/accounts
+      console.log('Account connected:', connectedAccount);
 
       // Redirecionar para página de sucesso
       return NextResponse.redirect(

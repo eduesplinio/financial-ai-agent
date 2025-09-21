@@ -354,37 +354,31 @@ export default function IntegrationsPage() {
       </div>
 
       {/* Conta Nubank */}
-      <Card className="border-0 shadow-sm">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg">
-                <NubankLogo size="lg" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Nubank</h3>
-                <p className="text-sm text-gray-600">Conta Corrente</p>
-                <p className="text-xs text-gray-500">
-                  Conectado desde 10/01/2024
-                </p>
-              </div>
+      <Card>
+        <CardContent className="p-3">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg">
+              <NubankLogo size="sm" />
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-medium">Nubank</h3>
+              <p className="text-xs text-muted-foreground">Conta Corrente</p>
+            </div>
+            <div className="flex items-center gap-2">
               <Badge
                 variant="default"
-                className="bg-green-100 text-green-800 border-0"
+                className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs"
               >
-                <CheckCircle className="h-3 w-3 mr-1" />
+                <CheckCircle className="h-2 w-2 mr-1" />
                 Ativo
               </Badge>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => handleSyncAccount('nubank')}
-                className="border-gray-200"
+                className="h-7 w-7 p-0"
               >
-                <RefreshCw className="h-4 w-4 mr-1" />
-                Sincronizar
+                <RefreshCw className="h-3 w-3" />
               </Button>
             </div>
           </div>
