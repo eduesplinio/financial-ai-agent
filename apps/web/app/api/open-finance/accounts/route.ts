@@ -3,6 +3,17 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import type { AccountData } from '@financial-ai/open-finance';
 
+// Armazenamento temporário em memória para demonstração
+// Em produção, isso seria feito no banco de dados
+const connectedAccountsStore = new Map<string, any[]>();
+
+// Função para adicionar conta conectada
+export function addConnectedAccount(userId: string, account: any) {
+  const userAccounts = connectedAccountsStore.get(userId) || [];
+  userAccounts.push(account);
+  connectedAccountsStore.set(userId, userAccounts);
+}
+
 /**
  * API para gerenciar contas bancárias conectadas do Open Finance
  */
@@ -24,88 +35,49 @@ export async function GET(request: NextRequest) {
     const accountType = searchParams.get('account_type');
     const includeBalances = searchParams.get('include_balances') === 'true';
 
-    // Em uma implementação real, buscaríamos do banco de dados
-    // Por enquanto, retornamos dados simulados
-    const mockAccounts: AccountData[] = [
+    // Buscar contas conectadas do usuário
+    const userAccounts = connectedAccountsStore.get(session.user.id) || [];
+
+    // Dados simulados iniciais (apenas se não houver contas conectadas)
+    const mockConnectedAccounts = [
       {
+        id: 'conn_bb_001',
+        institutionId: 'banco-do-brasil',
         accountId: 'acc_bb_001',
-        accountType: 'CHECKING',
-        accountSubType: 'STANDARD',
-        currency: 'BRL',
         nickname: 'Conta Corrente Principal',
-        name: 'Conta Corrente',
-        balance: 12500.75,
-        available: 12000.0,
-        blocked: 500.75,
-        overdraftLimit: 2000.0,
-        openingDate: '2020-01-15T00:00:00Z',
-        status: 'ACTIVE',
-        branch: '1234',
-        number: '12345-6',
-        institution: {
-          id: 'banco-do-brasil',
-          name: 'Banco do Brasil',
-          compeCode: '001',
-          ispb: '00000000',
-        },
-        updatedAt: new Date().toISOString(),
+        connectedAt: '2024-01-15T10:30:00Z',
+        status: 'CONNECTED' as const,
+        lastSyncAt: '2024-01-20T14:22:00Z',
       },
       {
+        id: 'conn_nubank_001',
+        institutionId: 'nubank',
         accountId: 'acc_nubank_001',
-        accountType: 'SAVINGS',
-        accountSubType: 'STANDARD',
-        currency: 'BRL',
         nickname: 'Conta Poupança Nubank',
-        name: 'Conta Poupança',
-        balance: 8500.0,
-        available: 8500.0,
-        blocked: 0,
-        openingDate: '2021-03-20T00:00:00Z',
-        status: 'ACTIVE',
-        branch: '0001',
-        number: '12345678-9',
-        institution: {
-          id: 'nubank',
-          name: 'Nubank',
-          compeCode: '260',
-          ispb: '18236120',
-        },
-        updatedAt: new Date().toISOString(),
+        connectedAt: '2024-01-10T09:15:00Z',
+        status: 'CONNECTED' as const,
+        lastSyncAt: '2024-01-20T14:22:00Z',
       },
     ];
 
-    let accounts = mockAccounts;
+    // Usar contas conectadas pelo usuário ou dados simulados
+    let accounts =
+      userAccounts.length > 0 ? userAccounts : mockConnectedAccounts;
 
     // Filtrar por instituição
     if (institutionId) {
-      accounts = accounts.filter(acc => acc.institution.id === institutionId);
-    }
-
-    // Filtrar por tipo de conta
-    if (accountType) {
-      accounts = accounts.filter(
-        acc => acc.accountType === accountType.toUpperCase()
-      );
-    }
-
-    // Remover saldos se não solicitado
-    if (!includeBalances) {
-      accounts = accounts.map(acc => ({
-        ...acc,
-        balance: 0,
-        available: 0,
-        blocked: 0,
-        overdraftLimit: 0,
-      }));
+      accounts = accounts.filter(acc => acc.institutionId === institutionId);
     }
 
     // Calcular estatísticas
     const stats = {
       totalAccounts: accounts.length,
-      totalBalance: accounts.reduce((sum, acc) => sum + acc.balance, 0),
-      totalAvailable: accounts.reduce((sum, acc) => sum + acc.available, 0),
-      institutions: [...new Set(accounts.map(acc => acc.institution.id))],
-      accountTypes: [...new Set(accounts.map(acc => acc.accountType))],
+      institutions: [...new Set(accounts.map(acc => acc.institutionId))],
+      connectedAccounts: accounts.filter(acc => acc.status === 'CONNECTED')
+        .length,
+      disconnectedAccounts: accounts.filter(
+        acc => acc.status === 'DISCONNECTED'
+      ).length,
     };
 
     return NextResponse.json({

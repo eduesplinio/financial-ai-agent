@@ -125,11 +125,21 @@ export default function IntegrationsPage() {
 
       const data = await response.json();
 
-      if (data.success && data.data.authorizationUrl) {
-        // Redirecionar para a URL de autorização
-        window.location.href = data.data.authorizationUrl;
+      if (data.success) {
+        if (data.data.status === 'AUTHORIZED' && data.data.connectedAccount) {
+          // Conta conectada com sucesso (simulação)
+          alert(
+            `Conta conectada com sucesso!\n\nInstituição: ${institution.name}\nConta: ${data.data.connectedAccount.nickname}`
+          );
+          // Recarregar dados para mostrar a nova conta
+          await loadData();
+        } else if (data.data.authorizationUrl) {
+          // Redirecionar para a URL de autorização (fluxo real)
+          window.location.href = data.data.authorizationUrl;
+        }
       } else {
         console.error('Error creating consent:', data.error);
+        alert('Erro ao conectar conta: ' + (data.error || 'Erro desconhecido'));
       }
     } catch (error) {
       console.error('Error connecting institution:', error);

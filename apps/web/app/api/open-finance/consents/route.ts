@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { OpenFinanceAuth } from '@financial-ai/open-finance';
 import type { OAuthConfig, ConsentRequest } from '@financial-ai/open-finance';
+import { addConnectedAccount } from '../accounts/route';
 
 /**
  * API para gerenciar consentimentos OAuth2 do Open Finance
@@ -135,59 +136,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Criar instância do OpenFinanceAuth
-    const auth = new OpenFinanceAuth({
-      baseUrl: oauthConfig.apiBaseUrl,
-      clientId: oauthConfig.clientId,
-      clientSecret: oauthConfig.clientSecret,
-      authUrl: oauthConfig.authorizationEndpoint,
-    });
-
-    // Criar URL de autorização
-    const authData = await auth.createAuthorizationUrl({
-      ...oauthConfig,
-      scopes: scopes || oauthConfig.scopes,
-    });
+    // Para demonstração, vamos simular uma conexão bem-sucedida
+    // Em produção, isso seria feito através do fluxo OAuth2 real
 
     // Calcular data de expiração
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + expirationDays);
 
-    // Criar requisição de consentimento
-    const consentRequest: ConsentRequest = {
-      data: {
-        loggedUser: {
-          document: {
-            identification: session.user.email || '',
-            rel: 'CPF', // Assumindo CPF por enquanto
-          },
-        },
-        permissions: scopes || oauthConfig.scopes,
-        expirationDateTime: expirationDate.toISOString(),
-        transactionFromDateTime: new Date(
-          Date.now() - 90 * 24 * 60 * 60 * 1000
-        ).toISOString(), // 90 dias atrás
-        transactionToDateTime: expirationDate.toISOString(),
-      },
+    // Simular consentimento autorizado automaticamente
+    const consentId = `consent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    // Simular criação de conta conectada
+    const connectedAccount = {
+      id: `conn_${institutionId}_${Date.now()}`,
+      institutionId,
+      accountId: `acc_${institutionId}_001`,
+      nickname: `Conta ${institutionId}`,
+      connectedAt: new Date().toISOString(),
+      status: 'CONNECTED',
+      lastSyncAt: new Date().toISOString(),
     };
 
-    // Em uma implementação real, salvaríamos o consentimento no banco de dados
-    // Por enquanto, apenas retornamos a URL de autorização
+    // Adicionar conta ao armazenamento do usuário
+    addConnectedAccount(session.user.id, connectedAccount);
 
     return NextResponse.json({
       success: true,
       data: {
-        consentId: `consent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        authorizationUrl: authData.url,
-        state: authData.state,
-        codeVerifier: authData.codeVerifier,
+        consentId,
+        connectedAccount,
         institutionId,
         scopes: scopes || oauthConfig.scopes,
         expirationDate: expirationDate.toISOString(),
-        status: 'AWAITING_AUTHORIZATION',
+        status: 'AUTHORIZED',
+        message: 'Conta conectada com sucesso! (Simulação)',
       },
-      message:
-        'Consent created successfully. Redirect user to authorization URL.',
     });
   } catch (error) {
     console.error('Error creating consent:', error);
