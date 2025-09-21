@@ -78,36 +78,61 @@ export default function SandboxDemoPage() {
       const data = await response.json();
 
       if (data.success) {
-        // Simular dados de transações
-        const mockTransactions: SandboxTransaction[] = [
-          {
-            transactionId: 'txn_001',
-            type: 'TRANSFER',
-            creditDebitType: 'DEBIT',
-            transactionAmount: -150.0,
-            description: 'Transferência PIX para João Silva',
-            transactionDate: '2024-01-15T10:30:00Z',
-            category: 'TRANSFER',
-          },
-          {
-            transactionId: 'txn_002',
-            type: 'PAYMENT',
-            creditDebitType: 'DEBIT',
-            transactionAmount: -89.9,
-            description: 'Pagamento de conta de luz',
-            transactionDate: '2024-01-14T14:20:00Z',
-            category: 'PAYMENT',
-          },
-          {
-            transactionId: 'txn_003',
-            type: 'DEPOSIT',
-            creditDebitType: 'CREDIT',
-            transactionAmount: 5000.0,
-            description: 'Depósito de salário',
-            transactionDate: '2024-01-13T09:00:00Z',
-            category: 'DEPOSIT',
-          },
-        ];
+        // Buscar transações realistas do sandbox
+        let mockTransactions: SandboxTransaction[] = [];
+
+        try {
+          const transactionsResponse = await fetch(
+            `/api/open-finance/transactions-sandbox?institution_id=${selectedInstitution}&account_id=acc_${selectedInstitution}_001`
+          );
+          const transactionsData = await transactionsResponse.json();
+
+          if (transactionsData.success) {
+            mockTransactions = transactionsData.data
+              .slice(0, 10)
+              .map((txn: any) => ({
+                transactionId: txn.transactionId,
+                type: txn.type,
+                creditDebitType: txn.creditDebitType,
+                transactionAmount: txn.transactionAmount,
+                description: txn.description,
+                transactionDate: txn.transactionDate,
+                category: txn.category,
+              }));
+          }
+        } catch (error) {
+          console.error('Error fetching realistic transactions:', error);
+          // Fallback para dados de demonstração
+          mockTransactions = [
+            {
+              transactionId: 'txn_demo_001',
+              type: 'TRANSFER',
+              creditDebitType: 'DEBIT',
+              transactionAmount: -150.0,
+              description: 'Transferência PIX para João Silva',
+              transactionDate: '2024-01-15T10:30:00Z',
+              category: 'TRANSFER',
+            },
+            {
+              transactionId: 'txn_demo_002',
+              type: 'PAYMENT',
+              creditDebitType: 'DEBIT',
+              transactionAmount: -89.9,
+              description: 'Pagamento de conta de luz',
+              transactionDate: '2024-01-14T14:20:00Z',
+              category: 'PAYMENT',
+            },
+            {
+              transactionId: 'txn_demo_003',
+              type: 'DEPOSIT',
+              creditDebitType: 'CREDIT',
+              transactionAmount: 5000.0,
+              description: 'Depósito de salário',
+              transactionDate: '2024-01-13T09:00:00Z',
+              category: 'DEPOSIT',
+            },
+          ];
+        }
 
         setDemo({
           institutionId: selectedInstitution,
@@ -364,6 +389,45 @@ export default function SandboxDemoPage() {
                           {account.accountType}
                         </span>
                       </div>
+                      {account.blocked && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">
+                            Bloqueado:
+                          </span>
+                          <span className="font-medium text-orange-600">
+                            {formatCurrency(account.blocked)}
+                          </span>
+                        </div>
+                      )}
+                      {account.overdraftLimit && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Limite:</span>
+                          <span className="font-medium text-blue-600">
+                            {formatCurrency(account.overdraftLimit)}
+                          </span>
+                        </div>
+                      )}
+                      {account.customer && (
+                        <div className="mt-2 pt-2 border-t">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">
+                              Cliente:
+                            </span>
+                            <span className="font-medium">
+                              {account.customer.name}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">
+                              Renda:
+                            </span>
+                            <span className="font-medium">
+                              {formatCurrency(account.customer.monthlyIncome)}
+                              /mês
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

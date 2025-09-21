@@ -1,9 +1,12 @@
 /**
  * Serviço de Sandbox do Open Finance Brasil
  * Simula respostas realistas das APIs das instituições financeiras
+ *
+ * @deprecated Use realisticSandboxService instead for more realistic data
  */
 
 import { OPEN_FINANCE_INSTITUTIONS } from './open-finance-config';
+import { realisticSandboxService } from './realistic-sandbox';
 
 export interface SandboxAccount {
   accountId: string;

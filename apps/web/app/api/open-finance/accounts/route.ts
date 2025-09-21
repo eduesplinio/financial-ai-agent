@@ -3,6 +3,10 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import type { AccountData } from '@financial-ai/open-finance';
 import { sandboxService, SandboxAccount } from '@/lib/sandbox-service';
+import {
+  realisticSandboxService,
+  RealisticAccount,
+} from '@/lib/realistic-sandbox';
 
 // Armazenamento temporário em memória para demonstração
 // Em produção, isso seria feito no banco de dados
@@ -73,26 +77,32 @@ export async function GET(request: NextRequest) {
           // Simular token de acesso (em produção, viria do banco de dados)
           const mockToken = `sandbox_token_${account.institutionId}_${Date.now()}`;
 
-          // Buscar dados reais da conta no sandbox
-          const sandboxAccounts = await sandboxService.getAccounts(
-            account.institutionId,
-            mockToken
-          );
-          const sandboxAccount = sandboxAccounts.find(
+          // Buscar dados realistas da conta no sandbox
+          const realisticAccounts =
+            await realisticSandboxService.getRealisticAccounts(
+              account.institutionId,
+              mockToken
+            );
+          const realisticAccount = realisticAccounts.find(
             acc => acc.accountId === account.accountId
           );
 
-          if (sandboxAccount) {
+          if (realisticAccount) {
             return {
               ...account,
-              // Adicionar dados reais do sandbox
-              balance: sandboxAccount.balance,
-              available: sandboxAccount.available,
-              blocked: sandboxAccount.blocked,
-              accountType: sandboxAccount.accountType,
-              currency: sandboxAccount.currency,
-              status: sandboxAccount.status,
+              // Adicionar dados realistas do sandbox
+              balance: realisticAccount.balance,
+              available: realisticAccount.available,
+              blocked: realisticAccount.blocked,
+              accountType: realisticAccount.accountType,
+              currency: realisticAccount.currency,
+              status: realisticAccount.status,
               lastSyncAt: new Date().toISOString(),
+              // Dados adicionais realistas
+              customer: realisticAccount.customer,
+              monthlyAverageBalance: realisticAccount.monthlyAverageBalance,
+              transactionCount: realisticAccount.transactionCount,
+              overdraftLimit: realisticAccount.overdraftLimit,
             };
           }
 

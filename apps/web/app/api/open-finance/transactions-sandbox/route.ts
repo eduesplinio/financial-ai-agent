@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { sandboxService } from '@/lib/sandbox-service';
+import {
+  realisticSandboxService,
+  RealisticTransaction,
+} from '@/lib/realistic-sandbox';
 
 /**
  * API para transações do Open Finance usando sandbox real
@@ -39,17 +43,18 @@ export async function GET(request: NextRequest) {
     // Simular token de acesso (em produção, viria do banco de dados)
     const mockToken = `sandbox_token_${institutionId}_${Date.now()}`;
 
-    // Buscar transações reais do sandbox
-    const sandboxTransactions = await sandboxService.getTransactions(
-      institutionId,
-      accountId,
-      mockToken,
-      fromDate ? new Date(fromDate) : undefined,
-      toDate ? new Date(toDate) : undefined
-    );
+    // Buscar transações realistas do sandbox
+    const realisticTransactions =
+      await realisticSandboxService.getRealisticTransactions(
+        institutionId,
+        accountId,
+        mockToken,
+        fromDate ? new Date(fromDate) : undefined,
+        toDate ? new Date(toDate) : undefined
+      );
 
     // Converter para formato da API
-    const transactions = sandboxTransactions.map(txn => ({
+    const transactions = realisticTransactions.map(txn => ({
       transactionId: txn.transactionId,
       accountId: txn.accountId,
       type: txn.type,
@@ -57,23 +62,17 @@ export async function GET(request: NextRequest) {
       transactionAmount: txn.transactionAmount,
       currency: txn.currency,
       transactionDate: txn.transactionDate,
-      valueDate: txn.transactionDate,
+      valueDate: txn.valueDate,
       description: txn.description,
-      status: 'COMPLETED',
+      status: txn.status,
       category: txn.category,
-      counterparty: txn.merchantName
-        ? {
-            name: txn.merchantName,
-            documentNumber: '12345678000195',
-            documentType: 'CNPJ' as const,
-          }
-        : undefined,
-      correlationId: `corr_${txn.transactionId}`,
-      details: txn.location
-        ? {
-            location: `${txn.location.city}, ${txn.location.state}`,
-          }
-        : undefined,
+      subcategory: txn.subcategory,
+      counterparty: txn.counterparty,
+      correlationId: txn.correlationId,
+      details: txn.details,
+      tags: txn.tags,
+      isRecurring: txn.isRecurring,
+      recurringPattern: txn.recurringPattern,
     }));
 
     // Aplicar filtros
