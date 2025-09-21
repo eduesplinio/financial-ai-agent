@@ -47,7 +47,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Landmark,
-  TestTube,
   X,
 } from 'lucide-react';
 
@@ -127,11 +126,6 @@ export function Sidebar({ className }: SidebarProps) {
       name: 'Integrações',
       href: '/integrations',
       icon: <Landmark className="h-5 w-5" />,
-    },
-    {
-      name: 'Sandbox Demo',
-      href: '/sandbox-demo',
-      icon: <TestTube className="h-5 w-5" />,
     },
   ];
 

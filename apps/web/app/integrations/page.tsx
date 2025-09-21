@@ -372,11 +372,28 @@ export default function IntegrationsPage() {
                   >
                     <div className="flex items-center gap-4">
                       <div className="p-2 bg-blue-100 rounded-lg">
-                        {institution ? (
-                          getInstitutionIcon(institution.type)
-                        ) : (
-                          <Wallet className="h-6 w-6" />
-                        )}
+                        {institution?.logoUrl ? (
+                          <img
+                            src={institution.logoUrl}
+                            alt={institution.name}
+                            className="h-6 w-6 object-contain"
+                            onError={e => {
+                              e.currentTarget.style.display = 'none';
+                              e.currentTarget.nextElementSibling?.classList.remove(
+                                'hidden'
+                              );
+                            }}
+                          />
+                        ) : null}
+                        <div
+                          className={`h-6 w-6 ${institution?.logoUrl ? 'hidden' : ''}`}
+                        >
+                          {institution ? (
+                            getInstitutionIcon(institution.type)
+                          ) : (
+                            <Wallet className="h-6 w-6" />
+                          )}
+                        </div>
                       </div>
                       <div>
                         <h3 className="font-medium">{account.nickname}</h3>
@@ -550,38 +567,6 @@ export default function IntegrationsPage() {
                 </div>
               );
             })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Informações de Segurança */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            Segurança e Privacidade
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="font-medium mb-2">Como Funciona</h3>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Conexão segura via Open Finance Brasil</li>
-                <li>• Dados criptografados em trânsito e repouso</li>
-                <li>• Acesso apenas aos dados autorizados</li>
-                <li>• Você pode revogar o acesso a qualquer momento</li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-medium mb-2">Seus Direitos</h3>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Controle total sobre seus dados</li>
-                <li>• Transparência sobre o uso dos dados</li>
-                <li>• Direito ao esquecimento (LGPD)</li>
-                <li>• Portabilidade dos dados</li>
-              </ul>
-            </div>
           </div>
         </CardContent>
       </Card>
