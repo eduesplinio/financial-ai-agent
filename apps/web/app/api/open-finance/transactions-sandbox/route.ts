@@ -1,19 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { sandboxService } from '@/lib/sandbox-service';
-import {
-  realisticSandboxService,
-  RealisticTransaction,
-} from '@/lib/realistic-sandbox';
+import mongoose from 'mongoose';
+
+// Conectar ao MongoDB
+const connectDB = async () => {
+  if (mongoose.connections[0].readyState) return;
+  await mongoose.connect(
+    process.env.MONGODB_URI ||
+      'mongodb+srv://esplinone_db_user:XyY0siKX2Ib2LZCw@cluster0.ih76fqj.mongodb.net/financial_ai?retryWrites=true&w=majority&appName=Cluster0'
+  );
+};
+
+// Schema de transação
+const TransactionSchema = new mongoose.Schema(
+  {
+    id: String,
+    accountId: String,
+    type: String,
+    creditDebitType: String,
+    amount: Number,
+    currency: String,
+    date: Date,
+    valueDate: Date,
+    description: String,
+    status: String,
+    category: {
+      primary: String,
+      secondary: String,
+    },
+    subcategory: String,
+    counterparty: String,
+    correlationId: String,
+    details: String,
+    tags: [String],
+    isRecurring: Boolean,
+    recurringPattern: String,
+    institutionName: String,
+  },
+  { strict: false }
+);
+
+const Transaction =
+  mongoose.models.Transaction ||
+  mongoose.model('Transaction', TransactionSchema);
 
 /**
- * API para transações do Open Finance usando sandbox real
+ * API para transações do Open Finance usando dados reais do banco
  */
 
 /**
  * GET /api/open-finance/transactions-sandbox
- * Lista transações bancárias usando dados reais do sandbox
+ * Lista transações bancárias usando dados reais do banco de dados
  */
 export async function GET(request: NextRequest) {
   try {
@@ -33,174 +71,104 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '50');
 
-    // Se não foram fornecidos, usar valores padrão para Nubank
-    const defaultInstitutionId = institutionId || 'nubank';
-    const defaultAccountId = accountId || 'acc_nubank_001';
+    // Conectar ao banco de dados
+    await connectDB();
 
-    // Simular token de acesso (em produção, viria do banco de dados)
-    const mockToken = `sandbox_token_${defaultInstitutionId}_${Date.now()}`;
+    // Construir filtros para busca no banco
+    const filters: any = {};
 
-    // Buscar transações realistas do sandbox
-    const realisticTransactions =
-      await realisticSandboxService.getRealisticTransactions(
-        defaultInstitutionId,
-        defaultAccountId,
-        mockToken,
-        fromDate ? new Date(fromDate) : undefined,
-        toDate ? new Date(toDate) : undefined
-      );
+    if (institutionId) {
+      filters.institutionName = institutionId;
+    }
 
-    // Converter para formato da API
-    const transactions = realisticTransactions.map(txn => ({
-      id: txn.transactionId,
+    if (accountId) {
+      filters.accountId = accountId;
+    }
+
+    if (fromDate) {
+      filters.date = { ...filters.date, $gte: new Date(fromDate) };
+    }
+
+    if (toDate) {
+      filters.date = { ...filters.date, $lte: new Date(toDate) };
+    }
+
+    if (category) {
+      filters['category.primary'] = category;
+    }
+
+    if (type && type !== 'all') {
+      filters.creditDebitType = type.toUpperCase();
+    }
+
+    // Buscar transações reais do banco de dados
+    const transactions = await Transaction.find(filters)
+      .sort({ date: -1 }) // Mais recente primeiro
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
+
+    // Contar total de transações para paginação
+    const totalTransactions = await Transaction.countDocuments(filters);
+
+    // Converter para formato da API (os dados já estão no formato correto)
+    const formattedTransactions = transactions.map(txn => ({
+      id: txn.id || txn._id,
       accountId: txn.accountId,
       type: txn.type,
       creditDebitType: txn.creditDebitType,
-      amount: txn.transactionAmount,
-      currency: txn.currency,
-      date: txn.transactionDate,
+      amount: txn.amount,
+      currency: txn.currency || 'BRL',
+      date: txn.date,
       valueDate: txn.valueDate,
       description: txn.description,
-      status: txn.status,
-      category: txn.category,
+      status: txn.status || 'SETTLED',
+      category: txn.category || { primary: 'Outros' },
       subcategory: txn.subcategory,
       counterparty: txn.counterparty,
       correlationId: txn.correlationId,
       details: txn.details,
-      tags: txn.tags,
-      isRecurring: txn.isRecurring,
+      tags: txn.tags || [],
+      isRecurring: txn.isRecurring || false,
       recurringPattern: txn.recurringPattern,
     }));
 
-    // Aplicar filtros
-    let filteredTransactions = transactions;
-
-    if (fromDate) {
-      const from = new Date(fromDate);
-      filteredTransactions = filteredTransactions.filter(
-        txn => new Date(txn.date) >= from
-      );
-    }
-
-    if (toDate) {
-      const to = new Date(toDate);
-      filteredTransactions = filteredTransactions.filter(
-        txn => new Date(txn.date) <= to
-      );
-    }
-
-    if (category) {
-      filteredTransactions = filteredTransactions.filter(
-        txn => txn.category === category.toUpperCase()
-      );
-    }
-
-    if (type && type !== 'all') {
-      filteredTransactions = filteredTransactions.filter(
-        txn => txn.creditDebitType === type.toUpperCase()
-      );
-    }
-
-    // Ordenar por data (mais recente primeiro)
-    filteredTransactions.sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-
-    // Paginação
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedTransactions = filteredTransactions.slice(
-      startIndex,
-      endIndex
-    );
-
     // Calcular estatísticas
     const stats = {
-      totalTransactions: filteredTransactions.length,
-      totalCredits: filteredTransactions
+      totalTransactions: totalTransactions,
+      totalCredits: formattedTransactions
         .filter(txn => txn.creditDebitType === 'CREDIT')
         .reduce((sum, txn) => sum + txn.amount, 0),
       totalDebits: Math.abs(
-        filteredTransactions
+        formattedTransactions
           .filter(txn => txn.creditDebitType === 'DEBIT')
           .reduce((sum, txn) => sum + txn.amount, 0)
       ),
-      netAmount: filteredTransactions.reduce((sum, txn) => sum + txn.amount, 0),
-      categories: [...new Set(filteredTransactions.map(txn => txn.category))],
-      accounts: [...new Set(filteredTransactions.map(txn => txn.accountId))],
+      netAmount: formattedTransactions.reduce(
+        (sum, txn) => sum + txn.amount,
+        0
+      ),
+      categories: [
+        ...new Set(formattedTransactions.map(txn => txn.category.primary)),
+      ],
+      accounts: [...new Set(formattedTransactions.map(txn => txn.accountId))],
     };
 
     return NextResponse.json({
       success: true,
-      data: paginatedTransactions,
+      data: formattedTransactions,
       stats,
       pagination: {
         page,
         limit,
-        total: filteredTransactions.length,
-        totalPages: Math.ceil(filteredTransactions.length / limit),
-        hasNext: endIndex < filteredTransactions.length,
+        total: totalTransactions,
+        totalPages: Math.ceil(totalTransactions / limit),
+        hasNext: page * limit < totalTransactions,
         hasPrev: page > 1,
       },
     });
   } catch (error) {
-    console.error('Error fetching transactions from sandbox:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
-}
-
-/**
- * POST /api/open-finance/transactions-sandbox
- * Simula uma nova transação no sandbox (para testes)
- */
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const body = await request.json();
-    const { institutionId, accountId, amount, description, type } = body;
-
-    if (!institutionId || !accountId || !amount || !description) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
-    }
-
-    // Simular criação de transação no sandbox
-    const mockToken = `sandbox_token_${institutionId}_${Date.now()}`;
-
-    // Em um ambiente real, isso criaria uma transação real
-    // Por enquanto, apenas simulamos a resposta
-    const simulatedTransaction = {
-      transactionId: `txn_sim_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      accountId,
-      type: type || 'PURCHASE',
-      creditDebitType: amount > 0 ? 'CREDIT' : 'DEBIT',
-      transactionAmount: amount,
-      currency: 'BRL',
-      transactionDate: new Date().toISOString(),
-      valueDate: new Date().toISOString(),
-      description,
-      status: 'PENDING',
-      category: type || 'PURCHASE',
-      correlationId: `corr_sim_${Date.now()}`,
-    };
-
-    return NextResponse.json({
-      success: true,
-      data: simulatedTransaction,
-      message: 'Transaction simulated successfully in sandbox',
-    });
-  } catch (error) {
-    console.error('Error simulating transaction:', error);
+    console.error('Error fetching transactions from database:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
