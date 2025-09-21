@@ -65,30 +65,63 @@ export function TransactionsContent() {
       try {
         setLoading(true);
 
+        // Calcular datas baseado no período selecionado
+        const now = new Date();
+        let fromDate: Date;
+
+        switch (selectedPeriod) {
+          case '7d':
+            fromDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            break;
+          case '30d':
+            fromDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            break;
+          case '90d':
+            fromDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+            break;
+          case '1y':
+            fromDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+            break;
+          default:
+            fromDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        }
+
         // Buscar dados das contas conectadas
         const accountsResponse = await fetch('/api/open-finance/accounts');
         const accountsData = await accountsResponse.json();
 
-        // Buscar transações
-        const transactionsResponse = await fetch(
-          '/api/open-finance/transactions-sandbox'
+        // Buscar transações com filtro de período
+        const transactionsUrl = new URL(
+          '/api/open-finance/transactions-sandbox',
+          window.location.origin
         );
+        transactionsUrl.searchParams.set('from_date', fromDate.toISOString());
+        transactionsUrl.searchParams.set('to_date', now.toISOString());
+
+        const transactionsResponse = await fetch(transactionsUrl.toString());
         const transactionsData = await transactionsResponse.json();
 
         if (accountsData.success && transactionsData.success) {
           const accounts = accountsData.data || [];
           const transactionsList = transactionsData.data || [];
 
-          // Calcular resumo
+          // Calcular resumo baseado no período selecionado
           const totalBalance = accounts.reduce(
             (sum: number, acc: any) => sum + (acc.balance || 0),
             0
           );
-          const totalIncome = transactionsList
+
+          // Filtrar transações por período para cálculos corretos
+          const periodTransactions = transactionsList.filter((tx: any) => {
+            const txDate = new Date(tx.date);
+            return txDate >= fromDate && txDate <= now;
+          });
+
+          const totalIncome = periodTransactions
             .filter((tx: any) => tx.amount > 0)
             .reduce((sum: number, tx: any) => sum + tx.amount, 0);
           const totalExpenses = Math.abs(
-            transactionsList
+            periodTransactions
               .filter((tx: any) => tx.amount < 0)
               .reduce((sum: number, tx: any) => sum + tx.amount, 0)
           );
@@ -97,7 +130,7 @@ export function TransactionsContent() {
             totalBalance,
             totalIncome,
             totalExpenses,
-            transactionCount: transactionsList.length,
+            transactionCount: periodTransactions.length,
           });
 
           // Mapear transações com dados da conta
@@ -230,7 +263,15 @@ export function TransactionsContent() {
               }) || '0,00'}
             </div>
             <p className="text-xs text-blue-700/70 dark:text-blue-300/70">
-              Este mês
+              {selectedPeriod === '7d'
+                ? 'Últimos 7 dias'
+                : selectedPeriod === '30d'
+                  ? 'Últimos 30 dias'
+                  : selectedPeriod === '90d'
+                    ? 'Últimos 90 dias'
+                    : selectedPeriod === '1y'
+                      ? 'Último ano'
+                      : 'Este período'}
             </p>
           </CardContent>
         </Card>
@@ -250,7 +291,15 @@ export function TransactionsContent() {
               }) || '0,00'}
             </div>
             <p className="text-xs text-red-700/70 dark:text-red-300/70">
-              Este mês
+              {selectedPeriod === '7d'
+                ? 'Últimos 7 dias'
+                : selectedPeriod === '30d'
+                  ? 'Últimos 30 dias'
+                  : selectedPeriod === '90d'
+                    ? 'Últimos 90 dias'
+                    : selectedPeriod === '1y'
+                      ? 'Último ano'
+                      : 'Este período'}
             </p>
           </CardContent>
         </Card>
