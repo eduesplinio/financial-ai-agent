@@ -1,6 +1,6 @@
 // Database package - MongoDB connection and models
-export * from './connection.js';
-export * from './models.js';
-export * from './init.js';
-export * from './vector-search.js';
-export * from './document-index.js';
+export * from './connection';
+export * from './models';
+export * from './init';
+export * from './vector-search';
+export * from './document-index';
