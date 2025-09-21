@@ -143,10 +143,15 @@ export class ChatService {
         throw new Error('Database connection not established');
       }
 
-      // Buscar TODAS as transações
+      // Buscar transações dos últimos 7 dias (mesmo filtro da página)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
       const transactions = await db
         .collection('transactions')
-        .find({})
+        .find({
+          date: { $gte: sevenDaysAgo },
+        })
         .sort({ date: -1 })
         .limit(100)
         .toArray();
