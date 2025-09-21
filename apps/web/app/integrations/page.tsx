@@ -353,33 +353,27 @@ export default function IntegrationsPage() {
         </Card>
       </div>
 
-      {/* Conta Nubank Conectada */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg">
-              <NubankLogo size="md" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold">Nubank</h2>
-              <p className="text-sm text-muted-foreground">Conta conectada</p>
-            </div>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-100">
+      {/* Conta Nubank */}
+      <Card className="border-0 shadow-sm">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg">
                 <NubankLogo size="lg" />
               </div>
               <div>
-                <h3 className="font-medium text-gray-800">Conta Nubank</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Nubank</h3>
                 <p className="text-sm text-gray-600">Conta Corrente</p>
-                <p className="text-xs text-gray-500">Desde 10/01/2024</p>
+                <p className="text-xs text-gray-500">
+                  Conectado desde 10/01/2024
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Badge variant="default" className="bg-green-100 text-green-800">
+              <Badge
+                variant="default"
+                className="bg-green-100 text-green-800 border-0"
+              >
                 <CheckCircle className="h-3 w-3 mr-1" />
                 Ativo
               </Badge>
@@ -387,6 +381,7 @@ export default function IntegrationsPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => handleSyncAccount('nubank')}
+                className="border-gray-200"
               >
                 <RefreshCw className="h-4 w-4 mr-1" />
                 Sincronizar
