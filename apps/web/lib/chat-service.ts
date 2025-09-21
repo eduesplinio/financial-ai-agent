@@ -181,23 +181,28 @@ export class ChatService {
 
     transactions.forEach(transaction => {
       const transactionDate = new Date(transaction.date);
+      const amount = Math.abs(transaction.amount);
+      const category = transaction.category?.primary || 'Outros';
 
-      if (transaction.creditDebitType === 'CREDIT' || transaction.amount > 0) {
-        totalIncome += Math.abs(transaction.amount);
-      } else if (
-        transaction.creditDebitType === 'DEBIT' ||
-        transaction.amount < 0
-      ) {
-        totalExpenses += Math.abs(transaction.amount);
-        const category = transaction.category?.primary || 'Outros';
-        categoryTotals[category] =
-          (categoryTotals[category] || 0) + Math.abs(transaction.amount);
+      // Determinar se é receita ou despesa baseado no amount e categoria
+      const isIncome =
+        transaction.amount > 0 ||
+        category.toLowerCase().includes('receita') ||
+        category.toLowerCase().includes('recebimento') ||
+        category.toLowerCase().includes('transferência') ||
+        category.toLowerCase().includes('pix');
+
+      if (isIncome) {
+        totalIncome += amount;
+      } else {
+        totalExpenses += amount;
+        categoryTotals[category] = (categoryTotals[category] || 0) + amount;
 
         // Calcular gastos dos últimos 7 dias
         if (transactionDate >= sevenDaysAgo) {
-          last7DaysExpenses += Math.abs(transaction.amount);
+          last7DaysExpenses += amount;
           last7DaysCategories[category] =
-            (last7DaysCategories[category] || 0) + Math.abs(transaction.amount);
+            (last7DaysCategories[category] || 0) + amount;
         }
       }
     });
