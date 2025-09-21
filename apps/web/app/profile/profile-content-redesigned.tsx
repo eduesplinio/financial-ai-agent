@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { BankLogo } from '@/components/ui/bank-logo';
+import { NubankLogo } from '@/components/ui/nubank-logo';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
@@ -824,7 +825,12 @@ export function ProfileContent() {
                   {financialProfile.connectedAccounts.map(account => {
                     // URLs dos logos dos bancos
                     const bankLogos: Record<string, string[]> = {
-                      nubank: ['https://logos.bancos.com.br/nubank.png'],
+                      nubank: [
+                        'https://nubank.com.br/images/nu-logo.png',
+                        'https://assets.nubank.com.br/images/nu-logo.png',
+                        'https://cdn.nubank.com.br/images/nu-logo.png',
+                        'https://logos.bancos.com.br/nubank.png',
+                      ],
                     };
 
                     const bankLogoUrls = bankLogos[account.institutionId];
@@ -836,12 +842,16 @@ export function ProfileContent() {
                       >
                         <div className="flex items-center space-x-3">
                           <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">
-                            <BankLogo
-                              logoUrls={bankLogoUrls}
-                              institutionName={account.institutionName}
-                              institutionType="fintech"
-                              size="lg"
-                            />
+                            {account.institutionId === 'nubank' ? (
+                              <NubankLogo size="lg" />
+                            ) : (
+                              <BankLogo
+                                logoUrls={bankLogoUrls}
+                                institutionName={account.institutionName}
+                                institutionType="fintech"
+                                size="lg"
+                              />
+                            )}
                           </div>
                           <div>
                             <p className="font-medium text-gray-800">

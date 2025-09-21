@@ -22,6 +22,7 @@ export function BankLogo({
 }: BankLogoProps) {
   const [currentUrlIndex, setCurrentUrlIndex] = useState(0);
   const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Tamanhos baseados no prop size
   const sizeClasses = {
@@ -36,13 +37,22 @@ export function BankLogo({
   const currentUrl = urlsToTry[currentUrlIndex];
 
   const handleError = () => {
+    console.log(`Logo failed to load: ${currentUrl}`);
     if (currentUrlIndex < urlsToTry.length - 1) {
       // Tentar próxima URL
       setCurrentUrlIndex(currentUrlIndex + 1);
+      setIsLoading(true);
     } else {
       // Todas as URLs falharam
       setHasError(true);
+      setIsLoading(false);
     }
+  };
+
+  const handleLoad = () => {
+    console.log(`Logo loaded successfully: ${currentUrl}`);
+    setIsLoading(false);
+    setHasError(false);
   };
 
   const getInstitutionIcon = () => {
@@ -73,7 +83,7 @@ export function BankLogo({
       alt={`Logo ${institutionName}`}
       className={`${sizeClasses[size]} object-contain ${className}`}
       onError={handleError}
-      onLoad={() => setHasError(false)}
+      onLoad={handleLoad}
     />
   );
 }
