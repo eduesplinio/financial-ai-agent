@@ -484,6 +484,10 @@ export class ChatService {
     context?: any;
   }> {
     try {
+      console.log(
+        '🤖 callRAGDirect - transactionSummary recebido:',
+        transactionSummary
+      );
       // Import mongoose dynamically to avoid bundling issues
       const mongoose = await import('mongoose');
 
