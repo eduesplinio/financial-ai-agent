@@ -181,8 +181,25 @@ export class ChatService {
     transactions: any[]
   ): UserProfile['recentTransactions'] {
     if (transactions.length === 0) {
-      return undefined;
+      console.log(
+        '⚠️ calculateTransactionSummary - Nenhuma transação encontrada'
+      );
+      return {
+        totalIncome: 0,
+        totalExpenses: 0,
+        netIncome: 0,
+        topCategories: [],
+        monthlyTrend: 'stable' as const,
+        last7DaysExpenses: 0,
+        last7DaysCategories: [],
+      };
     }
+
+    console.log(
+      '📊 calculateTransactionSummary - Processando',
+      transactions.length,
+      'transações'
+    );
 
     let totalIncome = 0;
     let totalExpenses = 0;
@@ -239,7 +256,7 @@ export class ChatService {
     const monthlyTrend =
       netIncome > 0 ? 'increasing' : netIncome < 0 ? 'decreasing' : 'stable';
 
-    return {
+    const result = {
       totalIncome,
       totalExpenses,
       netIncome,
@@ -251,6 +268,9 @@ export class ChatService {
         .sort((a, b) => b.amount - a.amount)
         .slice(0, 5),
     };
+
+    console.log('📊 calculateTransactionSummary - Resultado:', result);
+    return result;
   }
 
   constructor(config: ChatServiceConfig) {
