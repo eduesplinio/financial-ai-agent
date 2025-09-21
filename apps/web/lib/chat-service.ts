@@ -661,30 +661,28 @@ REGRA CRÍTICA PARA DADOS PESSOAIS:
 - NUNCA diga que não tem acesso aos dados pessoais se eles estão disponíveis abaixo
 - Use os valores específicos das transações para responder perguntas como "quanto gastei", "quanto recebi", "quais foram meus gastos", etc.
 
-${
-  transactionSummary
-    ? `DADOS DAS TRANSAÇÕES:
+DADOS DAS TRANSAÇÕES (ÚLTIMOS 7 DIAS):
 
 SITUAÇÃO FINANCEIRA RECENTE:
-- Renda total: R$ ${transactionSummary.totalIncome.toLocaleString('pt-BR')}
-- Gastos totais: R$ ${transactionSummary.totalExpenses.toLocaleString('pt-BR')}
-- Saldo líquido: R$ ${transactionSummary.netIncome.toLocaleString('pt-BR')}
-- Tendência: ${transactionSummary.monthlyTrend === 'increasing' ? 'Crescimento' : transactionSummary.monthlyTrend === 'decreasing' ? 'Declínio' : 'Estável'}
+- Renda total: R$ ${transactionSummary?.totalIncome?.toLocaleString('pt-BR') || '0,00'}
+- Gastos totais: R$ ${transactionSummary?.totalExpenses?.toLocaleString('pt-BR') || '0,00'}
+- Saldo líquido: R$ ${transactionSummary?.netIncome?.toLocaleString('pt-BR') || '0,00'}
+- Tendência: ${transactionSummary?.monthlyTrend === 'increasing' ? 'Crescimento' : transactionSummary?.monthlyTrend === 'decreasing' ? 'Declínio' : 'Estável'}
 
 PRINCIPAIS CATEGORIAS DE GASTOS:
-${transactionSummary.topCategories
-  .map(
-    cat =>
-      `- ${cat.category}: R$ ${cat.amount.toLocaleString('pt-BR')} (${cat.percentage.toFixed(1)}%)`
-  )
-  .join('\n')}
+${
+  transactionSummary?.topCategories
+    ?.map(
+      cat =>
+        `- ${cat.category}: R$ ${cat.amount.toLocaleString('pt-BR')} (${cat.percentage.toFixed(1)}%)`
+    )
+    .join('\n') || '- Nenhuma categoria encontrada'
+}
 
 GASTOS DOS ÚLTIMOS 7 DIAS:
-- Total gasto: R$ ${transactionSummary.last7DaysExpenses.toLocaleString('pt-BR')}
+- Total gasto: R$ ${transactionSummary?.last7DaysExpenses?.toLocaleString('pt-BR') || '0,00'}
 - Principais categorias:
-${transactionSummary.last7DaysCategories
-  .map(cat => `- ${cat.category}: R$ ${cat.amount.toLocaleString('pt-BR')}`)
-  .join('\n')}
+${transactionSummary?.last7DaysCategories?.map(cat => `- ${cat.category}: R$ ${cat.amount.toLocaleString('pt-BR')}`).join('\n') || '- Nenhuma categoria encontrada'}
 
 EXEMPLOS DE TRANSAÇÕES ESPECÍFICAS:
 - Água e Esgoto (Moradia): R$ 221,13 em 20/09/2025
@@ -695,9 +693,7 @@ IMPORTANTE:
 - Use esses dados específicos das transações para responder perguntas sobre gastos, receitas e análise financeira
 - Quando perguntarem sobre transações específicas (como "Água e Esgoto", "PIX Freelance"), forneça os valores exatos
 - Para perguntas sobre gastos totais, use os valores calculados acima
-- NUNCA diga que não tem acesso aos dados se eles estão listados aqui`
-    : '- Dados de transações não disponíveis'
-}`;
+- NUNCA diga que não tem acesso aos dados se eles estão listados aqui`;
 
       console.log('🤖 PROMPT FINAL CONSTRUÍDO:', systemPrompt);
 
