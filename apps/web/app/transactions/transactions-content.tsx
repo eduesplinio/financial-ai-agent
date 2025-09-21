@@ -59,6 +59,11 @@ export function TransactionsContent() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Função para capitalizar corretamente palavras em português
+  const capitalizePortuguese = (str: string) => {
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  };
+
   // Buscar transações e dados da conta
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -350,8 +355,7 @@ export function TransactionsContent() {
                   <SelectItem value="all">Todas as categorias</SelectItem>
                   {categories.map(category => (
                     <SelectItem key={category} value={category}>
-                      {category.charAt(0).toUpperCase() +
-                        category.slice(1).toLowerCase()}
+                      {capitalizePortuguese(category)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -424,10 +428,7 @@ export function TransactionsContent() {
                       </div>
                       <div className="flex items-center gap-4 mt-1">
                         <p className="text-xs text-gray-600 dark:text-gray-400">
-                          {transaction.category.primary
-                            .charAt(0)
-                            .toUpperCase() +
-                            transaction.category.primary.slice(1).toLowerCase()}
+                          {capitalizePortuguese(transaction.category.primary)}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-500">
                           {new Date(transaction.date).toLocaleDateString(
