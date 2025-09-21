@@ -374,7 +374,7 @@ export default function IntegrationsPage() {
                     className="flex items-center justify-between p-4 border rounded-lg"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="p-2 bg-blue-100 rounded-lg">
+                      <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg">
                         {account.institutionId === 'nubank' ? (
                           <NubankLogo size="md" />
                         ) : (
@@ -480,7 +480,7 @@ export default function IntegrationsPage() {
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100 rounded-lg">
+                      <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg">
                         {institution.id === 'nubank' ? (
                           <NubankLogo size="md" />
                         ) : (
