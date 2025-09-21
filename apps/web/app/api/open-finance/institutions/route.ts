@@ -7,14 +7,9 @@ import {
   getSandboxInstitutions,
 } from '@/lib/open-finance-config';
 
-// URLs dos logos dos bancos brasileiros (múltiplas opções para garantir funcionamento)
+// URLs dos logos dos bancos brasileiros
 const BANK_LOGOS: Record<string, string[]> = {
-  nubank: [
-    'https://nubank.com.br/images/nu-logo.png',
-    'https://assets.nubank.com.br/images/nu-logo.png',
-    'https://cdn.nubank.com.br/images/nu-logo.png',
-    'https://logos.bancos.com.br/nubank.png',
-  ],
+  nubank: ['https://logos.bancos.com.br/nubank.png'],
 };
 
 // Instituições conectadas (apenas Nubank por enquanto)
