@@ -9,11 +9,6 @@ import {
 
 // URLs reais dos logos dos bancos brasileiros
 const BANK_LOGOS: Record<string, string> = {
-  'banco-do-brasil': 'https://logos.bancos.com.br/banco-do-brasil.png',
-  'caixa-economica': 'https://logos.bancos.com.br/caixa-economica.png',
-  bradesco: 'https://logos.bancos.com.br/bradesco.png',
-  itau: 'https://logos.bancos.com.br/itau.png',
-  santander: 'https://logos.bancos.com.br/santander.png',
   nubank: 'https://logos.bancos.com.br/nubank.png',
 };
 
