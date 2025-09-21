@@ -699,6 +699,8 @@ IMPORTANTE:
     : '- Dados de transações não disponíveis'
 }`;
 
+      console.log('🤖 PROMPT FINAL CONSTRUÍDO:', systemPrompt);
+
       // Call OpenAI with enhanced prompt
       const response = await fetch(
         'https://api.openai.com/v1/chat/completions',
