@@ -841,7 +841,7 @@ export function ProfileContent() {
                         className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100"
                       >
                         <div className="flex items-center space-x-3">
-                          <div className="w-12 h-12 bg-gradient-to-br from-purple-50 to-blue-50 rounded-full flex items-center justify-center shadow-md border border-purple-100">
+                          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">
                             {account.institutionId === 'nubank' ? (
                               <NubankLogo size="lg" />
                             ) : (

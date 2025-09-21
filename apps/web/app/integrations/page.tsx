@@ -374,7 +374,7 @@ export default function IntegrationsPage() {
                     className="flex items-center justify-between p-4 border rounded-lg"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="p-3 bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl shadow-sm border border-purple-100">
+                      <div className="p-2 bg-blue-100 rounded-lg">
                         {account.institutionId === 'nubank' ? (
                           <NubankLogo size="md" />
                         ) : (
@@ -390,8 +390,10 @@ export default function IntegrationsPage() {
                         )}
                       </div>
                       <div>
-                        <h3 className="font-medium">{account.nickname}</h3>
-                        <p className="text-sm text-muted-foreground">
+                        <h3 className="text-sm font-medium">
+                          {account.nickname}
+                        </h3>
+                        <p className="text-xs text-muted-foreground">
                           {institution?.name || account.institutionId}
                         </p>
                         <p className="text-xs text-muted-foreground">
@@ -478,7 +480,7 @@ export default function IntegrationsPage() {
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="p-3 bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl shadow-sm border border-purple-100">
+                      <div className="p-2 bg-blue-100 rounded-lg">
                         {institution.id === 'nubank' ? (
                           <NubankLogo size="md" />
                         ) : (
@@ -492,8 +494,10 @@ export default function IntegrationsPage() {
                         )}
                       </div>
                       <div>
-                        <h3 className="font-medium">{institution.name}</h3>
-                        <p className="text-sm text-muted-foreground">
+                        <h3 className="text-sm font-medium">
+                          {institution.name}
+                        </h3>
+                        <p className="text-xs text-muted-foreground">
                           {institution.compeCode &&
                             `Código: ${institution.compeCode}`}
                         </p>
