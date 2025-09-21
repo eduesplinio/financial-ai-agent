@@ -121,9 +121,9 @@ export class ChatService {
   private sessions: Map<string, ConversationSession> = new Map();
 
   /**
-   * Buscar dados completos do usuário do banco de dados
+   * Buscar apenas transações do banco de dados
    */
-  private async fetchUserData(userId: string): Promise<UserProfile | null> {
+  private async fetchTransactions(): Promise<any[]> {
     try {
       // Import mongoose dynamically to avoid bundling issues
       const mongoose = await import('mongoose');
@@ -143,61 +143,18 @@ export class ChatService {
         throw new Error('Database connection not established');
       }
 
-      // Buscar dados do usuário
-      const user = await db.collection('users').findOne({
-        _id: new mongoose.Types.ObjectId(userId),
-        deletedAt: null,
-      });
-
-      if (!user) {
-        return null;
-      }
-
-      // Buscar transações recentes (últimos 3 meses)
-      const threeMonthsAgo = new Date();
-      threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-
+      // Buscar TODAS as transações
       const transactions = await db
         .collection('transactions')
-        .find({
-          date: { $gte: threeMonthsAgo },
-        })
+        .find({})
         .sort({ date: -1 })
         .limit(100)
         .toArray();
 
-      // Calcular resumo das transações
-      const recentTransactions = this.calculateTransactionSummary(transactions);
-
-      // Mapear dados do usuário para o formato esperado
-      const userProfile: UserProfile = {
-        riskTolerance: user.profile?.riskTolerance || 'moderate',
-        financialKnowledgeLevel:
-          user.profile?.financialKnowledgeLevel || 'intermediate',
-        ageGroup: user.profile?.ageGroup || '26-35',
-        incomeRange: user.profile?.incomeRange || '5k-10k',
-        financialGoals: user.profile?.financialGoals || [],
-        connectedAccounts: user.connectedAccounts || [],
-        preferences: user.preferences || {
-          currency: 'BRL',
-          language: 'pt-BR',
-          timezone: 'America/Sao_Paulo',
-          notifications: {
-            email: true,
-            push: true,
-            sms: false,
-            budgetAlerts: true,
-            goalReminders: true,
-            anomalyDetection: true,
-          },
-        },
-        recentTransactions,
-      };
-
-      return userProfile;
+      return transactions;
     } catch (error) {
-      console.error('Erro ao buscar dados do usuário:', error);
-      return null;
+      console.error('Erro ao buscar transações:', error);
+      return [];
     }
   }
 
@@ -355,17 +312,17 @@ export class ChatService {
         updatedAt: new Date(),
       };
 
-      // Buscar dados completos do usuário se não foram fornecidos
-      let completeUserProfile = userProfile;
-      if (!completeUserProfile) {
-        completeUserProfile = await this.fetchUserData(session.userId);
-      }
+      // Buscar transações
+      const transactions = await this.fetchTransactions();
+
+      // Calcular resumo das transações
+      const transactionSummary = this.calculateTransactionSummary(transactions);
 
       // Use RAG with direct database access
       const agentResponse = await this.callRAGDirect(
         message,
         updatedSession,
-        completeUserProfile
+        transactionSummary
       );
 
       const response = {
@@ -472,7 +429,7 @@ export class ChatService {
   private async callRAGDirect(
     message: string,
     session: ConversationSession,
-    userProfile?: UserProfile
+    transactionSummary?: any
   ): Promise<{
     content: string;
     sources: any[];
@@ -648,51 +605,19 @@ DIRETRIZES:
 - Foque em investimentos brasileiros (B3, Tesouro Direto, etc.)
 - Seja didático mas não simplifique demais
 - Se houver informações específicas na base de conhecimento, use-as como base principal da resposta
-- PERSONALIZE suas recomendações baseado no perfil completo do usuário
 
 ${
-  userProfile
-    ? `PERFIL COMPLETO DO USUÁRIO:
+  transactionSummary
+    ? `DADOS DAS TRANSAÇÕES:
 
-DADOS BÁSICOS:
-- Tolerância a risco: ${userProfile.riskTolerance}
-- Nível de conhecimento financeiro: ${userProfile.financialKnowledgeLevel}
-- Faixa etária: ${userProfile.ageGroup}
-- Faixa de renda: ${userProfile.incomeRange}
-
-METAS FINANCEIRAS ATIVAS:
-${
-  userProfile.financialGoals
-    .filter(goal => goal.status === 'active')
-    .map(
-      goal =>
-        `- ${goal.title}: R$ ${goal.currentAmount.toLocaleString('pt-BR')} / R$ ${goal.targetAmount.toLocaleString('pt-BR')} (${goal.category}, prioridade ${goal.priority})`
-    )
-    .join('\n') || '- Nenhuma meta financeira ativa definida'
-}
-
-CONTAS CONECTADAS:
-${
-  userProfile.connectedAccounts
-    .filter(account => account.isActive)
-    .map(
-      account =>
-        `- ${account.institutionName} (${account.accountType}): ${account.balance ? `R$ ${account.balance.toLocaleString('pt-BR')}` : 'Saldo não disponível'}`
-    )
-    .join('\n') || '- Nenhuma conta conectada'
-}
-
-SITUAÇÃO FINANCEIRA RECENTE (últimos 3 meses):
-${
-  userProfile.recentTransactions
-    ? `
-- Renda total: R$ ${userProfile.recentTransactions.totalIncome.toLocaleString('pt-BR')}
-- Gastos totais: R$ ${userProfile.recentTransactions.totalExpenses.toLocaleString('pt-BR')}
-- Saldo líquido: R$ ${userProfile.recentTransactions.netIncome.toLocaleString('pt-BR')}
-- Tendência: ${userProfile.recentTransactions.monthlyTrend === 'increasing' ? 'Crescimento' : userProfile.recentTransactions.monthlyTrend === 'decreasing' ? 'Declínio' : 'Estável'}
+SITUAÇÃO FINANCEIRA RECENTE:
+- Renda total: R$ ${transactionSummary.totalIncome.toLocaleString('pt-BR')}
+- Gastos totais: R$ ${transactionSummary.totalExpenses.toLocaleString('pt-BR')}
+- Saldo líquido: R$ ${transactionSummary.netIncome.toLocaleString('pt-BR')}
+- Tendência: ${transactionSummary.monthlyTrend === 'increasing' ? 'Crescimento' : transactionSummary.monthlyTrend === 'decreasing' ? 'Declínio' : 'Estável'}
 
 PRINCIPAIS CATEGORIAS DE GASTOS:
-${userProfile.recentTransactions.topCategories
+${transactionSummary.topCategories
   .map(
     cat =>
       `- ${cat.category}: R$ ${cat.amount.toLocaleString('pt-BR')} (${cat.percentage.toFixed(1)}%)`
@@ -700,24 +625,14 @@ ${userProfile.recentTransactions.topCategories
   .join('\n')}
 
 GASTOS DOS ÚLTIMOS 7 DIAS:
-- Total gasto: R$ ${userProfile.recentTransactions.last7DaysExpenses.toLocaleString('pt-BR')}
+- Total gasto: R$ ${transactionSummary.last7DaysExpenses.toLocaleString('pt-BR')}
 - Principais categorias:
-${userProfile.recentTransactions.last7DaysCategories
+${transactionSummary.last7DaysCategories
   .map(cat => `- ${cat.category}: R$ ${cat.amount.toLocaleString('pt-BR')}`)
   .join('\n')}
-`
-    : '- Dados de transações não disponíveis'
-}
 
-INSTRUÇÕES DE PERSONALIZAÇÃO:
-- Adapte o nível técnico da resposta ao conhecimento financeiro do usuário
-- Considere a tolerância a risco para recomendações de investimentos
-- Leve em conta a faixa etária para sugestões de planejamento de longo prazo
-- Use os dados de renda para calcular percentuais e valores realistas
-- Considere as metas financeiras ativas para priorizar recomendações
-- Analise o padrão de gastos para sugerir otimizações
-- Se houver tendência de declínio financeiro, foque em estratégias de contenção de gastos`
-    : ''
+IMPORTANTE: Use esses dados específicos das transações para responder perguntas sobre gastos, receitas e análise financeira.`
+    : '- Dados de transações não disponíveis'
 }`;
 
       // Call OpenAI with enhanced prompt
