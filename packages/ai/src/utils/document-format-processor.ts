@@ -1,6 +1,5 @@
 import fs from 'fs';
 import pdfParse from 'pdf-parse';
-import * as cheerio from 'cheerio';
 
 export type SupportedFormat = 'pdf' | 'html' | 'md' | 'txt';
 
@@ -10,8 +9,13 @@ export async function extractTextFromPDF(buffer: Buffer): Promise<string> {
 }
 
 export function extractTextFromHTML(html: string): string {
-  const $ = cheerio.load(html);
-  return $('body').text();
+  // Simple HTML text extraction without cheerio
+  return html
+    .replace(/<script[^>]*>.*?<\/script>/gi, '')
+    .replace(/<style[^>]*>.*?<\/style>/gi, '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 export function extractTextFromMarkdown(md: string): string {

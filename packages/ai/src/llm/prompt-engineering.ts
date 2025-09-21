@@ -6,7 +6,7 @@
  */
 
 import { LLMMessage } from './llm-service';
-import { UserProfile } from '@/shared/src/types';
+import { UserProfile } from '@financial-ai/shared/src/types';
 
 /**
  * Default system prompt for financial queries

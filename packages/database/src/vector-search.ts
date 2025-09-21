@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import { z } from 'zod';
-import { KnowledgeDocument, IKnowledgeDocument } from './models';
+import { KnowledgeDocument, IKnowledgeDocument } from './models.js';
 
 // =============================================================================
 // VECTOR SEARCH CONFIGURATION

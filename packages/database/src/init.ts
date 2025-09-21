@@ -1,4 +1,4 @@
-import { mongoConnection } from './connection';
+import { mongoConnection } from './connection.js';
 
 /**
  * Initialize database connection and setup
@@ -7,15 +7,14 @@ import { mongoConnection } from './connection';
 export async function initializeDatabase(): Promise<void> {
   try {
     console.log('🚀 Initializing database connection...');
-    
+
     // Connect to MongoDB
     await mongoConnection.connect();
-    
+
     // Create indexes for performance
     await mongoConnection.createIndexes();
-    
+
     console.log('✅ Database initialized successfully');
-    
   } catch (error) {
     console.error('❌ Database initialization failed:', error);
     throw error;
@@ -29,11 +28,10 @@ export async function initializeDatabase(): Promise<void> {
 export async function shutdownDatabase(): Promise<void> {
   try {
     console.log('🔄 Shutting down database connection...');
-    
+
     await mongoConnection.disconnect();
-    
+
     console.log('✅ Database shutdown completed');
-    
   } catch (error) {
     console.error('❌ Database shutdown failed:', error);
     throw error;

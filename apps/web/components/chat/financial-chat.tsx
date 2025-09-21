@@ -47,7 +47,9 @@ export function FinancialChat({
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!inputText.trim() || isLoading) return;
+    if (!inputText.trim() || isLoading) {
+      return;
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),

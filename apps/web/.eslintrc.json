@@ -1,0 +1,21 @@
+{
+  "extends": ["next/core-web-vitals"],
+  "rules": {
+    "prefer-const": "error",
+    "no-var": "error",
+    "no-console": "warn",
+    "eqeqeq": ["error", "always"],
+    "curly": ["error", "all"],
+    "react/no-unescaped-entities": "off",
+    "@next/next/no-img-element": "warn"
+  },
+  "ignorePatterns": [
+    "node_modules/",
+    ".next/",
+    "dist/",
+    "build/",
+    "coverage/",
+    "*.config.js",
+    "*.config.mjs"
+  ]
+}

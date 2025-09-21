@@ -268,7 +268,9 @@ export function SettingsContent() {
       const confirm = window.confirm(
         'Esta ação irá excluir permanentemente todos os seus dados. Esta ação não pode ser desfeita. Tem certeza?'
       );
-      if (!confirm) return;
+      if (!confirm) {
+        return;
+      }
     }
 
     setLoading(true);

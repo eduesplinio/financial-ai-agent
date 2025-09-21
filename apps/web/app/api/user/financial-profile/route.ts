@@ -4,12 +4,9 @@ import { authOptions } from '@/lib/auth';
 import { MongoClient, ObjectId } from 'mongodb';
 import { z } from 'zod';
 
-const MONGODB_URI = process.env.MONGODB_URI;
-if (!MONGODB_URI) {
-  throw new Error(
-    'Please define the MONGODB_URI environment variable inside .env.local'
-  );
-}
+// Usar a mesma string de conexão que o ChatService
+const MONGODB_URI =
+  'mongodb+srv://esplinone_db_user:XyY0siKX2Ib2LZCw@cluster0.ih76fqj.mongodb.net/financial_ai?retryWrites=true&w=majority&appName=Cluster0';
 
 const financialProfileSchema = z.object({
   monthlyIncome: z.number().min(0),
@@ -26,6 +23,24 @@ const financialProfileSchema = z.object({
   financialGoals: z.array(z.string()),
   emergencyFund: z.number().min(0),
   investmentExperience: z.enum(['beginner', 'intermediate', 'advanced']),
+  // Campos adicionais editáveis
+  preferences: z
+    .object({
+      currency: z.string().optional(),
+      language: z.string().optional(),
+      timezone: z.string().optional(),
+      notifications: z
+        .object({
+          email: z.boolean().optional(),
+          push: z.boolean().optional(),
+          sms: z.boolean().optional(),
+          budgetAlerts: z.boolean().optional(),
+          goalReminders: z.boolean().optional(),
+          anomalyDetection: z.boolean().optional(),
+        })
+        .optional(),
+    })
+    .optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -61,6 +76,20 @@ export async function GET(request: NextRequest) {
         financialGoals: [],
         emergencyFund: 0,
         investmentExperience: 'beginner',
+        preferences: {
+          currency: 'BRL',
+          language: 'pt-BR',
+          timezone: 'America/Sao_Paulo',
+          notifications: {
+            email: true,
+            push: true,
+            sms: false,
+            budgetAlerts: true,
+            goalReminders: true,
+            anomalyDetection: true,
+          },
+        },
+        connectedAccounts: [],
       });
     }
     // Extrair e transformar os dados financeiros do profile
@@ -80,6 +109,21 @@ export async function GET(request: NextRequest) {
       financialGoals: profile.financialGoals || [],
       emergencyFund: profile.emergencyFund || 0,
       investmentExperience: profile.financialKnowledgeLevel || 'beginner',
+      // Campos adicionais
+      preferences: user.preferences || {
+        currency: 'BRL',
+        language: 'pt-BR',
+        timezone: 'America/Sao_Paulo',
+        notifications: {
+          email: true,
+          push: true,
+          sms: false,
+          budgetAlerts: true,
+          goalReminders: true,
+          anomalyDetection: true,
+        },
+      },
+      connectedAccounts: user.connectedAccounts || [],
     };
 
     return NextResponse.json(financialData);
@@ -100,10 +144,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const userId = session.user.id;
-    console.log('[API] ID do usuário para atualização:', userId);
-
     const body = await request.json();
-    console.log('[API] Payload recebido para financialProfile:', body);
 
     // Validar dados de entrada
     const validationResult = financialProfileSchema.safeParse(body);
@@ -117,20 +158,12 @@ export async function PUT(request: NextRequest) {
 
     const client = new MongoClient(MONGODB_URI);
     await client.connect();
-    console.log('[API] Conexão com MongoDB estabelecida');
 
     const db = client.db();
     const users = db.collection('users');
 
     // Buscar usuário antes da atualização
     const userBefore = await users.findOne({ _id: new ObjectId(userId) });
-    console.log(
-      '[API] Usuário antes da atualização:',
-      userBefore
-        ? `ID: ${userBefore._id}, Email: ${userBefore.email}`
-        : 'Não encontrado'
-    );
-    console.log('[API] financialProfile antes:', userBefore?.financialProfile);
 
     // Migrar todos os dados apenas para o campo profile
     const updateResult = await users.updateOne(
@@ -149,6 +182,13 @@ export async function PUT(request: NextRequest) {
             financialGoals: validationResult.data.financialGoals,
             financialKnowledgeLevel: validationResult.data.investmentExperience,
           },
+          // Atualizar preferências se fornecidas
+          ...(validationResult.data.preferences && {
+            preferences: {
+              ...(userBefore?.preferences || {}),
+              ...validationResult.data.preferences,
+            },
+          }),
           updatedAt: new Date(),
         },
         // Remover o campo perfil se existir
@@ -158,23 +198,7 @@ export async function PUT(request: NextRequest) {
       }
     );
 
-    console.log('[API] Resultado da atualização:', updateResult);
-
-    // Buscar o valor salvo para conferência
-    const updatedUser = await users.findOne({ _id: new ObjectId(userId) });
-    console.log(
-      '[API] Usuário após atualização:',
-      updatedUser
-        ? `ID: ${updatedUser._id}, Email: ${updatedUser.email}`
-        : 'Não encontrado'
-    );
-    console.log(
-      '[API] financialProfile após atualização:',
-      updatedUser?.financialProfile
-    );
-
     await client.close();
-    console.log('[API] Conexão com MongoDB fechada');
 
     return NextResponse.json({ success: true, data: validationResult.data });
   } catch (error) {

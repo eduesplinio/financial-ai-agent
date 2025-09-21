@@ -5,7 +5,9 @@
     "rootDir": "../",
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "target": "es2018",
+    "downlevelIteration": true
   },
   "include": ["src/**/*"],
   "exclude": ["dist", "node_modules"]

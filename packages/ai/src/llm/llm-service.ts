@@ -1,6 +1,6 @@
 // LLM (Large Language Model) integration
 import OpenAI from 'openai';
-import { MessageRole } from '@/shared/src/types';
+import { MessageRole } from '@financial-ai/shared/src/types';
 
 export interface LLMResponse {
   content: string;

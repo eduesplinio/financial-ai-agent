@@ -94,7 +94,9 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
       conv.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">

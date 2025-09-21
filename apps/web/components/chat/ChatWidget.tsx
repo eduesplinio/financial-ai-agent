@@ -385,12 +385,16 @@ export const ChatWidget: React.FC = () => {
 
   // Get user's nickname or first name
   const getFirstName = () => {
-    if (!session?.user?.name) return '';
+    if (!session?.user?.name) {
+      return '';
+    }
     return getNickname(session.user.name);
   };
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || loading || streaming) return;
+    if (!input.trim() || loading || streaming) {
+      return;
+    }
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -422,12 +426,14 @@ export const ChatWidget: React.FC = () => {
         throw new Error('No reader available');
       }
 
-      let assistantMsgId = (Date.now() + 1).toString();
+      const assistantMsgId = (Date.now() + 1).toString();
       let currentContent = '';
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          break;
+        }
 
         const chunk = new TextDecoder().decode(value);
         const lines = chunk.split('\n');
@@ -526,7 +532,9 @@ export const ChatWidget: React.FC = () => {
   };
 
   const handleSendMessage = async (message: string) => {
-    if (loading || streaming || !message.trim()) return;
+    if (loading || streaming || !message.trim()) {
+      return;
+    }
 
     setInput(message);
 
