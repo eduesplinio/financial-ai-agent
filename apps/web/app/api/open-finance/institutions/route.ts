@@ -9,7 +9,7 @@ import {
 
 // URLs reais dos logos dos bancos brasileiros
 const BANK_LOGOS: Record<string, string> = {
-  nubank: 'https://logos.bancos.com.br/nubank.png',
+  nubank: 'https://nubank.com.br/images/nu-logo.png',
 };
 
 // Instituições conectadas (apenas Nubank por enquanto)

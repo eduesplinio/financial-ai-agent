@@ -21,8 +21,11 @@ const initializeConnectedAccounts = () => {
       accountId: `acc_${institutionId}_001`,
       institutionId,
       institutionName: getInstitutionName(institutionId),
-      accountType: 'CHECKING',
-      nickname: `Conta Corrente ${getInstitutionName(institutionId)}`,
+      accountType: institutionId === 'nubank' ? 'CHECKING' : 'CHECKING',
+      nickname:
+        institutionId === 'nubank'
+          ? 'Conta Nubank'
+          : `Conta Corrente ${getInstitutionName(institutionId)}`,
       connectedAt: new Date().toISOString(),
       status: 'ACTIVE',
       lastSyncAt: new Date().toISOString(),
@@ -81,22 +84,13 @@ export async function GET(request: NextRequest) {
     // Buscar contas conectadas do usuário
     const userAccounts = connectedAccountsStore.get(session.user.id) || [];
 
-    // Dados simulados iniciais (apenas se não houver contas conectadas)
+    // Dados simulados iniciais (apenas Nubank)
     const mockConnectedAccounts = [
-      {
-        id: 'conn_bb_001',
-        institutionId: 'banco-do-brasil',
-        accountId: 'acc_bb_001',
-        nickname: 'Conta Corrente Principal',
-        connectedAt: '2024-01-15T10:30:00Z',
-        status: 'CONNECTED' as const,
-        lastSyncAt: '2024-01-20T14:22:00Z',
-      },
       {
         id: 'conn_nubank_001',
         institutionId: 'nubank',
         accountId: 'acc_nubank_001',
-        nickname: 'Conta Poupança Nubank',
+        nickname: 'Conta Nubank',
         connectedAt: '2024-01-10T09:15:00Z',
         status: 'CONNECTED' as const,
         lastSyncAt: '2024-01-20T14:22:00Z',

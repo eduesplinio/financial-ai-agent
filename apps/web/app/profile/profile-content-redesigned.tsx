@@ -823,7 +823,7 @@ export function ProfileContent() {
                   {financialProfile.connectedAccounts.map(account => {
                     // URLs dos logos dos bancos
                     const bankLogos: Record<string, string> = {
-                      nubank: 'https://logos.bancos.com.br/nubank.png',
+                      nubank: 'https://nubank.com.br/images/nu-logo.png',
                     };
 
                     const bankLogo = bankLogos[account.institutionId];
