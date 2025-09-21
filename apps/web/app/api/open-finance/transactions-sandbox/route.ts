@@ -33,21 +33,18 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '50');
 
-    if (!institutionId || !accountId) {
-      return NextResponse.json(
-        { error: 'Institution ID and Account ID are required' },
-        { status: 400 }
-      );
-    }
+    // Se não foram fornecidos, usar valores padrão para Nubank
+    const defaultInstitutionId = institutionId || 'nubank';
+    const defaultAccountId = accountId || 'acc_nubank_001';
 
     // Simular token de acesso (em produção, viria do banco de dados)
-    const mockToken = `sandbox_token_${institutionId}_${Date.now()}`;
+    const mockToken = `sandbox_token_${defaultInstitutionId}_${Date.now()}`;
 
     // Buscar transações realistas do sandbox
     const realisticTransactions =
       await realisticSandboxService.getRealisticTransactions(
-        institutionId,
-        accountId,
+        defaultInstitutionId,
+        defaultAccountId,
         mockToken,
         fromDate ? new Date(fromDate) : undefined,
         toDate ? new Date(toDate) : undefined
@@ -55,13 +52,13 @@ export async function GET(request: NextRequest) {
 
     // Converter para formato da API
     const transactions = realisticTransactions.map(txn => ({
-      transactionId: txn.transactionId,
+      id: txn.transactionId,
       accountId: txn.accountId,
       type: txn.type,
       creditDebitType: txn.creditDebitType,
-      transactionAmount: txn.transactionAmount,
+      amount: txn.transactionAmount,
       currency: txn.currency,
-      transactionDate: txn.transactionDate,
+      date: txn.transactionDate,
       valueDate: txn.valueDate,
       description: txn.description,
       status: txn.status,
@@ -81,14 +78,14 @@ export async function GET(request: NextRequest) {
     if (fromDate) {
       const from = new Date(fromDate);
       filteredTransactions = filteredTransactions.filter(
-        txn => new Date(txn.transactionDate) >= from
+        txn => new Date(txn.date) >= from
       );
     }
 
     if (toDate) {
       const to = new Date(toDate);
       filteredTransactions = filteredTransactions.filter(
-        txn => new Date(txn.transactionDate) <= to
+        txn => new Date(txn.date) <= to
       );
     }
 
@@ -106,9 +103,7 @@ export async function GET(request: NextRequest) {
 
     // Ordenar por data (mais recente primeiro)
     filteredTransactions.sort(
-      (a, b) =>
-        new Date(b.transactionDate).getTime() -
-        new Date(a.transactionDate).getTime()
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
 
     // Paginação
@@ -124,16 +119,13 @@ export async function GET(request: NextRequest) {
       totalTransactions: filteredTransactions.length,
       totalCredits: filteredTransactions
         .filter(txn => txn.creditDebitType === 'CREDIT')
-        .reduce((sum, txn) => sum + txn.transactionAmount, 0),
+        .reduce((sum, txn) => sum + txn.amount, 0),
       totalDebits: Math.abs(
         filteredTransactions
           .filter(txn => txn.creditDebitType === 'DEBIT')
-          .reduce((sum, txn) => sum + txn.transactionAmount, 0)
+          .reduce((sum, txn) => sum + txn.amount, 0)
       ),
-      netAmount: filteredTransactions.reduce(
-        (sum, txn) => sum + txn.transactionAmount,
-        0
-      ),
+      netAmount: filteredTransactions.reduce((sum, txn) => sum + txn.amount, 0),
       categories: [...new Set(filteredTransactions.map(txn => txn.category))],
       accounts: [...new Set(filteredTransactions.map(txn => txn.accountId))],
     };

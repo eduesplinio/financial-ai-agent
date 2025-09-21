@@ -7,13 +7,30 @@ import {
   realisticSandboxService,
   RealisticAccount,
 } from '@/lib/realistic-sandbox';
-import { UserService } from '@financial-ai/database';
+// Importação dinâmica para evitar problemas de compilação do Mongoose
+let UserService: any = null;
 
 const getInstitutionName = (institutionId: string): string => {
   const names: Record<string, string> = {
     nubank: 'Nubank',
   };
   return names[institutionId] || institutionId;
+};
+
+// Função para garantir que o modelo não seja recompilado
+const getSafeUserService = async () => {
+  try {
+    if (!UserService) {
+      const { UserService: ImportedUserService } = await import(
+        '@financial-ai/database'
+      );
+      UserService = ImportedUserService;
+    }
+    return UserService;
+  } catch (error) {
+    console.error('Erro ao acessar UserService:', error);
+    return null;
+  }
 };
 
 /**
@@ -38,7 +55,15 @@ export async function GET(request: NextRequest) {
     const includeBalances = searchParams.get('include_balances') === 'true';
 
     // Buscar usuário do banco de dados
-    const user = await UserService.findByEmail(session.user.email || '');
+    const userService = await getSafeUserService();
+    if (!userService) {
+      return NextResponse.json(
+        { error: 'Database service unavailable' },
+        { status: 503 }
+      );
+    }
+
+    const user = await userService.findByEmail(session.user.email || '');
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -225,7 +250,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Buscar usuário do banco de dados
-    const user = await UserService.findByEmail(session.user.email || '');
+    const userService = await getSafeUserService();
+    if (!userService) {
+      return NextResponse.json(
+        { error: 'Database service unavailable' },
+        { status: 503 }
+      );
+    }
+
+    const user = await userService.findByEmail(session.user.email || '');
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
