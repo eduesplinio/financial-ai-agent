@@ -147,6 +147,8 @@ export class ChatService {
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
+      console.log('🔍 fetchTransactions - Data de 7 dias atrás:', sevenDaysAgo);
+
       const transactions = await db
         .collection('transactions')
         .find({
@@ -155,6 +157,15 @@ export class ChatService {
         .sort({ date: -1 })
         .limit(100)
         .toArray();
+
+      console.log(
+        '🔍 fetchTransactions - Transações encontradas:',
+        transactions.length
+      );
+      console.log(
+        '🔍 fetchTransactions - Primeira transação:',
+        transactions[0]
+      );
 
       return transactions;
     } catch (error) {
@@ -324,9 +335,14 @@ export class ChatService {
 
       // Buscar transações
       const transactions = await this.fetchTransactions();
+      console.log(
+        '🔍 Chat Service - Transações encontradas:',
+        transactions.length
+      );
 
       // Calcular resumo das transações
       const transactionSummary = this.calculateTransactionSummary(transactions);
+      console.log('📊 Chat Service - Resumo calculado:', transactionSummary);
 
       // Use RAG with direct database access
       const agentResponse = await this.callRAGDirect(
