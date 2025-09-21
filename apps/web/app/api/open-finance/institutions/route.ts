@@ -2,86 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { OpenFinanceClient } from '@financial-ai/open-finance';
+import {
+  OPEN_FINANCE_INSTITUTIONS,
+  getSandboxInstitutions,
+} from '@/lib/open-finance-config';
 
 /**
  * API para gerenciar instituições financeiras do Open Finance
  */
 
-// Instituições financeiras disponíveis no Brasil (exemplo)
-const AVAILABLE_INSTITUTIONS = [
-  {
-    id: 'banco-do-brasil',
-    name: 'Banco do Brasil',
-    logoUrl: 'https://logos.bancos.com.br/banco-do-brasil.png',
-    authUrl: 'https://auth.bb.com.br',
-    apiUrl: 'https://api.bb.com.br/open-banking',
-    type: 'BANK' as const,
-    compeCode: '001',
-    ispb: '00000000',
-    scopes: ['accounts', 'transactions', 'credit-cards'],
-    certificateRequired: false,
-  },
-  {
-    id: 'caixa-economica',
-    name: 'Caixa Econômica Federal',
-    logoUrl: 'https://logos.bancos.com.br/caixa.png',
-    authUrl: 'https://auth.caixa.gov.br',
-    apiUrl: 'https://api.caixa.gov.br/open-banking',
-    type: 'BANK' as const,
-    compeCode: '104',
-    ispb: '00360305',
-    scopes: ['accounts', 'transactions'],
-    certificateRequired: false,
-  },
-  {
-    id: 'bradesco',
-    name: 'Bradesco',
-    logoUrl: 'https://logos.bancos.com.br/bradesco.png',
-    authUrl: 'https://auth.bradesco.com.br',
-    apiUrl: 'https://api.bradesco.com.br/open-banking',
-    type: 'BANK' as const,
-    compeCode: '237',
-    ispb: '60746948',
-    scopes: ['accounts', 'transactions', 'credit-cards', 'loans'],
-    certificateRequired: true,
-  },
-  {
-    id: 'itau',
-    name: 'Itaú Unibanco',
-    logoUrl: 'https://logos.bancos.com.br/itau.png',
-    authUrl: 'https://auth.itau.com.br',
-    apiUrl: 'https://api.itau.com.br/open-banking',
-    type: 'BANK' as const,
-    compeCode: '341',
-    ispb: '60701190',
-    scopes: ['accounts', 'transactions', 'credit-cards', 'investments'],
-    certificateRequired: true,
-  },
-  {
-    id: 'santander',
-    name: 'Santander',
-    logoUrl: 'https://logos.bancos.com.br/santander.png',
-    authUrl: 'https://auth.santander.com.br',
-    apiUrl: 'https://api.santander.com.br/open-banking',
-    type: 'BANK' as const,
-    compeCode: '033',
-    ispb: '90400888',
-    scopes: ['accounts', 'transactions', 'credit-cards'],
-    certificateRequired: true,
-  },
-  {
-    id: 'nubank',
-    name: 'Nubank',
-    logoUrl: 'https://logos.bancos.com.br/nubank.png',
-    authUrl: 'https://auth.nubank.com.br',
-    apiUrl: 'https://api.nubank.com.br/open-banking',
-    type: 'BANK' as const,
-    compeCode: '260',
-    ispb: '18236120',
-    scopes: ['accounts', 'transactions', 'credit-cards'],
-    certificateRequired: false,
-  },
-];
+// Usar instituições reais do Open Finance Brasil
+const AVAILABLE_INSTITUTIONS = OPEN_FINANCE_INSTITUTIONS;
 
 /**
  * GET /api/open-finance/institutions

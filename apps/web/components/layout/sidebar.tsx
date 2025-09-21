@@ -127,6 +127,11 @@ export function Sidebar({ className }: SidebarProps) {
       href: '/integrations',
       icon: <Landmark className="h-5 w-5" />,
     },
+    {
+      name: 'Sandbox Demo',
+      href: '/sandbox-demo',
+      icon: <TestTube className="h-5 w-5" />,
+    },
   ];
 
   // Add conditional menu items based on user role

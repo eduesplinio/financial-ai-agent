@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import type { TransactionData } from '@financial-ai/open-finance';
+import { sandboxService } from '@/lib/sandbox-service';
 
 /**
  * API para gerenciar transações bancárias do Open Finance

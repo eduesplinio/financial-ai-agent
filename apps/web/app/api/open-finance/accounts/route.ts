@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import type { AccountData } from '@financial-ai/open-finance';
+import { sandboxService, SandboxAccount } from '@/lib/sandbox-service';
 
 // Armazenamento temporário em memória para demonstração
 // Em produção, isso seria feito no banco de dados
@@ -60,9 +61,53 @@ export async function GET(request: NextRequest) {
       },
     ];
 
-    // Usar contas conectadas pelo usuário ou dados simulados
-    let accounts =
-      userAccounts.length > 0 ? userAccounts : mockConnectedAccounts;
+    // Se não há contas conectadas, usar dados de demonstração
+    if (userAccounts.length === 0) {
+      userAccounts.push(...mockConnectedAccounts);
+    }
+
+    // Para contas conectadas, buscar dados reais do sandbox
+    const accountsWithData = await Promise.all(
+      userAccounts.map(async account => {
+        try {
+          // Simular token de acesso (em produção, viria do banco de dados)
+          const mockToken = `sandbox_token_${account.institutionId}_${Date.now()}`;
+
+          // Buscar dados reais da conta no sandbox
+          const sandboxAccounts = await sandboxService.getAccounts(
+            account.institutionId,
+            mockToken
+          );
+          const sandboxAccount = sandboxAccounts.find(
+            acc => acc.accountId === account.accountId
+          );
+
+          if (sandboxAccount) {
+            return {
+              ...account,
+              // Adicionar dados reais do sandbox
+              balance: sandboxAccount.balance,
+              available: sandboxAccount.available,
+              blocked: sandboxAccount.blocked,
+              accountType: sandboxAccount.accountType,
+              currency: sandboxAccount.currency,
+              status: sandboxAccount.status,
+              lastSyncAt: new Date().toISOString(),
+            };
+          }
+
+          return account;
+        } catch (error) {
+          console.error(
+            `Error fetching sandbox data for ${account.institutionId}:`,
+            error
+          );
+          return account;
+        }
+      })
+    );
+
+    let accounts = accountsWithData;
 
     // Filtrar por instituição
     if (institutionId) {
