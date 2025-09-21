@@ -1,4 +1,4 @@
-import { mongoConnection } from './connection.js';
+import { mongoConnection } from './connection';
 
 /**
  * Initialize database connection and setup
