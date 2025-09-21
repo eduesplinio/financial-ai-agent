@@ -823,7 +823,7 @@ export function ProfileContent() {
                   {financialProfile.connectedAccounts.map(account => {
                     // URLs dos logos dos bancos
                     const bankLogos: Record<string, string> = {
-                      nubank: 'https://nubank.com.br/images/nu-logo.png',
+                      nubank: 'https://logos.bancos.com.br/nubank.png',
                     };
 
                     const bankLogo = bankLogos[account.institutionId];
@@ -870,7 +870,7 @@ export function ProfileContent() {
                                       : 'Empréstimo'}
                             </p>
                             <p className="text-xs text-gray-400">
-                              Conectado em{' '}
+                              Desde{' '}
                               {account.lastSyncAt
                                 ? account.lastSyncAt.toLocaleDateString('pt-BR')
                                 : 'N/A'}
@@ -888,7 +888,7 @@ export function ProfileContent() {
                             className={
                               account.isActive
                                 ? 'bg-green-100 text-green-800'
-                                : ''
+                                : 'bg-gray-100 text-gray-600'
                             }
                           >
                             {account.isActive ? 'Ativa' : 'Inativa'}

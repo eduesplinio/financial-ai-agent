@@ -241,10 +241,11 @@ export default function IntegrationsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'CONNECTED':
+      case 'ACTIVE':
         return (
           <Badge variant="default" className="bg-green-100 text-green-800">
             <CheckCircle className="h-3 w-3 mr-1" />
-            Conectado
+            Ativo
           </Badge>
         );
       case 'DISCONNECTED':
@@ -401,7 +402,7 @@ export default function IntegrationsPage() {
                           {institution?.name || account.institutionId}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          Conectado em{' '}
+                          Desde{' '}
                           {new Date(account.connectedAt).toLocaleDateString(
                             'pt-BR'
                           )}
@@ -512,7 +513,7 @@ export default function IntegrationsPage() {
                         </p>
                         {institution.accountCount && (
                           <p className="text-xs text-blue-600">
-                            {institution.accountCount} conta(s) conectada(s)
+                            {institution.accountCount} conta(s)
                           </p>
                         )}
                       </div>
@@ -523,7 +524,7 @@ export default function IntegrationsPage() {
                         className="bg-green-100 text-green-800"
                       >
                         <CheckCircle className="h-3 w-3 mr-1" />
-                        Conectado
+                        Ativo
                       </Badge>
                     )}
                   </div>
@@ -554,7 +555,7 @@ export default function IntegrationsPage() {
                       {institution.isConnected ? (
                         <>
                           <CheckCircle className="h-4 w-4 mr-1" />
-                          Conectado
+                          Ativo
                         </>
                       ) : (
                         <>
