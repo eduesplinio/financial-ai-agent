@@ -7,9 +7,14 @@ import {
   getSandboxInstitutions,
 } from '@/lib/open-finance-config';
 
-// URLs dos logos dos bancos brasileiros (usando CDN confiável)
-const BANK_LOGOS: Record<string, string> = {
-  nubank: 'https://logos.bancos.com.br/nubank.png',
+// URLs dos logos dos bancos brasileiros (múltiplas opções para garantir funcionamento)
+const BANK_LOGOS: Record<string, string[]> = {
+  nubank: [
+    'https://nubank.com.br/images/nu-logo.png',
+    'https://assets.nubank.com.br/images/nu-logo.png',
+    'https://cdn.nubank.com.br/images/nu-logo.png',
+    'https://logos.bancos.com.br/nubank.png',
+  ],
 };
 
 // Instituições conectadas (apenas Nubank por enquanto)
@@ -62,7 +67,8 @@ export async function GET(request: NextRequest) {
     // Adicionar informações de conexão e logos
     const institutionsWithConnection = institutions.map(inst => ({
       ...inst,
-      logoUrl: BANK_LOGOS[inst.id] || inst.logoUrl,
+      logoUrl: BANK_LOGOS[inst.id] ? BANK_LOGOS[inst.id][0] : inst.logoUrl,
+      logoUrls: BANK_LOGOS[inst.id] || [inst.logoUrl],
       isConnected: CONNECTED_INSTITUTIONS.includes(inst.id), // Apenas Nubank conectado
       connectedAt: CONNECTED_INSTITUTIONS.includes(inst.id)
         ? new Date().toISOString()

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { BankLogo } from '@/components/ui/bank-logo';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -373,28 +374,15 @@ export default function IntegrationsPage() {
                   >
                     <div className="flex items-center gap-4">
                       <div className="p-2 bg-blue-100 rounded-lg">
-                        {institution?.logoUrl ? (
-                          <img
-                            src={institution.logoUrl}
-                            alt={institution.name}
-                            className="h-6 w-6 object-contain"
-                            onError={e => {
-                              e.currentTarget.style.display = 'none';
-                              e.currentTarget.nextElementSibling?.classList.remove(
-                                'hidden'
-                              );
-                            }}
-                          />
-                        ) : null}
-                        <div
-                          className={`h-6 w-6 ${institution?.logoUrl ? 'hidden' : ''}`}
-                        >
-                          {institution ? (
-                            getInstitutionIcon(institution.type)
-                          ) : (
-                            <Wallet className="h-6 w-6" />
-                          )}
-                        </div>
+                        <BankLogo
+                          logoUrl={institution?.logoUrl}
+                          logoUrls={institution?.logoUrls}
+                          institutionName={
+                            institution?.name || account.institutionId
+                          }
+                          institutionType={institution?.type}
+                          size="md"
+                        />
                       </div>
                       <div>
                         <h3 className="font-medium">{account.nickname}</h3>
@@ -486,24 +474,13 @@ export default function IntegrationsPage() {
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-blue-100 rounded-lg">
-                        {institution.logoUrl ? (
-                          <img
-                            src={institution.logoUrl}
-                            alt={institution.name}
-                            className="h-6 w-6 object-contain"
-                            onError={e => {
-                              e.currentTarget.style.display = 'none';
-                              e.currentTarget.nextElementSibling?.classList.remove(
-                                'hidden'
-                              );
-                            }}
-                          />
-                        ) : null}
-                        <div
-                          className={`h-6 w-6 ${institution.logoUrl ? 'hidden' : ''}`}
-                        >
-                          {getInstitutionIcon(institution.type)}
-                        </div>
+                        <BankLogo
+                          logoUrl={institution.logoUrl}
+                          logoUrls={institution.logoUrls}
+                          institutionName={institution.name}
+                          institutionType={institution.type}
+                          size="md"
+                        />
                       </div>
                       <div>
                         <h3 className="font-medium">{institution.name}</h3>
