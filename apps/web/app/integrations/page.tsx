@@ -518,15 +518,6 @@ export default function IntegrationsPage() {
                         )}
                       </div>
                     </div>
-                    {institution.isConnected && (
-                      <Badge
-                        variant="default"
-                        className="bg-green-100 text-green-800"
-                      >
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        Ativo
-                      </Badge>
-                    )}
                   </div>
 
                   <div className="space-y-2 mb-4">

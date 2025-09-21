@@ -16,40 +16,8 @@ import type {
  * API para sincronização de dados bancários do Open Finance
  */
 
-// Configurações para cada instituição (em produção, viria do banco de dados)
+// Configurações para cada instituição (apenas Nubank por enquanto)
 const INSTITUTION_CONFIGS = {
-  'banco-do-brasil': {
-    baseUrl: 'https://api.bb.com.br/open-banking',
-    clientId: process.env.BB_CLIENT_ID || 'bb-client-id',
-    clientSecret: process.env.BB_CLIENT_SECRET || 'bb-client-secret',
-    authUrl: 'https://auth.bb.com.br',
-  },
-  'caixa-economica': {
-    baseUrl: 'https://api.caixa.gov.br/open-banking',
-    clientId: process.env.CEF_CLIENT_ID || 'cef-client-id',
-    clientSecret: process.env.CEF_CLIENT_SECRET || 'cef-client-secret',
-    authUrl: 'https://auth.caixa.gov.br',
-  },
-  bradesco: {
-    baseUrl: 'https://api.bradesco.com.br/open-banking',
-    clientId: process.env.BRADESCO_CLIENT_ID || 'bradesco-client-id',
-    clientSecret:
-      process.env.BRADESCO_CLIENT_SECRET || 'bradesco-client-secret',
-    authUrl: 'https://auth.bradesco.com.br',
-  },
-  itau: {
-    baseUrl: 'https://api.itau.com.br/open-banking',
-    clientId: process.env.ITAU_CLIENT_ID || 'itau-client-id',
-    clientSecret: process.env.ITAU_CLIENT_SECRET || 'itau-client-secret',
-    authUrl: 'https://auth.itau.com.br',
-  },
-  santander: {
-    baseUrl: 'https://api.santander.com.br/open-banking',
-    clientId: process.env.SANTANDER_CLIENT_ID || 'santander-client-id',
-    clientSecret:
-      process.env.SANTANDER_CLIENT_SECRET || 'santander-client-secret',
-    authUrl: 'https://auth.santander.com.br',
-  },
   nubank: {
     baseUrl: 'https://api.nubank.com.br/open-banking',
     clientId: process.env.NUBANK_CLIENT_ID || 'nubank-client-id',
