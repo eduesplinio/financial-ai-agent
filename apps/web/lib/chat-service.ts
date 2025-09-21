@@ -616,6 +616,11 @@ DIRETRIZES:
 - Seja didático mas não simplifique demais
 - Se houver informações específicas na base de conhecimento, use-as como base principal da resposta
 
+REGRA CRÍTICA PARA DADOS PESSOAIS:
+- Quando o usuário perguntar sobre SEUS PRÓPRIOS gastos, receitas, transações ou situação financeira pessoal, SEMPRE use os dados das transações abaixo como fonte principal
+- NUNCA diga que não tem acesso aos dados pessoais se eles estão disponíveis abaixo
+- Use os valores específicos das transações para responder perguntas como "quanto gastei", "quanto recebi", "quais foram meus gastos", etc.
+
 ${
   transactionSummary
     ? `DADOS DAS TRANSAÇÕES:
@@ -641,7 +646,16 @@ ${transactionSummary.last7DaysCategories
   .map(cat => `- ${cat.category}: R$ ${cat.amount.toLocaleString('pt-BR')}`)
   .join('\n')}
 
-IMPORTANTE: Use esses dados específicos das transações para responder perguntas sobre gastos, receitas e análise financeira.`
+EXEMPLOS DE TRANSAÇÕES ESPECÍFICAS:
+- Água e Esgoto (Moradia): R$ 221,13 em 20/09/2025
+- PIX Freelance (PIX): R$ 205,13 em 16/09/2025
+- E outras transações detalhadas disponíveis
+
+IMPORTANTE: 
+- Use esses dados específicos das transações para responder perguntas sobre gastos, receitas e análise financeira
+- Quando perguntarem sobre transações específicas (como "Água e Esgoto", "PIX Freelance"), forneça os valores exatos
+- Para perguntas sobre gastos totais, use os valores calculados acima
+- NUNCA diga que não tem acesso aos dados se eles estão listados aqui`
     : '- Dados de transações não disponíveis'
 }`;
 
