@@ -104,6 +104,11 @@ export interface UserProfile {
       percentage: number;
     }>;
     monthlyTrend: 'increasing' | 'decreasing' | 'stable';
+    last7DaysExpenses: number;
+    last7DaysCategories: Array<{
+      category: string;
+      amount: number;
+    }>;
   };
 }
 
@@ -148,17 +153,17 @@ export class ChatService {
         return null;
       }
 
-      // Buscar transações recentes do usuário (últimos 3 meses)
+      // Buscar transações recentes (últimos 3 meses)
       const threeMonthsAgo = new Date();
       threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
 
       const transactions = await db
         .collection('transactions')
         .find({
-          userId: new mongoose.Types.ObjectId(userId),
-          deletedAt: null,
           date: { $gte: threeMonthsAgo },
         })
+        .sort({ date: -1 })
+        .limit(100)
         .toArray();
 
       // Calcular resumo das transações
@@ -210,14 +215,33 @@ export class ChatService {
     let totalExpenses = 0;
     const categoryTotals: Record<string, number> = {};
 
+    // Calcular gastos dos últimos 7 dias
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    let last7DaysExpenses = 0;
+    const last7DaysCategories: Record<string, number> = {};
+
     transactions.forEach(transaction => {
-      if (transaction.type === 'income') {
-        totalIncome += transaction.amount;
-      } else if (transaction.type === 'expense') {
-        totalExpenses += transaction.amount;
-        const category = transaction.category || 'Outros';
+      const transactionDate = new Date(transaction.date);
+
+      if (transaction.creditDebitType === 'CREDIT' || transaction.amount > 0) {
+        totalIncome += Math.abs(transaction.amount);
+      } else if (
+        transaction.creditDebitType === 'DEBIT' ||
+        transaction.amount < 0
+      ) {
+        totalExpenses += Math.abs(transaction.amount);
+        const category = transaction.category?.primary || 'Outros';
         categoryTotals[category] =
-          (categoryTotals[category] || 0) + transaction.amount;
+          (categoryTotals[category] || 0) + Math.abs(transaction.amount);
+
+        // Calcular gastos dos últimos 7 dias
+        if (transactionDate >= sevenDaysAgo) {
+          last7DaysExpenses += Math.abs(transaction.amount);
+          last7DaysCategories[category] =
+            (last7DaysCategories[category] || 0) + Math.abs(transaction.amount);
+        }
       }
     });
 
@@ -243,6 +267,11 @@ export class ChatService {
       netIncome,
       topCategories,
       monthlyTrend,
+      last7DaysExpenses,
+      last7DaysCategories: Object.entries(last7DaysCategories)
+        .map(([category, amount]) => ({ category, amount }))
+        .sort((a, b) => b.amount - a.amount)
+        .slice(0, 5),
     };
   }
 
@@ -668,6 +697,13 @@ ${userProfile.recentTransactions.topCategories
     cat =>
       `- ${cat.category}: R$ ${cat.amount.toLocaleString('pt-BR')} (${cat.percentage.toFixed(1)}%)`
   )
+  .join('\n')}
+
+GASTOS DOS ÚLTIMOS 7 DIAS:
+- Total gasto: R$ ${userProfile.recentTransactions.last7DaysExpenses.toLocaleString('pt-BR')}
+- Principais categorias:
+${userProfile.recentTransactions.last7DaysCategories
+  .map(cat => `- ${cat.category}: R$ ${cat.amount.toLocaleString('pt-BR')}`)
   .join('\n')}
 `
     : '- Dados de transações não disponíveis'
