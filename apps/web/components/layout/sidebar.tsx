@@ -47,6 +47,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Landmark,
+  TestTube,
   X,
 } from 'lucide-react';
 
