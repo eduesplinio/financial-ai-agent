@@ -353,202 +353,45 @@ export default function IntegrationsPage() {
         </Card>
       </div>
 
-      {/* Contas Conectadas */}
-      {connectedAccounts.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Wallet className="h-5 w-5" />
-              Contas Conectadas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {connectedAccounts.map(account => {
-                const institution = institutions.find(
-                  inst => inst.id === account.institutionId
-                );
-                return (
-                  <div
-                    key={account.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg">
-                        {account.institutionId === 'nubank' ? (
-                          <NubankLogo size="md" />
-                        ) : (
-                          <BankLogo
-                            logoUrl={institution?.logoUrl}
-                            logoUrls={institution?.logoUrls}
-                            institutionName={
-                              institution?.name || account.institutionId
-                            }
-                            institutionType={institution?.type}
-                            size="md"
-                          />
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-medium">
-                          {account.nickname}
-                        </h3>
-                        <p className="text-xs text-muted-foreground">
-                          {institution?.name || account.institutionId}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Desde{' '}
-                          {new Date(account.connectedAt).toLocaleDateString(
-                            'pt-BR'
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {getStatusBadge(account.status)}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleSyncAccount(account.accountId)}
-                        disabled={syncing === account.accountId}
-                      >
-                        {syncing === account.accountId ? (
-                          <RefreshCw className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <RefreshCw className="h-4 w-4" />
-                        )}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDisconnectAccount(account.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Instituições Disponíveis */}
+      {/* Conta Nubank Conectada */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5" />
-            Instituições Disponíveis
+          <CardTitle className="flex items-center gap-3">
+            <div className="p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg">
+              <NubankLogo size="md" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold">Nubank</h2>
+              <p className="text-sm text-muted-foreground">Conta conectada</p>
+            </div>
           </CardTitle>
-          <div className="flex items-center gap-4 mt-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar instituições..."
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
-              <select
-                value={filterType}
-                onChange={e => setFilterType(e.target.value)}
-                className="px-3 py-2 border rounded-md"
-              >
-                <option value="all">Todos</option>
-                <option value="BANK">Bancos</option>
-                <option value="CREDIT_CARD">Cartões</option>
-                <option value="INVESTMENT">Investimentos</option>
-              </select>
-            </div>
-          </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredInstitutions.map(institution => {
-              const isConnected = connectedAccounts.some(
-                acc => acc.institutionId === institution.id
-              );
-
-              return (
-                <div
-                  key={institution.id}
-                  className="border rounded-lg p-4 hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg">
-                        {institution.id === 'nubank' ? (
-                          <NubankLogo size="md" />
-                        ) : (
-                          <BankLogo
-                            logoUrl={institution.logoUrl}
-                            logoUrls={institution.logoUrls}
-                            institutionName={institution.name}
-                            institutionType={institution.type}
-                            size="md"
-                          />
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-medium">
-                          {institution.name}
-                        </h3>
-                        <p className="text-xs text-muted-foreground">
-                          {institution.compeCode &&
-                            `Código: ${institution.compeCode}`}
-                        </p>
-                        {institution.accountCount && (
-                          <p className="text-xs text-blue-600">
-                            {institution.accountCount} conta(s)
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Shield className="h-4 w-4 text-green-500" />
-                      <span>Open Finance Brasil</span>
-                    </div>
-                    {institution.certificateRequired && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Shield className="h-4 w-4 text-blue-500" />
-                        <span>Certificado Digital</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs text-muted-foreground">
-                      {institution.scopes.length} permissões
-                    </div>
-                    <Button
-                      variant={institution.isConnected ? 'outline' : 'default'}
-                      size="sm"
-                      onClick={() => handleConnectInstitution(institution)}
-                      disabled={institution.isConnected}
-                    >
-                      {institution.isConnected ? (
-                        <>
-                          <CheckCircle className="h-4 w-4 mr-1" />
-                          Ativo
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="h-4 w-4 mr-1" />
-                          Conectar
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-100">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg">
+                <NubankLogo size="lg" />
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-800">Conta Nubank</h3>
+                <p className="text-sm text-gray-600">Conta Corrente</p>
+                <p className="text-xs text-gray-500">Desde 10/01/2024</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Badge variant="default" className="bg-green-100 text-green-800">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Ativo
+              </Badge>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleSyncAccount('nubank')}
+              >
+                <RefreshCw className="h-4 w-4 mr-1" />
+                Sincronizar
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
