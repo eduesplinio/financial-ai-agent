@@ -660,6 +660,8 @@ REGRA CRÍTICA PARA DADOS PESSOAIS:
 - Quando o usuário perguntar sobre SEUS PRÓPRIOS gastos, receitas, transações ou situação financeira pessoal, SEMPRE use os dados das transações abaixo como fonte principal
 - NUNCA diga que não tem acesso aos dados pessoais se eles estão disponíveis abaixo
 - Use os valores específicos das transações para responder perguntas como "quanto gastei", "quanto recebi", "quais foram meus gastos", etc.
+- IGNORE completamente a base de conhecimento quando perguntarem sobre dados pessoais específicos
+- Use APENAS os dados das transações listados abaixo para responder sobre gastos, receitas e transações pessoais
 
 DADOS DAS TRANSAÇÕES (ÚLTIMOS 7 DIAS):
 
@@ -693,7 +695,11 @@ IMPORTANTE:
 - Use esses dados específicos das transações para responder perguntas sobre gastos, receitas e análise financeira
 - Quando perguntarem sobre transações específicas (como "Água e Esgoto", "PIX Freelance"), forneça os valores exatos
 - Para perguntas sobre gastos totais, use os valores calculados acima
-- NUNCA diga que não tem acesso aos dados se eles estão listados aqui`;
+- NUNCA diga que não tem acesso aos dados se eles estão listados aqui
+- Para perguntas sobre gastos pessoais, use APENAS os dados acima, ignore outras fontes
+- Se perguntarem sobre uma transação específica que não está nos dados acima, diga que não há registro dessa transação específica, mas forneça os dados disponíveis
+
+FONTES PARA DADOS PESSOAIS: Use APENAS os dados das transações listados acima. NÃO use outras fontes como "Juros Compostos", "Análise Técnica", etc. quando perguntarem sobre gastos pessoais.`;
 
       console.log('🤖 PROMPT FINAL CONSTRUÍDO:', systemPrompt);
 
