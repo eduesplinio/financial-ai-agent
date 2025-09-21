@@ -448,9 +448,6 @@ export function TransactionsContent() {
                         minimumFractionDigits: 2,
                       })}
                     </div>
-                    <div className="text-xs text-gray-400 dark:text-gray-600">
-                      {transaction.accountId.slice(-8)}
-                    </div>
                   </div>
                 </div>
               ))}
