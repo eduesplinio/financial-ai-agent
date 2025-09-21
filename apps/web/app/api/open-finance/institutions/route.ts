@@ -17,6 +17,9 @@ const BANK_LOGOS: Record<string, string> = {
   nubank: 'https://logos.bancos.com.br/nubank.png',
 };
 
+// Instituições conectadas (apenas Nubank por enquanto)
+const CONNECTED_INSTITUTIONS = ['nubank'];
+
 /**
  * API para gerenciar instituições financeiras do Open Finance
  */
@@ -65,11 +68,15 @@ export async function GET(request: NextRequest) {
     const institutionsWithConnection = institutions.map(inst => ({
       ...inst,
       logoUrl: BANK_LOGOS[inst.id] || inst.logoUrl,
-      isConnected: true, // Todas estão conectadas automaticamente
-      connectedAt: new Date().toISOString(),
-      lastSyncAt: new Date().toISOString(),
-      accountCount: 1, // Cada instituição tem pelo menos 1 conta
-      status: 'ACTIVE',
+      isConnected: CONNECTED_INSTITUTIONS.includes(inst.id), // Apenas Nubank conectado
+      connectedAt: CONNECTED_INSTITUTIONS.includes(inst.id)
+        ? new Date().toISOString()
+        : undefined,
+      lastSyncAt: CONNECTED_INSTITUTIONS.includes(inst.id)
+        ? new Date().toISOString()
+        : undefined,
+      accountCount: CONNECTED_INSTITUTIONS.includes(inst.id) ? 1 : 0,
+      status: CONNECTED_INSTITUTIONS.includes(inst.id) ? 'ACTIVE' : 'AVAILABLE',
     }));
 
     return NextResponse.json({

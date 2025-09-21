@@ -12,16 +12,9 @@ import {
 // Em produção, isso seria feito no banco de dados
 const connectedAccountsStore = new Map<string, any[]>();
 
-// Inicializar com todas as instituições conectadas automaticamente
+// Inicializar com apenas o Nubank conectado
 const initializeConnectedAccounts = () => {
-  const institutions = [
-    'banco-do-brasil',
-    'caixa-economica',
-    'bradesco',
-    'itau',
-    'santander',
-    'nubank',
-  ];
+  const institutions = ['nubank'];
 
   institutions.forEach(institutionId => {
     const mockAccount = {
@@ -49,11 +42,6 @@ const initializeConnectedAccounts = () => {
 
 const getInstitutionName = (institutionId: string): string => {
   const names: Record<string, string> = {
-    'banco-do-brasil': 'Banco do Brasil',
-    'caixa-economica': 'Caixa Econômica Federal',
-    bradesco: 'Bradesco',
-    itau: 'Itaú Unibanco',
-    santander: 'Santander',
     nubank: 'Nubank',
   };
   return names[institutionId] || institutionId;
