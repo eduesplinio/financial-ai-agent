@@ -350,7 +350,7 @@ export function TransactionsContent() {
                   <SelectItem value="all">Todas as categorias</SelectItem>
                   {categories.map(category => (
                     <SelectItem key={category} value={category}>
-                      {category}
+                      {category.toLowerCase()}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -414,7 +414,7 @@ export function TransactionsContent() {
 
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-medium text-gray-900 dark:text-gray-100">
+                        <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
                           {transaction.description}
                         </h3>
                         <Badge variant="secondary" className="text-xs">
@@ -422,10 +422,10 @@ export function TransactionsContent() {
                         </Badge>
                       </div>
                       <div className="flex items-center gap-4 mt-1">
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {transaction.category.primary}
+                        <p className="text-xs text-gray-600 dark:text-gray-400">
+                          {transaction.category.primary.toLowerCase()}
                         </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-gray-500">
                           {new Date(transaction.date).toLocaleDateString(
                             'pt-BR'
                           )}
@@ -436,15 +436,15 @@ export function TransactionsContent() {
 
                   <div className="text-right">
                     <div
-                      className={`text-lg font-bold ${transaction.amount > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
+                      className={`text-sm font-bold ${transaction.amount > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
                     >
                       {transaction.amount > 0 ? '+' : ''}R${' '}
                       {Math.abs(transaction.amount).toLocaleString('pt-BR', {
                         minimumFractionDigits: 2,
                       })}
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-500">
-                      {transaction.accountId}
+                    <div className="text-xs text-gray-400 dark:text-gray-600">
+                      {transaction.accountId.slice(-8)}
                     </div>
                   </div>
                 </div>
