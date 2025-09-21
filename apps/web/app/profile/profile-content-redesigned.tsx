@@ -40,6 +40,7 @@ import {
   Shield,
   Settings,
   ArrowRight,
+  Plus,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -161,23 +162,47 @@ export function ProfileContent() {
   const loadFinancialProfile = useCallback(async () => {
     try {
       setInitialLoading(true);
-      const response = await fetch('/api/user/financial-profile');
-      if (response.ok) {
-        const data = await response.json();
-        // Garante que os dados vêm do campo financialProfile
-        const profileData = {
-          ...data,
-          userName: session?.user?.name || '',
-        };
-        setFinancialProfile(profileData);
-        setTempProfile(profileData);
-      } else {
-        console.error(
-          '❌ Erro na resposta da API:',
-          response.status,
-          response.statusText
-        );
+
+      // Carregar perfil financeiro
+      const profileResponse = await fetch('/api/user/financial-profile');
+      let profileData = {};
+
+      if (profileResponse.ok) {
+        profileData = await profileResponse.json();
       }
+
+      // Carregar contas conectadas
+      const accountsResponse = await fetch('/api/open-finance/accounts');
+      let connectedAccounts = [];
+
+      if (accountsResponse.ok) {
+        const accountsData = await accountsResponse.json();
+        if (accountsData.success) {
+          connectedAccounts = accountsData.data.map((account: any) => ({
+            id: account.accountId,
+            institutionId: account.institutionId,
+            institutionName: account.institutionName,
+            accountType: account.accountType?.toLowerCase() || 'checking',
+            accountNumber: account.accountId,
+            balance: account.balance,
+            currency: account.currency || 'BRL',
+            isActive: account.status === 'ACTIVE',
+            lastSyncAt: account.lastSyncAt
+              ? new Date(account.lastSyncAt)
+              : undefined,
+          }));
+        }
+      }
+
+      // Combinar dados
+      const finalProfileData = {
+        ...profileData,
+        userName: session?.user?.name || '',
+        connectedAccounts,
+      };
+
+      setFinancialProfile(finalProfileData);
+      setTempProfile(finalProfileData);
     } catch (error) {
       console.error('❌ Erro ao carregar perfil financeiro:', error);
     } finally {
@@ -777,58 +802,122 @@ export function ProfileContent() {
 
             {/* Contas Conectadas */}
             <div className="space-y-4">
-              <h4 className="text-lg font-medium text-gray-800">
-                Contas Conectadas
-              </h4>
+              <div className="flex items-center justify-between">
+                <h4 className="text-lg font-medium text-gray-800">
+                  Contas Conectadas
+                </h4>
+                <Link href="/integrations">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-blue-500 border-blue-200 hover:bg-blue-50"
+                  >
+                    <ArrowRight className="h-4 w-4 mr-2" />
+                    Gerenciar Contas
+                  </Button>
+                </Link>
+              </div>
               {financialProfile.connectedAccounts &&
               financialProfile.connectedAccounts.length > 0 ? (
-                <div className="space-y-2">
-                  {financialProfile.connectedAccounts.map(account => (
-                    <div
-                      key={account.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                          <Settings className="h-4 w-4 text-blue-600" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {financialProfile.connectedAccounts.map(account => {
+                    // URLs dos logos dos bancos
+                    const bankLogos: Record<string, string> = {
+                      'banco-do-brasil':
+                        'https://logos.bancos.com.br/banco-do-brasil.png',
+                      'caixa-economica':
+                        'https://logos.bancos.com.br/caixa-economica.png',
+                      bradesco: 'https://logos.bancos.com.br/bradesco.png',
+                      itau: 'https://logos.bancos.com.br/itau.png',
+                      santander: 'https://logos.bancos.com.br/santander.png',
+                      nubank: 'https://logos.bancos.com.br/nubank.png',
+                    };
+
+                    const bankLogo = bankLogos[account.institutionId];
+
+                    return (
+                      <div
+                        key={account.id}
+                        className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">
+                            {bankLogo ? (
+                              <img
+                                src={bankLogo}
+                                alt={account.institutionName}
+                                className="h-8 w-8 object-contain"
+                                onError={e => {
+                                  e.currentTarget.style.display = 'none';
+                                  e.currentTarget.nextElementSibling?.classList.remove(
+                                    'hidden'
+                                  );
+                                }}
+                              />
+                            ) : null}
+                            <div
+                              className={`h-8 w-8 ${bankLogo ? 'hidden' : ''} flex items-center justify-center`}
+                            >
+                              <Settings className="h-5 w-5 text-blue-600" />
+                            </div>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-800">
+                              {account.institutionName}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {account.accountType === 'checking'
+                                ? 'Conta Corrente'
+                                : account.accountType === 'savings'
+                                  ? 'Conta Poupança'
+                                  : account.accountType === 'credit_card'
+                                    ? 'Cartão de Crédito'
+                                    : account.accountType === 'investment'
+                                      ? 'Investimentos'
+                                      : 'Empréstimo'}
+                            </p>
+                            <p className="text-xs text-gray-400">
+                              Conectado em{' '}
+                              {account.lastSyncAt
+                                ? account.lastSyncAt.toLocaleDateString('pt-BR')
+                                : 'N/A'}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-800">
-                            {account.institutionName}
+                        <div className="text-right">
+                          <p className="font-semibold text-gray-800 text-lg">
+                            {account.balance
+                              ? formatCurrency(account.balance)
+                              : 'N/A'}
                           </p>
-                          <p className="text-sm text-gray-500">
-                            {account.accountType === 'checking'
-                              ? 'Conta Corrente'
-                              : account.accountType === 'savings'
-                                ? 'Conta Poupança'
-                                : account.accountType === 'credit_card'
-                                  ? 'Cartão de Crédito'
-                                  : account.accountType === 'investment'
-                                    ? 'Investimentos'
-                                    : 'Empréstimo'}
-                          </p>
+                          <Badge
+                            variant={account.isActive ? 'default' : 'secondary'}
+                            className={
+                              account.isActive
+                                ? 'bg-green-100 text-green-800'
+                                : ''
+                            }
+                          >
+                            {account.isActive ? 'Ativa' : 'Inativa'}
+                          </Badge>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-medium text-gray-800">
-                          {account.balance
-                            ? formatCurrency(account.balance)
-                            : 'N/A'}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {account.isActive ? 'Ativa' : 'Inativa'}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="text-center py-8 text-gray-500">
                   <Settings className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                   <p>Nenhuma conta conectada</p>
-                  <p className="text-sm">
+                  <p className="text-sm mb-4">
                     Conecte suas contas para uma experiência mais completa
                   </p>
+                  <Link href="/integrations">
+                    <Button className="bg-blue-500 hover:bg-blue-600">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Conectar Contas
+                    </Button>
+                  </Link>
                 </div>
               )}
             </div>

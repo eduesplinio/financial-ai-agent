@@ -12,6 +12,56 @@ import {
 // Em produção, isso seria feito no banco de dados
 const connectedAccountsStore = new Map<string, any[]>();
 
+// Inicializar com todas as instituições conectadas automaticamente
+const initializeConnectedAccounts = () => {
+  const institutions = [
+    'banco-do-brasil',
+    'caixa-economica',
+    'bradesco',
+    'itau',
+    'santander',
+    'nubank',
+  ];
+
+  institutions.forEach(institutionId => {
+    const mockAccount = {
+      accountId: `acc_${institutionId}_001`,
+      institutionId,
+      institutionName: getInstitutionName(institutionId),
+      accountType: 'CHECKING',
+      nickname: `Conta Corrente ${getInstitutionName(institutionId)}`,
+      connectedAt: new Date().toISOString(),
+      status: 'ACTIVE',
+      lastSyncAt: new Date().toISOString(),
+    };
+
+    if (!connectedAccountsStore.has('demo_user')) {
+      connectedAccountsStore.set('demo_user', []);
+    }
+
+    const userAccounts = connectedAccountsStore.get('demo_user') || [];
+    if (!userAccounts.find(acc => acc.institutionId === institutionId)) {
+      userAccounts.push(mockAccount);
+      connectedAccountsStore.set('demo_user', userAccounts);
+    }
+  });
+};
+
+const getInstitutionName = (institutionId: string): string => {
+  const names: Record<string, string> = {
+    'banco-do-brasil': 'Banco do Brasil',
+    'caixa-economica': 'Caixa Econômica Federal',
+    bradesco: 'Bradesco',
+    itau: 'Itaú Unibanco',
+    santander: 'Santander',
+    nubank: 'Nubank',
+  };
+  return names[institutionId] || institutionId;
+};
+
+// Inicializar contas conectadas
+initializeConnectedAccounts();
+
 // Função para adicionar conta conectada
 export function addConnectedAccount(userId: string, account: any) {
   const userAccounts = connectedAccountsStore.get(userId) || [];
