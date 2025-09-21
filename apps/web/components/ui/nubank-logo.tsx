@@ -7,16 +7,20 @@ interface NubankLogoProps {
 
 export function NubankLogo({ className = '', size = 'md' }: NubankLogoProps) {
   const sizeClasses = {
-    sm: 'h-4 w-4',
-    md: 'h-6 w-6',
-    lg: 'h-8 w-8',
+    sm: 'h-5 w-5',
+    md: 'h-7 w-7',
+    lg: 'h-10 w-10',
   };
 
   return (
-    <img
-      src="/nubank-logo.svg"
-      alt="Nubank Logo"
-      className={`${sizeClasses[size]} object-contain ${className}`}
-    />
+    <div
+      className={`${sizeClasses[size]} flex items-center justify-center ${className}`}
+    >
+      <img
+        src="/nubank-logo.svg"
+        alt="Nubank Logo"
+        className="w-full h-full object-contain drop-shadow-sm"
+      />
+    </div>
   );
 }
