@@ -7,7 +7,7 @@
 
 import { LLMService } from '../llm/llm-service';
 import { createFactCheckPrompt } from '../llm/prompt-engineering';
-import { KnowledgeDocument } from '@financial-ai/shared/src/types';
+import { KnowledgeDocument } from '@/shared/src/types';
 
 export interface ValidatedResponse {
   content: string;
@@ -78,10 +78,10 @@ export class ResponseValidator {
       /Precisão factual: (\d+)/i
     );
     const factualsCorrectMatch = factCheckResponse.content.match(
-      /Afirmações corretas: (.+?)(?=\n|$)/
+      /Afirmações corretas: (.+?)(?=\n|$)/s
     );
     const factualsIncorrectMatch = factCheckResponse.content.match(
-      /Afirmações incorretas: (.+?)(?=\n|$)/
+      /Afirmações incorretas: (.+?)(?=\n|$)/s
     );
     const citationsMatch = factCheckResponse.content.match(
       /Citações adequadas: (\w+)/i

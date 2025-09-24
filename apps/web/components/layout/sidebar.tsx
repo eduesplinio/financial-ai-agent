@@ -124,7 +124,7 @@ export function Sidebar({ className }: SidebarProps) {
     },
     {
       name: 'Integrações',
-      href: '/integrations',
+      href: '/integracoes',
       icon: <Landmark className="h-5 w-5" />,
     },
   ];

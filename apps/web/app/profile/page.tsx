@@ -1,5 +1,5 @@
 import { AuthGuard } from '@/components/auth/auth-guard';
-import { ProfileContent } from './profile-content-redesigned';
+import { ProfileContent } from './profile-content';
 
 export default function ProfilePage() {
   return (

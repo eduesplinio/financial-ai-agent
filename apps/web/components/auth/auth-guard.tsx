@@ -23,9 +23,7 @@ export function AuthGuard({
   const isMounted = useIsMounted();
 
   useEffect(() => {
-    if (status === 'loading') {
-      return;
-    }
+    if (status === 'loading') return;
 
     // Se não precisa de autenticação e está autenticado, redireciona para o dashboard
     if (!requireAuth && status === 'authenticated') {

@@ -69,11 +69,15 @@ export async function GET(request: NextRequest) {
             sessionId = conversationSession.sessionId;
           }
 
-          // Process the message with AI - ChatService will automatically fetch user data
+          // Process the message with AI
           const aiResponse = await chatService.processMessage(
             sessionId,
-            message
-            // userProfile will be fetched automatically by ChatService
+            message,
+            {
+              riskTolerance: 'moderate',
+              financialKnowledgeLevel: 'intermediate',
+              ageGroup: 'adult',
+            }
           );
 
           const response = aiResponse.message.content;
@@ -85,9 +89,7 @@ export async function GET(request: NextRequest) {
 
           words.forEach((word, index) => {
             const timeout = setTimeout(() => {
-              if (isClosed) {
-                return;
-              }
+              if (isClosed) return;
 
               try {
                 currentResponse += (index > 0 ? ' ' : '') + word;
@@ -103,9 +105,7 @@ export async function GET(request: NextRequest) {
                 // Send final message with sources when complete
                 if (index === words.length - 1) {
                   const finalTimeout = setTimeout(() => {
-                    if (isClosed) {
-                      return;
-                    }
+                    if (isClosed) return;
 
                     try {
                       controller.enqueue(
@@ -144,9 +144,7 @@ export async function GET(request: NextRequest) {
 
           words.forEach((word, index) => {
             const timeout = setTimeout(() => {
-              if (isClosed) {
-                return;
-              }
+              if (isClosed) return;
 
               try {
                 currentResponse += (index > 0 ? ' ' : '') + word;
@@ -161,9 +159,7 @@ export async function GET(request: NextRequest) {
 
                 if (index === words.length - 1) {
                   const finalTimeout = setTimeout(() => {
-                    if (isClosed) {
-                      return;
-                    }
+                    if (isClosed) return;
 
                     try {
                       controller.enqueue(

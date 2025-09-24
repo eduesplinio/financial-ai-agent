@@ -28,9 +28,7 @@ export function SafeLink({
       href.startsWith('mailto:') ||
       href.startsWith('tel:')
     ) {
-      if (onClick) {
-        onClick();
-      }
+      if (onClick) onClick();
       return; // Deixa o comportamento padrão para links externos
     }
 
@@ -41,9 +39,7 @@ export function SafeLink({
       return;
     }
 
-    if (onClick) {
-      onClick();
-    }
+    if (onClick) onClick();
   };
 
   return (

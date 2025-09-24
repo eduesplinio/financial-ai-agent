@@ -25,10 +25,8 @@ export function detectDuplicates(
       // Simple similarity: Jaccard index on tokens
       const tokens1 = new Set(preprocessDescription(t1.description));
       const tokens2 = new Set(preprocessDescription(t2.description));
-      const intersection = new Set(
-        Array.from(tokens1).filter(x => tokens2.has(x))
-      );
-      const union = new Set([...Array.from(tokens1), ...Array.from(tokens2)]);
+      const intersection = new Set([...tokens1].filter(x => tokens2.has(x)));
+      const union = new Set([...tokens1, ...tokens2]);
       const similarity = intersection.size / union.size;
       // Amount and date proximity (within 1 day and 1 real)
       const amountClose = Math.abs(t1.amount - t2.amount) < 1;

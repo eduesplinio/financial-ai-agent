@@ -14,7 +14,6 @@
   },
   "dependencies": {
     "@financial-ai/database": "workspace:*",
-    "@financial-ai/shared": "workspace:*",
     "@langchain/anthropic": "^0.0.4",
     "@langchain/openai": "^0.0.14",
     "chromadb": "^1.7.3",
@@ -27,6 +26,7 @@
     "@types/ioredis": "^5.0.0",
     "@types/node": "^20.10.4",
     "@types/pdf-parse": "^1.1.5",
+    "cheerio": "^1.1.2",
     "eslint": "^8.56.0",
     "pdf-parse": "^1.1.1",
     "typescript": "^5.3.3"

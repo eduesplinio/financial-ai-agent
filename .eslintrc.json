@@ -1,12 +1,15 @@
 {
   "root": true,
-  "extends": ["next/core-web-vitals", "@typescript-eslint/recommended"],
+  "extends": [
+    "next/core-web-vitals",
+    "@typescript-eslint/recommended",
+    "prettier"
+  ],
   "plugins": ["@typescript-eslint"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": 2022,
-    "sourceType": "module",
-    "project": "./tsconfig.json"
+    "sourceType": "module"
   },
   "rules": {
     "@typescript-eslint/no-unused-vars": "error",
@@ -19,17 +22,7 @@
     "no-var": "error",
     "no-console": "warn",
     "eqeqeq": ["error", "always"],
-    "curly": ["error", "all"],
-    "react/no-unescaped-entities": "off",
-    "@next/next/no-img-element": "warn"
+    "curly": ["error", "all"]
   },
-  "ignorePatterns": [
-    "node_modules/",
-    ".next/",
-    "dist/",
-    "build/",
-    "coverage/",
-    "*.config.js",
-    "*.config.mjs"
-  ]
+  "ignorePatterns": ["node_modules/", ".next/", "dist/", "build/", "coverage/"]
 }

@@ -146,6 +146,4 @@ logs
 
 # Temporary files
 tmp/
-temp/# Next.js build output
-.next/
-*.pack
+temp/

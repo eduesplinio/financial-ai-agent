@@ -16,9 +16,7 @@ export class NicknameService {
 
     for (const pattern of patterns) {
       const match = message.match(pattern);
-      if (match) {
-        return match[1];
-      }
+      if (match) return match[1];
     }
     return null;
   }

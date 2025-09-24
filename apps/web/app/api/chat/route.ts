@@ -31,11 +31,16 @@ export async function POST(request: NextRequest) {
       conversationSession = chatService.createSession(session.user.id);
     }
 
-    // Process the message - ChatService will automatically fetch user data
+    // Process the message
     const response = await chatService.processMessage(
       conversationSession.sessionId,
-      message
-      // userProfile will be fetched automatically by ChatService
+      message,
+      {
+        // TODO: Get user profile from database
+        riskTolerance: 'moderate',
+        financialKnowledgeLevel: 'intermediate',
+        ageGroup: 'adult',
+      }
     );
 
     return NextResponse.json({

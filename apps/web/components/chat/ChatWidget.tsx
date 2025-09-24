@@ -16,9 +16,6 @@ import {
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { ChatHistory } from './ChatHistory';
-import ReactMarkdown from 'react-markdown';
-import { remark } from 'remark';
-import remarkGfm from 'remark-gfm';
 
 export interface ChatMessage {
   id: string;
@@ -28,114 +25,6 @@ export interface ChatMessage {
   streaming?: boolean;
   feedback?: 'positive' | 'negative' | null;
 }
-
-// Função para renderizar Markdown customizado
-const renderMarkdown = (content: string) => {
-  const processor = remark().use(remarkGfm);
-  const tree = processor.parse(content);
-
-  const renderNode = (node: any, index: number = 0): React.ReactNode => {
-    if (node.type === 'text') {
-      return node.value;
-    }
-
-    if (node.type === 'paragraph') {
-      return (
-        <p key={index} className="mb-2 last:mb-0">
-          {node.children.map((child: any, i: number) => renderNode(child, i))}
-        </p>
-      );
-    }
-
-    if (node.type === 'strong') {
-      return (
-        <strong key={index} className="font-semibold text-foreground">
-          {node.children.map((child: any, i: number) => renderNode(child, i))}
-        </strong>
-      );
-    }
-
-    if (node.type === 'emphasis') {
-      return (
-        <em key={index} className="italic">
-          {node.children.map((child: any, i: number) => renderNode(child, i))}
-        </em>
-      );
-    }
-
-    if (node.type === 'list') {
-      const ListTag = node.ordered ? 'ol' : 'ul';
-      const listClass = node.ordered
-        ? 'mb-2 space-y-1 pl-6 list-decimal'
-        : 'mb-2 space-y-1 pl-6 list-disc';
-
-      return (
-        <ListTag key={index} className={listClass}>
-          {node.children.map((child: any, i: number) => renderNode(child, i))}
-        </ListTag>
-      );
-    }
-
-    if (node.type === 'listItem') {
-      return (
-        <li key={index} className="text-sm leading-relaxed">
-          {node.children.map((child: any, i: number) => renderNode(child, i))}
-        </li>
-      );
-    }
-
-    if (node.type === 'heading') {
-      const HeadingTag = `h${node.depth}` as keyof JSX.IntrinsicElements;
-      const headingClass =
-        {
-          1: 'text-lg font-bold mb-2',
-          2: 'text-base font-bold mb-2',
-          3: 'text-sm font-bold mb-1',
-        }[node.depth] || 'text-sm font-bold mb-1';
-
-      return (
-        <HeadingTag key={index} className={headingClass}>
-          {node.children.map((child: any, i: number) => renderNode(child, i))}
-        </HeadingTag>
-      );
-    }
-
-    if (node.type === 'code') {
-      return (
-        <code
-          key={index}
-          className="bg-muted px-1 py-0.5 rounded text-xs font-mono"
-        >
-          {node.value}
-        </code>
-      );
-    }
-
-    if (node.type === 'blockquote') {
-      return (
-        <blockquote
-          key={index}
-          className="border-l-2 border-border pl-2 italic"
-        >
-          {node.children.map((child: any, i: number) => renderNode(child, i))}
-        </blockquote>
-      );
-    }
-
-    // Para outros tipos de nó, renderizar filhos
-    if (node.children) {
-      return node.children.map((child: any, i: number) => renderNode(child, i));
-    }
-
-    return null;
-  };
-
-  return (
-    <div className="prose prose-sm max-w-none dark:prose-invert">
-      {renderNode(tree)}
-    </div>
-  );
-};
 
 export const ChatWidget: React.FC = () => {
   const { data: session } = useSession();
@@ -147,106 +36,19 @@ export const ChatWidget: React.FC = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  // Load messages from localStorage on component mount
-  useEffect(() => {
-    if (session?.user?.id) {
-      // Check if this is a page reload (F5)
-      const isPageReload = sessionStorage.getItem('page-reloaded');
-      if (isPageReload) {
-        // Clear chat history on page reload
-        localStorage.removeItem(`chat-messages-${session.user.id}`);
-        sessionStorage.removeItem('page-reloaded');
-        setMessages([]);
-        return;
-      }
-
-      const savedMessages = localStorage.getItem(
-        `chat-messages-${session.user.id}`
-      );
-      if (savedMessages) {
-        try {
-          const parsedMessages = JSON.parse(savedMessages);
-          setMessages(parsedMessages);
-        } catch (error) {
-          // Error loading saved messages
-        }
-      }
-    }
-  }, [session?.user?.id]);
-
-  // Mark page as reloaded when component mounts
-  useEffect(() => {
-    sessionStorage.setItem('page-reloaded', 'true');
-  }, []);
-
-  // Save messages to localStorage whenever messages change
-  useEffect(() => {
-    if (session?.user?.id && messages.length > 0) {
-      localStorage.setItem(
-        `chat-messages-${session.user.id}`,
-        JSON.stringify(messages)
-      );
-    }
-  }, [messages, session?.user?.id]);
-
-  // Function to scroll to bottom
-  const scrollToBottom = () => {
-    if (messagesContainerRef.current) {
-      // Force scroll to absolute bottom immediately
-      messagesContainerRef.current.scrollTop =
-        messagesContainerRef.current.scrollHeight;
-    }
-  };
-
-  // Function to smooth scroll to bottom
-  const smoothScrollToBottom = () => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'end',
-      });
-    }
-  };
-
-  // Function to focus input field
-  const focusInput = () => {
-    setTimeout(() => {
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
-    }, 100);
-  };
 
   // Scroll to bottom when messages change (backup for any missed cases)
   useEffect(() => {
-    // Multiple attempts to ensure scroll to bottom
-    setTimeout(() => scrollToBottom(), 50);
-    setTimeout(() => scrollToBottom(), 200);
-    setTimeout(() => scrollToBottom(), 500);
+    const timer = setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 50);
+    return () => clearTimeout(timer);
   }, [messages.length]); // Only trigger on new messages, not content updates
-
-  // Scroll when loading state changes (when thinking animation appears)
-  useEffect(() => {
-    if (loading) {
-      scrollToBottom();
-    }
-  }, [loading]);
 
   // Reset to windowed mode when widget opens
   useEffect(() => {
     if (showWidget) {
       setIsFullscreen(false);
-      // Scroll to bottom immediately when widget opens
-      scrollToBottom();
-      // Additional scroll attempts to ensure it works
-      setTimeout(() => scrollToBottom(), 50);
-      setTimeout(() => scrollToBottom(), 150);
-      setTimeout(() => scrollToBottom(), 300);
-      // Focus input when widget opens
-      focusInput();
     }
   }, [showWidget]);
 
@@ -385,16 +187,12 @@ export const ChatWidget: React.FC = () => {
 
   // Get user's nickname or first name
   const getFirstName = () => {
-    if (!session?.user?.name) {
-      return '';
-    }
+    if (!session?.user?.name) return '';
     return getNickname(session.user.name);
   };
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || loading || streaming) {
-      return;
-    }
+    if (!input.trim() || loading || streaming) return;
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -405,12 +203,12 @@ export const ChatWidget: React.FC = () => {
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setLoading(true);
-    setStreaming(false); // Don't set streaming to true until we start receiving chunks
+    setStreaming(true);
 
     // Scroll to bottom immediately after sending message
-    scrollToBottom();
-    // Focus input to continue typing
-    focusInput();
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
 
     try {
       // Use Server-Sent Events for streaming
@@ -426,14 +224,12 @@ export const ChatWidget: React.FC = () => {
         throw new Error('No reader available');
       }
 
-      const assistantMsgId = (Date.now() + 1).toString();
+      let assistantMsgId = (Date.now() + 1).toString();
       let currentContent = '';
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) {
-          break;
-        }
+        if (done) break;
 
         const chunk = new TextDecoder().decode(value);
         const lines = chunk.split('\n');
@@ -444,10 +240,6 @@ export const ChatWidget: React.FC = () => {
               const data = JSON.parse(line.slice(6));
 
               if (data.type === 'chunk' || data.type === 'stream') {
-                // Stop loading animation immediately when any chunk arrives
-                setLoading(false);
-                setStreaming(true);
-
                 if (data.type === 'chunk') {
                   currentContent += data.content;
                 } else {
@@ -478,10 +270,13 @@ export const ChatWidget: React.FC = () => {
                   }
                 });
 
-                // Scroll to bottom during streaming (like Claude.ai) - immediate
-                scrollToBottom();
+                // Scroll to bottom during streaming (like Claude.ai)
+                setTimeout(() => {
+                  messagesEndRef.current?.scrollIntoView({
+                    behavior: 'smooth',
+                  });
+                }, 10);
               } else if (data.type === 'complete') {
-                setLoading(false); // Ensure loading is stopped
                 setMessages(prev =>
                   prev.map(msg =>
                     msg.id === assistantMsgId
@@ -495,18 +290,21 @@ export const ChatWidget: React.FC = () => {
                       : msg
                   )
                 );
-                // Smooth scroll to bottom when streaming completes
-                setTimeout(() => smoothScrollToBottom(), 100);
-                // Focus input to continue typing
-                setTimeout(() => focusInput(), 200);
+                // Scroll to bottom when streaming completes
+                setTimeout(() => {
+                  messagesEndRef.current?.scrollIntoView({
+                    behavior: 'smooth',
+                  });
+                }, 100);
               }
             } catch (err) {
-              // Error parsing SSE data
+              console.error('Error parsing SSE data:', err);
             }
           }
         }
       }
     } catch (error) {
+      console.error('Error sending message:', error);
       const errorMsg: ChatMessage = {
         id: (Date.now() + 2).toString(),
         role: 'assistant',
@@ -529,12 +327,11 @@ export const ChatWidget: React.FC = () => {
     );
 
     // TODO: Send feedback to API
+    console.log('Feedback submitted:', { messageId, feedback });
   };
 
   const handleSendMessage = async (message: string) => {
-    if (loading || streaming || !message.trim()) {
-      return;
-    }
+    if (loading || streaming || !message.trim()) return;
 
     setInput(message);
 
@@ -622,7 +419,7 @@ export const ChatWidget: React.FC = () => {
             className={`overflow-y-auto px-4 py-3 space-y-3 ${
               isFullscreen ? 'flex-1' : 'h-96'
             }`}
-            ref={messagesContainerRef}
+            ref={messagesEndRef}
           >
             {messages.length === 0 ? (
               <div
@@ -717,9 +514,7 @@ export const ChatWidget: React.FC = () => {
                       }`}
                     >
                       <div className="whitespace-pre-wrap">
-                        {message.role === 'assistant'
-                          ? renderMarkdown(message.content)
-                          : message.content}
+                        {message.content}
                       </div>
 
                       {/* Citations */}
@@ -781,7 +576,7 @@ export const ChatWidget: React.FC = () => {
             )}
 
             {/* Thinking animation when AI is processing */}
-            {loading && !streaming && (
+            {loading && (
               <div className="flex justify-start mb-4">
                 <div className="max-w-[80%]">
                   <div className="inline-block px-3 py-2 rounded-lg text-sm bg-muted text-foreground border border-border">
@@ -818,7 +613,6 @@ export const ChatWidget: React.FC = () => {
           >
             <div className="flex items-center gap-2">
               <input
-                ref={inputRef}
                 className="flex-1 px-3 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-1 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all text-sm placeholder:text-muted-foreground/60"
                 type="text"
                 value={input}

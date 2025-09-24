@@ -171,8 +171,7 @@ export function ProfileContent() {
       });
 
       if (response.ok) {
-        // Recarregar dados do servidor para garantir consistência
-        await loadFinancialProfile();
+        setFinancialProfile(tempProfile);
         setEditingProfile(false);
         setSaveMessage('Perfil financeiro atualizado com sucesso!');
       } else {

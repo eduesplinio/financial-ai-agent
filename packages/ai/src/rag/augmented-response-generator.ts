@@ -6,7 +6,7 @@
  */
 import { LLMService, LLMMessage } from '../llm/llm-service';
 import { RAGService, RAGResponse, RelevantDocument } from './rag-service';
-import { KnowledgeDocument, UserProfile } from '@financial-ai/shared/src/types';
+import { KnowledgeDocument, UserProfile } from '@/shared/src/types';
 
 export interface SourceReference {
   id: string;
