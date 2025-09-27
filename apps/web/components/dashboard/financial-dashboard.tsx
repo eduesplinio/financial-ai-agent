@@ -16,8 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-// ...existing code...
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -52,44 +51,94 @@ interface FinancialDashboardProps {
 export function FinancialDashboard({ userId }: FinancialDashboardProps) {
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
 
-  // Mock de dados financeiros
-  const mockData = {
-    balance: 12450.75,
-    income: 8500.0,
-    expenses: 3200.5,
-    savings: 9250.25,
-    monthlyTrend: [
-      { month: 'Jan', income: 8000, expenses: 3500 },
-      { month: 'Fev', income: 8200, expenses: 3200 },
-      { month: 'Mar', income: 8500, expenses: 3000 },
-      { month: 'Abr', income: 8300, expenses: 3400 },
-      { month: 'Mai', income: 8700, expenses: 3100 },
-      { month: 'Jun', income: 8500, expenses: 3200 },
-    ],
-    categoryExpenses: [
-      { category: 'Alimentação', amount: 850, color: '#FF6384' },
-      { category: 'Transporte', amount: 420, color: '#36A2EB' },
-      { category: 'Moradia', amount: 1200, color: '#FFCE56' },
-      { category: 'Saúde', amount: 300, color: '#4BC0C0' },
-      { category: 'Lazer', amount: 280, color: '#9966FF' },
-      { category: 'Outros', amount: 150, color: '#FF9F40' },
-    ],
-  };
+  // Dados reais das transações
+  const [loading, setLoading] = useState(true);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [stats, setStats] = useState<any | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [categoryExpenses, setCategoryExpenses] = useState<any[]>([]);
+  const [monthlyTrend, setMonthlyTrend] = useState<any[]>([]);
 
+  useEffect(() => {
+    setLoading(true);
+    fetch('/api/transactions?limit=1000')
+      .then(res => res.json())
+      .then(data => {
+        setTransactions(data.transactions || []);
+        setStats(data.statistics || null);
+        setCategories(data.statistics?.uniqueCategories || []);
+        // Monta gastos por categoria
+        let categoryColors = [
+          '#FF6384',
+          '#36A2EB',
+          '#FFCE56',
+          '#4BC0C0',
+          '#9966FF',
+          '#FF9F40',
+          '#10B981',
+          '#EF4444',
+          '#F59E42',
+          '#A3E635',
+        ];
+        let catMap: Record<string, { amount: number; color: string }> = {};
+        (data.transactions || []).forEach((tx, idx) => {
+          const cat = tx.category?.primary || tx.category;
+          if (cat && typeof cat === 'string') {
+            if (!catMap[cat]) {
+              catMap[cat] = {
+                amount: 0,
+                color: categoryColors[idx % categoryColors.length],
+              };
+            }
+            catMap[cat].amount += Math.abs(tx.amount);
+          }
+        });
+        setCategoryExpenses(
+          Object.entries(catMap).map(([category, obj]) => ({
+            category,
+            amount: obj.amount,
+            color: obj.color,
+          }))
+        );
+        // Monta tendência mensal
+        const months: Record<string, { income: number; expenses: number }> = {};
+        (data.transactions || []).forEach(tx => {
+          const d = new Date(tx.date);
+          const month = d.toLocaleString('pt-BR', {
+            month: 'short',
+            year: '2-digit',
+          });
+          if (!months[month]) months[month] = { income: 0, expenses: 0 };
+          if (tx.amount > 0) months[month].income += tx.amount;
+          else months[month].expenses += Math.abs(tx.amount);
+        });
+        setMonthlyTrend(
+          Object.entries(months)
+            .map(([month, v]) => ({ month, ...v }))
+            .sort((a, b) => a.month.localeCompare(b.month))
+        );
+        setLoading(false);
+      })
+      .catch(() => {
+        setError('Erro ao carregar dados do dashboard');
+        setLoading(false);
+      });
+  }, []);
   // Configuração do gráfico de tendências
   const trendChartData = {
-    labels: mockData.monthlyTrend.map(item => item.month),
+    labels: monthlyTrend.map(item => item.month),
     datasets: [
       {
         label: 'Receitas',
-        data: mockData.monthlyTrend.map(item => item.income),
+        data: monthlyTrend.map(item => item.income),
         borderColor: '#10B981',
         backgroundColor: 'rgba(16, 185, 129, 0.1)',
         tension: 0.4,
       },
       {
         label: 'Gastos',
-        data: mockData.monthlyTrend.map(item => item.expenses),
+        data: monthlyTrend.map(item => item.expenses),
         borderColor: '#EF4444',
         backgroundColor: 'rgba(239, 68, 68, 0.1)',
         tension: 0.4,
@@ -99,11 +148,15 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
 
   // Configuração do gráfico de gastos por categoria
   const categoryChartData = {
-    labels: mockData.categoryExpenses.map(item => item.category),
+    labels: categoryExpenses.map(item =>
+      typeof item.category === 'string' ? item.category : String(item.category)
+    ),
     datasets: [
       {
-        data: mockData.categoryExpenses.map(item => item.amount),
-        backgroundColor: mockData.categoryExpenses.map(item => item.color),
+        data: categoryExpenses.map(item =>
+          typeof item.amount === 'number' ? item.amount : 0
+        ),
+        backgroundColor: categoryExpenses.map(item => item.color || '#36A2EB'),
         borderWidth: 0,
       },
     ],
@@ -179,12 +232,17 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
           <CardContent>
             <div className="text-2xl font-bold text-green-600 dark:text-green-400">
               R${' '}
-              {mockData.balance.toLocaleString('pt-BR', {
-                minimumFractionDigits: 2,
-              })}
+              {typeof stats?.totalCredits === 'number' &&
+              typeof stats?.totalDebits === 'number'
+                ? (stats.totalCredits - stats.totalDebits).toLocaleString(
+                    'pt-BR',
+                    { minimumFractionDigits: 2 }
+                  )
+                : '0,00'}
             </div>
             <p className="text-xs text-green-700/70 dark:text-green-300/70">
-              +5.2% em relação ao mês passado
+              {/* Variação pode ser calculada se stats trouxer histórico */}
+              {/* +5.2% em relação ao mês passado */}
             </p>
           </CardContent>
         </Card>
@@ -198,12 +256,14 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
           <CardContent>
             <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
               R${' '}
-              {mockData.income.toLocaleString('pt-BR', {
-                minimumFractionDigits: 2,
-              })}
+              {typeof stats?.totalCredits === 'number'
+                ? stats.totalCredits.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2,
+                  })
+                : '0,00'}
             </div>
             <p className="text-xs text-blue-700/70 dark:text-blue-300/70">
-              +2.1% em relação ao mês passado
+              {/* +2.1% em relação ao mês passado */}
             </p>
           </CardContent>
         </Card>
@@ -211,18 +271,20 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
         <Card className="bg-red-100 dark:bg-red-900/20 border-red-200 dark:border-red-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-red-800 dark:text-red-300">
-              Gastos
+              Despesas
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600 dark:text-red-400">
               R${' '}
-              {mockData.expenses.toLocaleString('pt-BR', {
-                minimumFractionDigits: 2,
-              })}
+              {typeof stats?.totalDebits === 'number'
+                ? stats.totalDebits.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2,
+                  })
+                : '0,00'}
             </div>
             <p className="text-xs text-red-700/70 dark:text-red-300/70">
-              -3.4% em relação ao mês passado
+              {/* -3.4% em relação ao mês passado */}
             </p>
           </CardContent>
         </Card>
@@ -236,12 +298,14 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
           <CardContent>
             <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
               R${' '}
-              {mockData.savings.toLocaleString('pt-BR', {
-                minimumFractionDigits: 2,
-              })}
+              {typeof stats?.avgAmount === 'number'
+                ? stats.avgAmount.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2,
+                  })
+                : '0,00'}
             </div>
             <p className="text-xs text-purple-700/70 dark:text-purple-300/70">
-              +8.7% em relação ao mês passado
+              {/* +8.7% em relação ao mês passado */}
             </p>
           </CardContent>
         </Card>
@@ -253,7 +317,7 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
           <CardHeader>
             <CardTitle>Tendência Mensal</CardTitle>
             <CardDescription>
-              Evolução das receitas e gastos nos últimos meses
+              Evolução das receitas e despesas nos últimos meses
             </CardDescription>
           </CardHeader>
           <CardContent className="bg-muted/30 rounded-lg">
@@ -271,7 +335,7 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
           <CardHeader>
             <CardTitle>Gastos por Categoria</CardTitle>
             <CardDescription>
-              Distribuição dos seus gastos por categoria
+              Distribuição das suas despesas por categoria
             </CardDescription>
           </CardHeader>
           <CardContent className="bg-muted/30 rounded-lg">
@@ -285,36 +349,50 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
           <CardHeader>
             <CardTitle>Detalhamento por Categoria</CardTitle>
             <CardDescription>
-              Análise detalhada dos gastos por categoria no período selecionado
+              Análise detalhada das despesas por categoria no período
+              selecionado
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {mockData.categoryExpenses.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-3 rounded-lg"
-                  style={{ background: `${item.color}22` }}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="font-medium text-gray-800 dark:text-gray-200">
-                      {item.category}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-bold text-gray-800 dark:text-gray-200">
-                      R${' '}
-                      {item.amount.toLocaleString('pt-BR', {
-                        minimumFractionDigits: 2,
-                      })}
-                    </div>
-                    <div className="text-xs opacity-90 text-gray-700 dark:text-gray-300">
-                      {((item.amount / mockData.expenses) * 100).toFixed(1)}% do
-                      total
-                    </div>
-                  </div>
+              {categoryExpenses.length === 0 ? (
+                <div className="text-muted-foreground">
+                  Nenhum dado de categoria encontrado.
                 </div>
-              ))}
+              ) : (
+                categoryExpenses.map((item, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 rounded-lg"
+                    style={{ background: `${item.color}22` }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="font-medium text-gray-800 dark:text-gray-200">
+                        {typeof item.category === 'string'
+                          ? item.category
+                          : String(item.category)}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-bold text-gray-800 dark:text-gray-200">
+                        R${' '}
+                        {typeof item.amount === 'number'
+                          ? item.amount.toLocaleString('pt-BR', {
+                              minimumFractionDigits: 2,
+                            })
+                          : '0,00'}
+                      </div>
+                      <div className="text-xs opacity-90 text-gray-700 dark:text-gray-300">
+                        {typeof stats?.totalDebits === 'number' &&
+                        stats.totalDebits > 0
+                          ? ((item.amount / stats.totalDebits) * 100).toFixed(1)
+                          : '0.0'}
+                        % do total
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </CardContent>
         </Card>

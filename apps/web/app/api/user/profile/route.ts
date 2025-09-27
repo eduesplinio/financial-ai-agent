@@ -13,13 +13,27 @@ const updateProfileSchema = z.object({
       riskTolerance: z
         .enum(['conservative', 'moderate', 'aggressive'])
         .optional(),
-      financialGoals: z.array(z.string()).optional(),
+      financialGoals: z
+        .array(
+          z.object({
+            id: z.string().optional(),
+            title: z.string(),
+            description: z.string().optional(),
+            targetAmount: z.number().optional(),
+            currentAmount: z.number().optional(),
+            targetDate: z.string().optional(),
+            category: z.string().optional(),
+            priority: z.string().optional(),
+            status: z.string().optional(),
+            _id: z.string().optional(),
+          })
+        )
+        .optional(),
       incomeRange: z.string().optional(),
       ageGroup: z.string().optional(),
       financialKnowledgeLevel: z
         .enum(['beginner', 'intermediate', 'advanced'])
         .optional(),
-      // Campos adicionais que podem vir do financialProfile
       monthlyIncome: z.number().min(0).optional(),
       spendingCategories: z
         .object({

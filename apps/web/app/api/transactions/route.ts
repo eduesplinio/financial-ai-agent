@@ -88,7 +88,13 @@ export async function GET(request: NextRequest) {
               },
             },
             avgAmount: { $avg: '$amount' },
-            categories: { $addToSet: '$category.primary' },
+            categories: {
+              $addToSet: {
+                $toLower: {
+                  $ifNull: [{ $toString: '$category.primary' }, ''],
+                },
+              },
+            },
           },
         },
       ])
