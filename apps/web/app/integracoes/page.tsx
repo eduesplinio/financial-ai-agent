@@ -99,6 +99,7 @@ export default function IntegracoesPage() {
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState<string | null>(null);
   const [syncing, setSyncing] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('connected');
   const { toast } = useToast();
   const { openModal, ModalComponent } = useConfirmationModal();
 
@@ -197,6 +198,7 @@ export default function IntegracoesPage() {
         }
 
         loadData(); // Recarregar dados
+        setActiveTab('connected'); // Voltar para aba de contas conectadas
       } else {
         const error = await response.json();
         throw new Error(error.message);
@@ -333,17 +335,19 @@ export default function IntegracoesPage() {
   }
 
   return (
-    <div className="p-8 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Integrações Bancárias</h1>
-          <p className="text-muted-foreground mt-2">
-            Conecte suas contas bancárias para análise financeira automatizada
-          </p>
-        </div>
+    <div className="w-full px-4 lg:px-8 py-6">
+      <div className="mb-8">
+        <h1 className="text-xl font-semibold">Integrações Bancárias</h1>
+        <p className="text-muted-foreground">
+          Conecte suas contas bancárias para análise financeira automatizada
+        </p>
       </div>
 
-      <Tabs defaultValue="connected" className="space-y-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-6"
+      >
         <TabsList>
           <TabsTrigger value="connected">
             Contas Conectadas ({connectedAccounts.length})
@@ -365,15 +369,7 @@ export default function IntegracoesPage() {
                   Conecte suas contas bancárias para começar a análise
                   financeira
                 </p>
-                <Button
-                  onClick={() => {
-                    const element = document.querySelector(
-                      '[value="available"]'
-                    ) as HTMLElement;
-                    element?.click();
-                  }}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
+                <Button onClick={() => setActiveTab('available')}>
                   Conectar Primeira Conta
                 </Button>
               </CardContent>
@@ -415,6 +411,7 @@ export default function IntegracoesPage() {
                             size="sm"
                             onClick={() => handleSyncAccount(account.id)}
                             disabled={syncing === account.id}
+                            className="border-primary text-primary hover:bg-primary/10"
                           >
                             {syncing === account.id ? (
                               <RefreshCw className="h-4 w-4 animate-spin" />
@@ -474,22 +471,11 @@ export default function IntegracoesPage() {
                       onClick={() => handleConnectBank(institution)}
                       disabled={connecting === institution.id || isConnected}
                     >
-                      {connecting === institution.id ? (
-                        <>
-                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                          Conectando...
-                        </>
-                      ) : isConnected ? (
-                        <>
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          Conectado
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="h-4 w-4 mr-2" />
-                          Conectar
-                        </>
-                      )}
+                      {connecting === institution.id
+                        ? 'Conectando...'
+                        : isConnected
+                          ? 'Conectado'
+                          : 'Conectar'}
                     </Button>
                   </CardContent>
                 </Card>

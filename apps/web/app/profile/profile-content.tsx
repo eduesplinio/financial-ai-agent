@@ -344,7 +344,6 @@ export function ProfileContent() {
                 onClick={() => setEditingProfile(true)}
                 className="bg-background hover:bg-primary/10 text-primary border-primary/20"
               >
-                <Edit className="h-4 w-4 mr-2" />
                 Personalizar Perfil
               </Button>
             ) : (
@@ -354,15 +353,7 @@ export function ProfileContent() {
                   disabled={loading}
                   className="bg-primary hover:bg-primary/90"
                 >
-                  <Save className="h-4 w-4 mr-2" />
-                  {loading ? (
-                    <span className="flex items-center">
-                      <span className="animate-spin h-4 w-4 mr-1 border-2 border-white border-t-transparent rounded-full"></span>
-                      Salvando
-                    </span>
-                  ) : (
-                    'Salvar Alterações'
-                  )}
+                  {loading ? 'Salvando...' : 'Salvar Alterações'}
                 </Button>
                 <Button
                   variant="outline"

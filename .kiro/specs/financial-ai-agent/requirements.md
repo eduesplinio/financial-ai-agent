@@ -17,6 +17,7 @@ Este documento define os requisitos para o desenvolvimento de um Agente de IA Fi
 3. QUANDO autenticação for necessária ENTÃO o sistema DEVE implementar autenticação multifatorial e gerenciamento seguro de tokens
 4. SE a conexão falhar ENTÃO o sistema DEVE fornecer mensagens de erro claras e mecanismos de retry
 5. QUANDO dados forem transmitidos ENTÃO o sistema DEVE usar criptografia ponta-a-ponta para todos os dados financeiros
+6. QUANDO uma conta bancária conectada for excluída ENTÃO o sistema DEVE automaticamente remover todos os documentos de transações associados a essa conta do banco de dados MongoDB Atlas
 
 ### Requisito 2
 

@@ -108,24 +108,19 @@ export function Sidebar({ className }: SidebarProps) {
       icon: <LayoutDashboard className="h-5 w-5" />,
     },
     {
+      name: 'Integrações',
+      href: '/integracoes',
+      icon: <Landmark className="h-5 w-5" />,
+    },
+    {
       name: 'Transações',
       href: '/transactions',
       icon: <Receipt className="h-5 w-5" />,
     },
-    // {
-    //   name: 'Chat IA',
-    //   href: '/chat',
-    //   icon: <MessageSquare className="h-5 w-5" />,
-    // },
     {
       name: 'Metas',
       href: '/goals',
       icon: <Target className="h-5 w-5" />,
-    },
-    {
-      name: 'Integrações',
-      href: '/integracoes',
-      icon: <Landmark className="h-5 w-5" />,
     },
   ];
 

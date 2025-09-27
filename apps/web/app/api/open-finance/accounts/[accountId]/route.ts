@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { MongoClient, ObjectId } from 'mongodb';
-
-const MONGODB_URI = process.env.MONGODB_URI;
-if (!MONGODB_URI) {
-  throw new Error(
-    'Please define the MONGODB_URI environment variable inside .env.local'
-  );
-}
+import { ObjectId } from 'mongodb';
+import { getDatabase } from '@/lib/mongodb';
 
 /**
  * GET /api/open-finance/accounts/[accountId]
@@ -242,6 +236,30 @@ export async function DELETE(
       );
     }
 
+    // Remover transações relacionadas à conta (por segurança)
+    const transactions = db.collection('transactions');
+    const transactionsDeleteResult = await transactions.deleteMany({
+      userId: userId,
+      accountId: existingAccount.accountId,
+      institutionId: existingAccount.institutionId,
+    });
+
+    console.log(
+      `Removidas ${transactionsDeleteResult.deletedCount} transações da conta ${existingAccount.institutionName}`
+    );
+
+    // Remover histórico de sincronizações relacionadas
+    const syncHistory = db.collection('sync_history');
+    const syncDeleteResult = await syncHistory.deleteMany({
+      userId: userId,
+      accountId: existingAccount.accountId,
+      institutionId: existingAccount.institutionId,
+    });
+
+    console.log(
+      `Removidos ${syncDeleteResult.deletedCount} registros de sincronização da conta ${existingAccount.institutionName}`
+    );
+
     // Soft delete - marcar como removida
     const result = await connectedAccounts.updateOne(
       { _id: new ObjectId(accountId), userId: userId },
@@ -259,6 +277,10 @@ export async function DELETE(
     return NextResponse.json({
       message: 'Conta desconectada com sucesso',
       revokedAt: new Date(),
+      dataCleanup: {
+        transactionsRemoved: transactionsDeleteResult.deletedCount,
+        syncHistoryRemoved: syncDeleteResult.deletedCount,
+      },
     });
   } catch (error) {
     console.error('Error revoking account:', error);

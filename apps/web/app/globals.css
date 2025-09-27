@@ -23,10 +23,10 @@
     --popover-foreground: 240 10% 3.9%;
 
     /* Cores primárias */
-    --primary: 142 76% 36%;
+    --primary: 154 61% 28%;
     --primary-foreground: 0 0% 100%;
-    --primary-light: 142 76% 93%;
-    --primary-dark: 142 76% 26%;
+    --primary-light: 154 61% 93%;
+    --primary-dark: 154 61% 18%;
 
     /* Cores secundárias */
     --secondary: 240 4.8% 95.9%;
@@ -37,7 +37,7 @@
     --accent-foreground: 240 5.9% 10%;
 
     /* Cores de feedback */
-    --success: 142 76% 36%;
+    --success: 154 61% 28%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
@@ -51,7 +51,7 @@
     --muted-foreground: 240 3.8% 46.1%;
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
-    --ring: 142 76% 36%;
+    --ring: 154 61% 28%;
 
     /* Bordas e sombras */
     --radius: 0.5rem;
@@ -73,10 +73,10 @@
     --popover-foreground: 0 0% 98%;
 
     /* Cores primárias */
-    --primary: 217 91% 60%;
+    --primary: 154 61% 28%;
     --primary-foreground: 0 0% 100%;
-    --primary-light: 217 91% 10%;
-    --primary-dark: 217 91% 70%;
+    --primary-light: 154 61% 15%;
+    --primary-dark: 154 61% 18%;
 
     /* Cores secundárias */
     --secondary: 198 60% 11%;
@@ -87,7 +87,7 @@
     --accent-foreground: 0 0% 98%;
 
     /* Cores de feedback */
-    --success: 142 71% 45%;
+    --success: 154 61% 28%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
@@ -101,7 +101,7 @@
     --muted-foreground: 240 5% 64.9%;
     --border: 198 40% 15%;
     --input: 198 40% 15%;
-    --ring: 217 91% 60%;
+    --ring: 154 61% 28%;
 
     /* Bordas e sombras */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.25);

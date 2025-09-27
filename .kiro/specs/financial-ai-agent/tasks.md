@@ -65,6 +65,13 @@
     - Implementar auditoria completa de consentimentos e acessos
     - Criar relatórios de compliance LGPD
     - _Requisitos: 1.2, 6.2, 6.3_
+  - [ ] 4.4 Implementar exclusão cascata de dados transacionais
+    - Criar script administrativo para limpeza de transações existentes no MongoDB Atlas
+    - Implementar funcionalidade de exclusão automática de transações ao deletar conta conectada
+    - Criar API endpoint para exclusão manual de transações por conta (admin)
+    - Implementar logs de auditoria para exclusões de dados transacionais
+    - Criar testes unitários e de integração para exclusão cascata
+    - _Requisitos: 1.6, 6.3_
 
 - [✅] 5. Desenvolver processador de transações com ML
   - 5.1 Implementar categorizador automático de transações

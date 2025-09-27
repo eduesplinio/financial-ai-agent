@@ -508,30 +508,27 @@ export function SettingsContent() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <Button
                   variant="outline"
-                  className="flex items-center gap-2 bg-card border-border hover:bg-primary/10 text-primary"
+                  className="bg-card border-border hover:bg-primary/10 text-primary"
                   onClick={() => handleDataAction('export')}
                   disabled={loading}
                 >
-                  <Download className="h-4 w-4" />
                   Baixar Dados
                 </Button>
 
                 <Button
                   variant="outline"
-                  className="flex items-center gap-2 bg-card border-border hover:bg-primary/10 text-primary"
+                  className="bg-card border-border hover:bg-primary/10 text-primary"
                   onClick={() => (window.location.href = '/privacy')}
                 >
-                  <Eye className="h-4 w-4" />
                   Ver Política
                 </Button>
 
                 <Button
                   variant="destructive"
-                  className="flex items-center gap-2 bg-red-500 border-red-500 hover:bg-red-600 text-white"
+                  className="bg-red-500 border-red-500 hover:bg-red-600 text-white"
                   onClick={() => handleDataAction('delete')}
                   disabled={loading}
                 >
-                  <Trash className="h-4 w-4" />
                   Excluir Conta
                 </Button>
               </div>
