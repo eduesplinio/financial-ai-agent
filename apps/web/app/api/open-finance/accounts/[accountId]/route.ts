@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { ObjectId } from 'mongodb';
-import { getDatabase } from '@/lib/mongodb';
+import { ObjectId, MongoClient } from 'mongodb';
+
+const MONGODB_URI = process.env.MONGODB_URI;
+if (!MONGODB_URI) {
+  throw new Error(
+    'MONGODB_URI não definida. Configure a URI do MongoDB Atlas em suas variáveis de ambiente.'
+  );
+}
 
 /**
  * GET /api/open-finance/accounts/[accountId]
