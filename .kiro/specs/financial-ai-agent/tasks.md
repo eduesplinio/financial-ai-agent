@@ -236,22 +236,48 @@
     - Criar runbooks para resposta a incidentes
     - _Requisitos: Disponibilidade e confiabilidade do sistema_
 
-- [ ] 13. Preparar para produção e deploy
-  - [ ] 13.1 Configurar pipeline de CI/CD
+- [ ] 13. Melhorias de UX/UI - Open Finance
+  - [x] 13.1 Corrigir exibição de logos dos bancos
+    - Corrigir logos não aparecendo nas contas conectadas (usar logoUrl da instituição)
+    - Aumentar tamanho das logos para melhor visibilidade (de 8x8 para 12x12 ou 16x16)
+    - Implementar fallback adequado quando logo não carregar
+    - Garantir que logos apareçam consistentemente em todas as telas
+    - _Requisitos: 5.1 - Interface intuitiva_
+  - [x] 13.2 Implementar modais de confirmação
+    - Criar modal customizado para confirmação de exclusão de conta (substituir alert padrão)
+    - Implementar modal de confirmação para revogação de consentimentos
+    - Adicionar animações suaves e design consistente nos modais
+    - Incluir botões de ação claros (Confirmar/Cancelar)
+    - _Requisitos: 5.1 - Interface intuitiva_
+  - [x] 13.3 Melhorar feedback visual e mensagens
+    - Alterar cor do toast de sincronização para verde (sucesso)
+    - Centralizar toasts no fundo da tela seguindo padrão do sistema
+    - Remover informações técnicas desnecessárias (accountId) da interface
+    - Padronizar todas as mensagens de feedback do sistema
+    - _Requisitos: 5.1 - Interface intuitiva_
+  - [x] 13.4 Corrigir navegação e funcionalidades
+    - Corrigir problema de duplo clique para acessar página de consentimentos
+    - Implementar exibição completa dos detalhes dos consentimentos
+    - Remover botão e página de "Relatório de Compliance" (desnecessário)
+    - Otimizar fluxo de navegação entre páginas de integração
+    - _Requisitos: 5.1 - Interface intuitiva_
+
+- [ ] 14. Preparar para produção e deploy
+  - [ ] 14.1 Configurar pipeline de CI/CD
     - Configurar GitHub Actions para build, test e deploy
     - Implementar deploy automatizado na Vercel com preview deployments
     - Criar ambientes de staging e produção com variáveis específicas
     - Configurar deploy automático apenas após aprovação de testes
     - Implementar semantic versioning e changelog automático
     - _Requisitos: Deploy seguro e confiável_
-  - [ ] 13.2 Configurar backup e disaster recovery
+  - [ ] 14.2 Configurar backup e disaster recovery
     - Configurar backup automático do MongoDB Atlas com retenção de 30 dias
     - Implementar estratégia de disaster recovery com RTO/RPO definidos
     - Criar procedimentos de rollback para aplicação e banco de dados
     - Configurar replicação de dados críticos
     - Criar documentação de procedimentos de emergência
     - _Requisitos: 6.1, 6.4_
-  - [ ] 13.3 Realizar testes de carga e performance
+  - [ ] 14.3 Realizar testes de carga e performance
     - Executar load testing para 10.000 usuários simultâneos com k6
     - Otimizar queries e índices do MongoDB baseado em profiling
     - Validar latência de respostas conversacionais (<2s)

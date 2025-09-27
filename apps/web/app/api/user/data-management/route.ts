@@ -58,8 +58,6 @@ async function exportUserData(db: any, userId: string) {
   const collections = [
     'users',
     'user_preferences',
-    'user_consents',
-    'user_consent_history',
     'notification_settings',
     'financial_profiles',
   ];
@@ -108,7 +106,7 @@ async function exportPortableData(db: any, userId: string) {
   const preferences = await db
     .collection('user_preferences')
     .findOne({ userId });
-  const consents = await db.collection('user_consents').findOne({ userId });
+
   const notifications = await db
     .collection('notification_settings')
     .findOne({ userId });
@@ -140,14 +138,7 @@ async function exportPortableData(db: any, userId: string) {
           emergency_fund: financialProfile.emergencyFund,
         }
       : null,
-    privacy_settings: consents
-      ? {
-          analytics_consent: consents.analytics,
-          marketing_consent: consents.marketing,
-          data_processing_consent: consents.dataProcessing,
-          last_updated: consents.updatedAt,
-        }
-      : null,
+    privacy_settings: preferences?.privacy || null,
     export_info: {
       lgpd_compliance: true,
       format: 'JSON estruturado para portabilidade',
@@ -175,8 +166,6 @@ async function deleteUserData(db: any, userId: string) {
       // Collections que devem ser completamente removidas
       const collectionsToDelete = [
         'user_preferences',
-        'user_consents',
-        'user_consent_history',
         'notification_settings',
         'financial_profiles',
       ];
@@ -240,18 +229,9 @@ export async function GET() {
     await client.connect();
     const db = client.db();
 
-    // Buscar histórico de consentimentos para compliance
-    const consentHistory = await db
-      .collection('user_consent_history')
-      .find({ userId: session.user.id })
-      .sort({ updatedAt: -1 })
-      .limit(10)
-      .toArray();
-
     // Verificar se existem dados para exportação
     const dataCollections = [
       'user_preferences',
-      'user_consents',
       'notification_settings',
       'financial_profiles',
     ];
@@ -268,7 +248,6 @@ export async function GET() {
 
     return NextResponse.json(
       {
-        consent_history: consentHistory,
         data_available: dataAvailable,
         lgpd_rights: {
           access: true,
