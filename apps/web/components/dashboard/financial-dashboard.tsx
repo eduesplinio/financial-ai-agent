@@ -84,7 +84,13 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
         let catMap: Record<string, { amount: number; color: string }> = {};
         (data.transactions || []).forEach((tx, idx) => {
           const cat = tx.category?.primary || tx.category;
-          if (cat && typeof cat === 'string') {
+          // Excluir receitas e investimentos dos gráficos de despesas
+          if (
+            cat &&
+            typeof cat === 'string' &&
+            cat !== 'Receita' &&
+            cat !== 'Investimento'
+          ) {
             if (!catMap[cat]) {
               catMap[cat] = {
                 amount: 0,

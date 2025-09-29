@@ -10,6 +10,62 @@ function generateMockTransaction(
   accountId: string,
   institutionId: string
 ) {
+  // BTG Pactual: só receitas e investimentos
+  if (institutionId === 'btg-pactual-001') {
+    const receitas = ['Salário', 'Renda-extra', 'Recebidos de PIX'];
+    const investimentos = [
+      'Tesouro Direto',
+      'Bitcoin',
+      'Ações',
+      'Fundos Imobiliários',
+      'ETFs',
+      'Ativos Internacionais',
+    ];
+    const isReceita = Math.random() < 0.5;
+    const category = isReceita
+      ? receitas[Math.floor(Math.random() * receitas.length)]
+      : investimentos[Math.floor(Math.random() * investimentos.length)];
+    const amount = isReceita
+      ? Math.round((Math.random() * 4999 + 100) * 100) / 100
+      : Math.round((Math.random() * 9999 + 500) * 100) / 100;
+    const daysAgo = Math.floor(Math.random() * 90);
+    const transactionDate = new Date();
+    transactionDate.setDate(transactionDate.getDate() - daysAgo);
+    return {
+      userId,
+      accountId,
+      institutionId,
+      amount,
+      currency: 'BRL',
+      date: transactionDate,
+      description: isReceita
+        ? `Receita: ${category}`
+        : `Investimento: ${category}`,
+      category: {
+        primary: isReceita ? 'Receita' : 'Investimento',
+        detail: category,
+        confidence: 1,
+      },
+      merchant: {
+        name: category,
+        category: isReceita ? 'Receita' : 'Investimento',
+      },
+      type: 'CREDIT',
+      status: 'COMPLETED',
+      metadata: {
+        source: 'open_finance',
+        processed: true,
+        tags: [
+          isReceita ? 'receita' : 'investimento',
+          category.toLowerCase().replace(/\s/g, '-'),
+        ],
+      },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+  }
+
+  // Bancos comuns: lógica antiga
   const categories = [
     {
       name: 'Alimentação',
