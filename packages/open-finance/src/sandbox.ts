@@ -48,22 +48,6 @@ export class OpenFinanceSandbox {
       scopes: ['openid', 'investments', 'consent'],
       certificateRequired: false,
     },
-    {
-      id: 'btg-pactual-001',
-      name: 'BTG Pactual',
-      type: 'BANK',
-      apiBaseUrl: 'https://api.sandbox.btgpactual.com.br',
-      authUrl: 'https://auth.sandbox.btgpactual.com.br',
-      clientId: 'sandbox-btg-id',
-      clientSecret: 'sandbox-btg-secret',
-      apiVersion: 'v1',
-      scopes: ['openid', 'accounts', 'investments', 'consent'],
-      certificateRequired: false,
-      // Este banco só registra receitas e investimentos, não despesas
-      // Categorias exemplo:
-      // Receitas: Renda-extra, Salário, Recebidos de PIX
-      // Investimentos: Tesouro direto, Bitcoin, Ações, Fundos, ETFs
-    },
   ];
 
   constructor(config: SandboxConfig = {}) {
@@ -157,112 +141,53 @@ export class OpenFinanceSandbox {
    */
   public generateMockTransactions(accountId: string, count: number = 20) {
     const transactions = [];
-    // Extrair institutionId do padrão do accountId: mock-<userId>-<institutionId>-<i>
-    const parts = accountId.split('-');
-    const institutionId = parts.length >= 4 ? parts[2] : '';
-    const isBTG =
-      institutionId === 'btg-pactual-001' || accountId.includes('btg-pactual');
-    console.log(
-      '[sandbox] Gerando transações para conta:',
-      accountId,
-      'InstitutionId:',
-      institutionId,
-      'É BTG?',
-      isBTG
-    );
+    const transactionTypes = ['PIX', 'TED', 'PAYMENT', 'DEBIT', 'CREDIT'];
+    const creditDebitTypes = ['CREDIT', 'DEBIT'];
+    const parties = [
+      'Mercado Livre',
+      'Netflix',
+      'Amazon',
+      'Uber',
+      'iFood',
+      'Salário',
+      'Transferência',
+    ];
+
+    // Data de hoje
     const today = new Date();
 
-    if (isBTG) {
-      console.log(
-        '[sandbox] Gerando apenas receitas e investimentos para BTG Pactual'
-      );
-      // Categorias de receitas e investimentos
-      const receitas = ['Salário', 'Renda-extra', 'Recebidos de PIX'];
-      const investimentos = [
-        'Tesouro Direto',
-        'Bitcoin',
-        'Ações',
-        'Fundos Imobiliários',
-        'ETFs',
-        'Ativos Internacionais',
-      ];
-      for (let i = 0; i < count; i++) {
-        const daysAgo = Math.floor(Math.random() * 60);
-        const transactionDate = new Date(today);
-        transactionDate.setDate(today.getDate() - daysAgo);
-        // Alterna entre receita e investimento
-        const isReceita = i % 2 === 0;
-        const category = isReceita
-          ? receitas[Math.floor(Math.random() * receitas.length)]
-          : investimentos[Math.floor(Math.random() * investimentos.length)];
-        const type = isReceita ? 'CREDIT' : 'INVESTMENT';
-        const creditDebitType = 'CREDIT';
-        const amount = Math.round((Math.random() * 4999 + 100) * 100) / 100;
-        console.log(
-          `[sandbox] BTG: ${isReceita ? 'Receita' : 'Investimento'} - Categoria: ${category}`
-        );
-        transactions.push({
-          transactionId: `tx-${accountId}-${i}`,
-          accountId,
-          type,
-          creditDebitType,
-          transactionAmount: amount,
-          currency: 'BRL',
-          transactionDate: transactionDate.toISOString(),
-          valueDate: transactionDate.toISOString(),
-          description: `${type} ${category}`,
-          status: 'COMPLETED',
-          merchant: {
-            name: category,
-            documentNumber: '12345678901234',
-            documentType: 'CNPJ',
-          },
-        });
-      }
-    } else {
-      console.log(
-        '[sandbox] Gerando transações padrão (inclui despesas) para banco não-BTG'
-      );
-      // ...existing code...
-      const transactionTypes = ['PIX', 'TED', 'PAYMENT', 'DEBIT', 'CREDIT'];
-      const creditDebitTypes = ['CREDIT', 'DEBIT'];
-      const parties = [
-        'Mercado Livre',
-        'Netflix',
-        'Amazon',
-        'Uber',
-        'iFood',
-        'Salário',
-        'Transferência',
-      ];
-      for (let i = 0; i < count; i++) {
-        const daysAgo = Math.floor(Math.random() * 60);
-        const transactionDate = new Date(today);
-        transactionDate.setDate(today.getDate() - daysAgo);
-        const type =
-          transactionTypes[Math.floor(Math.random() * transactionTypes.length)];
-        const creditDebitType =
-          creditDebitTypes[Math.floor(Math.random() * creditDebitTypes.length)];
-        const partyName = parties[Math.floor(Math.random() * parties.length)];
-        const amount = Math.round((Math.random() * 999 + 1) * 100) / 100;
-        transactions.push({
-          transactionId: `tx-${accountId}-${i}`,
-          accountId,
-          type,
-          creditDebitType,
-          transactionAmount: amount,
-          currency: 'BRL',
-          transactionDate: transactionDate.toISOString(),
-          valueDate: transactionDate.toISOString(),
-          description: `${type} ${partyName}`,
-          status: 'COMPLETED',
-          merchant: {
-            name: partyName,
-            documentNumber: '12345678901234',
-            documentType: 'CNPJ',
-          },
-        });
-      }
+    for (let i = 0; i < count; i++) {
+      // Transações nos últimos 60 dias
+      const daysAgo = Math.floor(Math.random() * 60);
+      const transactionDate = new Date(today);
+      transactionDate.setDate(today.getDate() - daysAgo);
+
+      const type =
+        transactionTypes[Math.floor(Math.random() * transactionTypes.length)];
+      const creditDebitType =
+        creditDebitTypes[Math.floor(Math.random() * creditDebitTypes.length)];
+      const partyName = parties[Math.floor(Math.random() * parties.length)];
+
+      // Valor entre 1 e 1000
+      const amount = Math.round((Math.random() * 999 + 1) * 100) / 100;
+
+      transactions.push({
+        transactionId: `tx-${accountId}-${i}`,
+        accountId,
+        type,
+        creditDebitType,
+        transactionAmount: amount,
+        currency: 'BRL',
+        transactionDate: transactionDate.toISOString(),
+        valueDate: transactionDate.toISOString(),
+        description: `${type} ${partyName}`,
+        status: 'COMPLETED',
+        merchant: {
+          name: partyName,
+          documentNumber: '12345678901234',
+          documentType: 'CNPJ',
+        },
+      });
     }
 
     // Ordenar por data, mais recente primeiro

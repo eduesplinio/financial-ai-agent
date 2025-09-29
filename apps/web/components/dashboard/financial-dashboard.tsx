@@ -49,6 +49,10 @@ interface FinancialDashboardProps {
 }
 
 export function FinancialDashboard({ userId }: FinancialDashboardProps) {
+  // ...existing code...
+
+  // Cálculo correto para receitas e investimentos (após transactions)
+
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
 
   // Dados reais das transações
@@ -59,6 +63,20 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
   const [categories, setCategories] = useState<string[]>([]);
   const [categoryExpenses, setCategoryExpenses] = useState<any[]>([]);
   const [monthlyTrend, setMonthlyTrend] = useState<any[]>([]);
+
+  const totalReceitas = transactions
+    .filter(tx => tx.category?.primary === 'Receita')
+    .reduce(
+      (sum, tx) => sum + (typeof tx.amount === 'number' ? tx.amount : 0),
+      0
+    );
+
+  const totalInvestimentos = transactions
+    .filter(tx => tx.category?.primary === 'Investimento')
+    .reduce(
+      (sum, tx) => sum + (typeof tx.amount === 'number' ? tx.amount : 0),
+      0
+    );
 
   useEffect(() => {
     setLoading(true);
@@ -262,11 +280,9 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
           <CardContent>
             <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
               R${' '}
-              {typeof stats?.totalCredits === 'number'
-                ? stats.totalCredits.toLocaleString('pt-BR', {
-                    minimumFractionDigits: 2,
-                  })
-                : '0,00'}
+              {totalReceitas.toLocaleString('pt-BR', {
+                minimumFractionDigits: 2,
+              })}
             </div>
             <p className="text-xs text-blue-700/70 dark:text-blue-300/70">
               {/* +2.1% em relação ao mês passado */}
@@ -304,11 +320,9 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
           <CardContent>
             <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
               R${' '}
-              {typeof stats?.avgAmount === 'number'
-                ? stats.avgAmount.toLocaleString('pt-BR', {
-                    minimumFractionDigits: 2,
-                  })
-                : '0,00'}
+              {totalInvestimentos.toLocaleString('pt-BR', {
+                minimumFractionDigits: 2,
+              })}
             </div>
             <p className="text-xs text-purple-700/70 dark:text-purple-300/70">
               {/* +8.7% em relação ao mês passado */}
