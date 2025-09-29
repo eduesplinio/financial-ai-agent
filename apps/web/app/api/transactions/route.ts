@@ -45,7 +45,14 @@ export async function GET(request: NextRequest) {
     }
 
     if (type) {
-      filter.type = type;
+      if (type === 'INVESTMENT') {
+        filter['category.primary'] = 'Investimento';
+      } else if (type === 'CREDIT') {
+        filter.type = 'CREDIT';
+        filter['category.primary'] = { $ne: 'Investimento' };
+      } else {
+        filter.type = type;
+      }
     }
 
     if (startDate || endDate) {

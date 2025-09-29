@@ -246,7 +246,7 @@ export function TransactionsContent() {
             </Select>
           </div>
           {/* Tipo */}
-          <div className="w-full sm:w-[120px]">
+          <div className="w-full sm:w-[180px]">
             <Select
               value={filters.type}
               onValueChange={value => {
@@ -260,6 +260,7 @@ export function TransactionsContent() {
               <SelectContent>
                 <SelectItem value="CREDIT">Receita</SelectItem>
                 <SelectItem value="DEBIT">Despesa</SelectItem>
+                <SelectItem value="INVESTMENT">Investimento</SelectItem>
               </SelectContent>
             </Select>
           </div>
