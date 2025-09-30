@@ -14,6 +14,8 @@
     "test:watch": "jest --watch --runInBand",
     "test:coverage": "jest --coverage --runInBand",
     "setup:vector-search": "tsx scripts/setup-vector-search.ts",
+    "setup:transaction-vector-search": "tsx scripts/setup-transaction-vector-search.ts",
+    "test:transaction-vector-search": "tsx scripts/test-transaction-vector-search.ts",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
