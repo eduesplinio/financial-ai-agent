@@ -336,6 +336,12 @@ export function TransactionsContent() {
               {transactions.slice(0, 15).map(tx => {
                 const acc = accounts.find(a => a.accountId === tx.accountId);
                 const isDebit = tx.amount < 0;
+                // Remove prefixos se existirem
+                let displayDesc = tx.description;
+                if (displayDesc.startsWith('Receita: '))
+                  displayDesc = displayDesc.replace('Receita: ', '');
+                if (displayDesc.startsWith('Investimento: '))
+                  displayDesc = displayDesc.replace('Investimento: ', '');
                 return (
                   <li
                     key={tx.id}
@@ -344,7 +350,7 @@ export function TransactionsContent() {
                     {/* Nome da transação e data */}
                     <div className="flex flex-col flex-1 min-w-0">
                       <span className="text-base font-medium text-foreground truncate">
-                        {tx.description}
+                        {displayDesc}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         {new Date(tx.date).toLocaleDateString()}

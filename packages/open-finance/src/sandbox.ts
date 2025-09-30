@@ -192,12 +192,27 @@ export class OpenFinanceSandbox {
         transactionDate.setDate(today.getDate() - daysAgo);
         // Alterna entre receita e investimento
         const isReceita = i % 2 === 0;
-        const category = isReceita
+        let category = isReceita
           ? receitas[Math.floor(Math.random() * receitas.length)]
           : investimentos[Math.floor(Math.random() * investimentos.length)];
         const type = isReceita ? 'CREDIT' : 'INVESTMENT';
         const creditDebitType = 'CREDIT';
         const amount = Math.round((Math.random() * 4999 + 100) * 100) / 100;
+        let description = category;
+        if (category === 'Recebidos de PIX') {
+          const nomesPix = [
+            'Fulano',
+            'Beltrano',
+            'Ciclano',
+            'Maria',
+            'João',
+            'Ana',
+            'Carlos',
+            'Fernanda',
+          ];
+          const nome = nomesPix[Math.floor(Math.random() * nomesPix.length)];
+          description = `Transferência PIX recebida de ${nome}`;
+        }
         console.log(
           `[sandbox] BTG: ${isReceita ? 'Receita' : 'Investimento'} - Categoria: ${category}`
         );
@@ -210,7 +225,7 @@ export class OpenFinanceSandbox {
           currency: 'BRL',
           transactionDate: transactionDate.toISOString(),
           valueDate: transactionDate.toISOString(),
-          description: `${type} ${category}`,
+          description,
           status: 'COMPLETED',
           merchant: {
             name: category,
