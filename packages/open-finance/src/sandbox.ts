@@ -49,14 +49,14 @@ export class OpenFinanceSandbox {
       certificateRequired: false,
     },
     {
-      id: 'btg-pactual',
+      id: 'btg-pactual-001',
       name: 'BTG Pactual',
       type: 'BANK',
       apiBaseUrl: 'https://api.sandbox.btgpactual.com.br',
       authUrl: 'https://auth.sandbox.btgpactual.com.br',
-      clientId: 'btg-sandbox-client-id',
-      clientSecret: 'btg-sandbox-client-secret',
-      apiVersion: 'v2',
+      clientId: 'sandbox-btg-id',
+      clientSecret: 'sandbox-btg-secret',
+      apiVersion: 'v1',
       scopes: ['openid', 'accounts', 'investments', 'consent'],
       certificateRequired: false,
       // Este banco só registra receitas e investimentos, não despesas
@@ -161,7 +161,7 @@ export class OpenFinanceSandbox {
     const parts = accountId.split('-');
     const institutionId = parts.length >= 4 ? parts[2] : '';
     const isBTG =
-      institutionId === 'btg-pactual' || accountId.includes('btg-pactual');
+      institutionId === 'btg-pactual-001' || accountId.includes('btg-pactual');
     console.log(
       '[sandbox] Gerando transações para conta:',
       accountId,
