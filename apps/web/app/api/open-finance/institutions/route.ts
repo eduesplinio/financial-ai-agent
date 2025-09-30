@@ -86,15 +86,6 @@ const AVAILABLE_INSTITUTIONS = [
     supportedServices: ['accounts', 'transactions', 'credit-cards'],
     description: 'Banco C6 S.A.',
   },
-  {
-    id: 'btg-pactual-001',
-    name: 'BTG Pactual',
-    type: 'BANK',
-    logoUrl: '/logos/btg.svg', // Adapte o caminho do logo se necessário
-    status: 'active',
-    supportedServices: ['accounts', 'investments', 'transactions'], // Apenas receitas e investimentos
-    description: 'Banco BTG Pactual. Apenas receitas e investimentos.',
-  },
 ];
 
 /**

@@ -48,22 +48,6 @@ export class OpenFinanceSandbox {
       scopes: ['openid', 'investments', 'consent'],
       certificateRequired: false,
     },
-    {
-      id: 'btg-pactual-001',
-      name: 'BTG Pactual',
-      type: 'BANK',
-      apiBaseUrl: 'https://api.sandbox.btgpactual.com.br',
-      authUrl: 'https://auth.sandbox.btgpactual.com.br',
-      clientId: 'sandbox-btg-id',
-      clientSecret: 'sandbox-btg-secret',
-      apiVersion: 'v1',
-      scopes: ['openid', 'accounts', 'investments', 'consent'],
-      certificateRequired: false,
-      // Este banco só registra receitas e investimentos, não despesas
-      // Categorias exemplo:
-      // Receitas: Renda-extra, Salário, Recebidos de PIX
-      // Investimentos: Tesouro direto, Bitcoin, Ações, Fundos, ETFs
-    },
   ];
 
   constructor(config: SandboxConfig = {}) {
@@ -157,26 +141,25 @@ export class OpenFinanceSandbox {
    */
   public generateMockTransactions(accountId: string, count: number = 20) {
     const transactions = [];
-    // Extrair institutionId do padrão do accountId: mock-<userId>-<institutionId>-<i>
+    const transactionTypes = ['PIX', 'TED', 'PAYMENT', 'DEBIT', 'CREDIT'];
+    const creditDebitTypes = ['CREDIT', 'DEBIT'];
+    const parties = [
+      'Mercado Livre',
+      'Netflix',
+      'Amazon',
+      'Uber',
+      'iFood',
+      'Salário',
+      'Transferência',
+    ];
+    const today = new Date();
+    // Detecta se é conta do BTG
     const parts = accountId.split('-');
     const institutionId = parts.length >= 4 ? parts[2] : '';
     const isBTG =
       institutionId === 'btg-pactual-001' || accountId.includes('btg-pactual');
-    console.log(
-      '[sandbox] Gerando transações para conta:',
-      accountId,
-      'InstitutionId:',
-      institutionId,
-      'É BTG?',
-      isBTG
-    );
-    const today = new Date();
-
     if (isBTG) {
-      console.log(
-        '[sandbox] Gerando apenas receitas e investimentos para BTG Pactual'
-      );
-      // Categorias de receitas e investimentos
+      // BTG: só receitas e investimentos, descrição realista para PIX
       const receitas = ['Salário', 'Renda-extra', 'Recebidos de PIX'];
       const investimentos = [
         'Tesouro Direto',
@@ -190,7 +173,6 @@ export class OpenFinanceSandbox {
         const daysAgo = Math.floor(Math.random() * 60);
         const transactionDate = new Date(today);
         transactionDate.setDate(today.getDate() - daysAgo);
-        // Alterna entre receita e investimento
         const isReceita = i % 2 === 0;
         let category = isReceita
           ? receitas[Math.floor(Math.random() * receitas.length)]
@@ -213,9 +195,6 @@ export class OpenFinanceSandbox {
           const nome = nomesPix[Math.floor(Math.random() * nomesPix.length)];
           description = `Transferência PIX recebida de ${nome}`;
         }
-        console.log(
-          `[sandbox] BTG: ${isReceita ? 'Receita' : 'Investimento'} - Categoria: ${category}`
-        );
         transactions.push({
           transactionId: `tx-${accountId}-${i}`,
           accountId,
@@ -235,21 +214,7 @@ export class OpenFinanceSandbox {
         });
       }
     } else {
-      console.log(
-        '[sandbox] Gerando transações padrão (inclui despesas) para banco não-BTG'
-      );
-      // ...existing code...
-      const transactionTypes = ['PIX', 'TED', 'PAYMENT', 'DEBIT', 'CREDIT'];
-      const creditDebitTypes = ['CREDIT', 'DEBIT'];
-      const parties = [
-        'Mercado Livre',
-        'Netflix',
-        'Amazon',
-        'Uber',
-        'iFood',
-        'Salário',
-        'Transferência',
-      ];
+      // Bancos normais: lógica padrão
       for (let i = 0; i < count; i++) {
         const daysAgo = Math.floor(Math.random() * 60);
         const transactionDate = new Date(today);
