@@ -16,6 +16,7 @@
     "setup:vector-search": "tsx scripts/setup-vector-search.ts",
     "setup:transaction-vector-search": "tsx scripts/setup-transaction-vector-search.ts",
     "test:transaction-vector-search": "tsx scripts/test-transaction-vector-search.ts",
+    "test:vector-search-queries": "tsx scripts/test-vector-search-queries.ts",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
