@@ -4,3 +4,4 @@ export * from './models';
 export * from './init';
 export * from './vector-search';
 export * from './document-index';
+export * from './transaction-vector-search';

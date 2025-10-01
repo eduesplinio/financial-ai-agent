@@ -18,6 +18,7 @@
     "test:transaction-vector-search": "tsx scripts/test-transaction-vector-search.ts",
     "test:vector-search-queries": "tsx scripts/test-vector-search-queries.ts",
     "generate:transaction-embeddings": "tsx scripts/generate-transaction-embeddings.ts",
+    "test:transaction-search-service": "tsx scripts/test-transaction-search-service.ts",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
