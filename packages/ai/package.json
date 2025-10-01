@@ -10,7 +10,8 @@
     "lint": "eslint src --ext .ts,.tsx",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist",
-    "test": "jest --config jest.config.js"
+    "test": "jest --config jest.config.js",
+    "test:rag-integration": "tsx scripts/test-rag-transaction-integration.ts"
   },
   "dependencies": {
     "@financial-ai/database": "workspace:*",
