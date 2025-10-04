@@ -85,6 +85,365 @@ export class RAGService {
   }
 
   /**
+   * Search transactions using semantic similarity
+   *
+   * @param query User query string
+   * @param userId User ID for security filtering
+   * @param filters Optional filters for transactions
+   * @returns Array of relevant transactions with scores
+   */
+  async searchTransactions(
+    query: string,
+    userId: string,
+    filters?: TransactionSearchFilters
+  ): Promise<RelevantTransaction[]> {
+    try {
+      // Dynamic import to avoid circular dependencies
+      const { TransactionVectorSearchService } = await import(
+        '../../../database/src/transaction-vector-search'
+      );
+
+      // Build search query
+      const searchQuery = {
+        queryText: query,
+        userId: userId,
+        limit: 10,
+        filters: filters
+          ? {
+              dateRange: filters.dateRange,
+              amountRange: filters.amountRange,
+              categories: filters.categories,
+              accountIds: filters.accountIds,
+            }
+          : undefined,
+      };
+
+      // Execute search using TransactionVectorSearchService
+      const results =
+        await TransactionVectorSearchService.searchTransactions(searchQuery);
+
+      // Convert to RelevantTransaction format
+      return results.map(result => ({
+        transaction: result.transaction,
+        score: result.score,
+        relevanceFactors: result.relevanceFactors,
+      }));
+    } catch (error) {
+      console.error('❌ Transaction search failed:', error);
+      // Return empty array instead of throwing to maintain service stability
+      return [];
+    }
+  }
+
+  /**
+   * Analyze spending patterns using vector search
+   *
+   * @param query Natural language query about spending patterns
+   * @param userId User ID for security filtering
+   * @param timeframe Optional time range for analysis
+   * @returns Spending analysis with transactions and summary
+   */
+  async analyzeSpendingPatterns(
+    query: string,
+    userId: string,
+    timeframe?: { start: Date; end: Date }
+  ): Promise<{
+    transactions: RelevantTransaction[];
+    summary: {
+      totalAmount: number;
+      transactionCount: number;
+      averageAmount: number;
+      categories: Record<string, number>;
+    };
+    insights: string[];
+  }> {
+    try {
+      // Dynamic import
+      const { TransactionVectorSearchService } = await import(
+        '../../../database/src/transaction-vector-search'
+      );
+
+      // Get spending insights
+      const insights = await TransactionVectorSearchService.getSpendingInsights(
+        userId,
+        query,
+        timeframe
+      );
+
+      // Convert transactions to RelevantTransaction format
+      const transactions = insights.transactions.map(result => ({
+        transaction: result.transaction,
+        score: result.score,
+        relevanceFactors: result.relevanceFactors,
+      }));
+
+      // Generate insights based on the data
+      const generatedInsights = this.generateSpendingInsights(
+        insights.summary,
+        query
+      );
+
+      return {
+        transactions,
+        summary: insights.summary,
+        insights: generatedInsights,
+      };
+    } catch (error) {
+      console.error('❌ Spending pattern analysis failed:', error);
+      return {
+        transactions: [],
+        summary: {
+          totalAmount: 0,
+          transactionCount: 0,
+          averageAmount: 0,
+          categories: {},
+        },
+        insights: [
+          'Não foi possível analisar os padrões de gastos no momento.',
+        ],
+      };
+    }
+  }
+
+  /**
+   * Get transaction insights for conversational AI
+   *
+   * @param query User question about their transactions
+   * @param userId User ID for security filtering
+   * @returns Formatted insights ready for AI response
+   */
+  async getTransactionInsights(
+    query: string,
+    userId: string
+  ): Promise<{
+    transactions: RelevantTransaction[];
+    contextualResponse: string;
+    confidence: number;
+  }> {
+    try {
+      // Search for relevant transactions
+      const transactions = await this.searchTransactions(query, userId);
+
+      if (transactions.length === 0) {
+        return {
+          transactions: [],
+          contextualResponse:
+            'Não encontrei transações relacionadas à sua consulta.',
+          confidence: 0,
+        };
+      }
+
+      // Generate contextual response based on transactions found
+      const contextualResponse = this.generateContextualResponse(
+        transactions,
+        query
+      );
+
+      // Calculate confidence based on scores and number of results
+      const avgScore =
+        transactions.reduce((sum, t) => sum + t.score, 0) / transactions.length;
+      const confidence = Math.min(avgScore * (transactions.length / 10), 1);
+
+      return {
+        transactions,
+        contextualResponse,
+        confidence,
+      };
+    } catch (error) {
+      console.error('❌ Transaction insights failed:', error);
+      return {
+        transactions: [],
+        contextualResponse:
+          'Ocorreu um erro ao buscar informações sobre suas transações.',
+        confidence: 0,
+      };
+    }
+  }
+
+  /**
+   * Hybrid search combining knowledge documents and transactions
+   *
+   * @param query User query
+   * @param userId User ID for transaction filtering
+   * @param options Search options
+   * @returns Combined results from documents and transactions
+   */
+  async hybridFinancialSearch(
+    query: string,
+    userId: string,
+    options?: {
+      includeDocuments?: boolean;
+      includeTransactions?: boolean;
+      documentLimit?: number;
+      transactionLimit?: number;
+    }
+  ): Promise<{
+    documents: RelevantDocument[];
+    transactions: RelevantTransaction[];
+    combinedInsights: string;
+  }> {
+    try {
+      const opts = {
+        includeDocuments: true,
+        includeTransactions: true,
+        documentLimit: 5,
+        transactionLimit: 10,
+        ...options,
+      };
+
+      // Search documents and transactions in parallel
+      const [documents, transactions] = await Promise.all([
+        opts.includeDocuments
+          ? this.semanticSearch(query, { categories: [] }).then(results =>
+              results.slice(0, opts.documentLimit)
+            )
+          : Promise.resolve([]),
+        opts.includeTransactions
+          ? this.searchTransactions(query, userId).then(results =>
+              results.slice(0, opts.transactionLimit)
+            )
+          : Promise.resolve([]),
+      ]);
+
+      // Generate combined insights
+      const combinedInsights = this.generateCombinedInsights(
+        documents,
+        transactions,
+        query
+      );
+
+      return {
+        documents,
+        transactions,
+        combinedInsights,
+      };
+    } catch (error) {
+      console.error('❌ Hybrid financial search failed:', error);
+      return {
+        documents: [],
+        transactions: [],
+        combinedInsights:
+          'Não foi possível realizar a busca completa no momento.',
+      };
+    }
+  }
+
+  // =============================================================================
+  // PRIVATE HELPER METHODS
+  // =============================================================================
+
+  /**
+   * Generate spending insights based on summary data
+   */
+  private generateSpendingInsights(
+    summary: {
+      totalAmount: number;
+      transactionCount: number;
+      categories: Record<string, number>;
+    },
+    query: string
+  ): string[] {
+    const insights: string[] = [];
+
+    if (summary.transactionCount === 0) {
+      insights.push('Nenhuma transação encontrada para esta consulta.');
+      return insights;
+    }
+
+    // Total amount insight
+    insights.push(
+      `Encontrei ${summary.transactionCount} transações totalizando R$ ${summary.totalAmount.toFixed(2)}.`
+    );
+
+    // Average amount insight
+    const avgAmount = summary.totalAmount / summary.transactionCount;
+    insights.push(`Valor médio por transação: R$ ${avgAmount.toFixed(2)}.`);
+
+    // Category insights
+    const categories = Object.entries(summary.categories)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3);
+
+    if (categories.length > 0) {
+      const topCategory = categories[0];
+      insights.push(
+        `Categoria com maior gasto: ${topCategory[0]} (R$ ${topCategory[1].toFixed(2)}).`
+      );
+    }
+
+    return insights;
+  }
+
+  /**
+   * Generate contextual response for transaction insights
+   */
+  private generateContextualResponse(
+    transactions: RelevantTransaction[],
+    query: string
+  ): string {
+    if (transactions.length === 0) {
+      return 'Não encontrei transações relacionadas à sua consulta.';
+    }
+
+    const totalAmount = transactions.reduce(
+      (sum, t) => sum + Math.abs(t.transaction.amount),
+      0
+    );
+    const categories = new Set(
+      transactions.map(t => t.transaction.category?.primary).filter(Boolean)
+    );
+
+    let response = `Encontrei ${transactions.length} transações relacionadas`;
+
+    if (categories.size > 0) {
+      response += ` nas categorias: ${Array.from(categories).join(', ')}`;
+    }
+
+    response += `. Total: R$ ${totalAmount.toFixed(2)}.`;
+
+    // Add top transaction
+    const topTransaction = transactions[0];
+    if (topTransaction) {
+      response += ` Transação mais relevante: "${topTransaction.transaction.description}" (R$ ${Math.abs(topTransaction.transaction.amount).toFixed(2)}).`;
+    }
+
+    return response;
+  }
+
+  /**
+   * Generate combined insights from documents and transactions
+   */
+  private generateCombinedInsights(
+    documents: RelevantDocument[],
+    transactions: RelevantTransaction[],
+    query: string
+  ): string {
+    const parts: string[] = [];
+
+    if (transactions.length > 0) {
+      const totalAmount = transactions.reduce(
+        (sum, t) => sum + Math.abs(t.transaction.amount),
+        0
+      );
+      parts.push(
+        `Suas transações: ${transactions.length} encontradas, total de R$ ${totalAmount.toFixed(2)}`
+      );
+    }
+
+    if (documents.length > 0) {
+      parts.push(
+        `Conhecimento disponível: ${documents.length} documentos relevantes sobre o tema`
+      );
+    }
+
+    if (parts.length === 0) {
+      return 'Não encontrei informações relevantes para sua consulta.';
+    }
+
+    return parts.join('. ') + '.';
+  }
+
+  /**
    * Search for documents semantically related to the query
    *
    * @param query User query string

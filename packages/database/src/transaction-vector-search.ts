@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import { z } from 'zod';
-import { Transaction, ITransaction } from './models';
+import { Transaction, ITransaction } from './models/transaction';
 // Import will be resolved at runtime
 // import { OpenAIEmbeddingProvider } from '../../ai/src/rag/embedding-generator';
 
@@ -86,6 +86,11 @@ export class TransactionVectorSearchService {
     query: TransactionVectorQuery
   ): Promise<TransactionSearchResult[]> {
     try {
+      // Ensure MongoDB connection
+      if (mongoose.connection.readyState !== 1) {
+        await mongoose.connect(process.env.MONGODB_URI!);
+      }
+
       // Validate input
       const validatedQuery = TransactionVectorQuerySchema.parse(query);
 
@@ -99,14 +104,13 @@ export class TransactionVectorSearchService {
       const pipeline: any[] = [
         {
           $vectorSearch: {
-            index: 'transaction_vector_index',
+            index: 'transaction_vector_search',
             path: 'embedding',
             queryVector: queryVector,
             numCandidates: validatedQuery.limit * 4,
             limit: validatedQuery.limit * 2,
             filter: {
-              userId: new mongoose.Types.ObjectId(validatedQuery.userId),
-              embedding: { $exists: true, $ne: null },
+              userId: validatedQuery.userId,
             },
           },
         },
@@ -216,7 +220,7 @@ export class TransactionVectorSearchService {
       // Get the source transaction
       const sourceTransaction = await Transaction.findOne({
         _id: transactionId,
-        userId: new mongoose.Types.ObjectId(userId),
+        userId: userId,
       });
 
       if (!sourceTransaction || !(sourceTransaction as any).embedding) {
@@ -227,14 +231,13 @@ export class TransactionVectorSearchService {
       const pipeline = [
         {
           $vectorSearch: {
-            index: 'transaction_vector_index',
+            index: 'transaction_vector_search',
             path: 'embedding',
             queryVector: (sourceTransaction as any).embedding,
             numCandidates: limit * 4,
             limit: limit + 1,
             filter: {
-              userId: new mongoose.Types.ObjectId(userId),
-              embedding: { $exists: true, $ne: null },
+              userId: userId,
             },
           },
         },

@@ -11,7 +11,8 @@
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist",
     "test": "jest --config jest.config.js",
-    "test:rag-integration": "tsx scripts/test-rag-transaction-integration.ts"
+    "test:rag-integration": "tsx scripts/test-rag-transaction-integration.ts",
+    "test:rag-transaction-integration": "tsx scripts/test-rag-transaction-integration.ts"
   },
   "dependencies": {
     "@financial-ai/database": "workspace:*",

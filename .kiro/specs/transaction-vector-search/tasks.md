@@ -9,19 +9,19 @@
 
 ## 🔥 Phase 2: Core Implementation (3 Essential Tasks)
 
-- [-] 2.1 Generate embeddings for existing transactions
+- [x] 2.1 Generate embeddings for existing transactions
   - Create script to generate OpenAI embeddings for all transactions
   - Process transactions in batches to optimize API usage
   - Update MongoDB with real embeddings
   - _Requirements: 2.1, 2.3_
 
-- [ ] 2.2 Create TransactionVectorSearchService
+- [x] 2.2 Create TransactionVectorSearchService
   - Implement basic semantic search for transactions
   - Add user filtering (security) and basic filters (date, category, amount)
   - Follow existing VectorSearchService patterns
   - _Requirements: 1.1, 1.2, 5.1_
 
-- [ ] 2.3 Integrate with RAGService
+- [x] 2.3 Integrate with RAGService
   - Add searchTransactions() method to existing RAGService
   - Enable AI to search user's transaction history semantically
   - Support queries like "show me restaurant expenses" or "investment transactions"
