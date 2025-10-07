@@ -72,7 +72,7 @@ export class TransactionVectorSearchService {
       }
       // Dynamic import to avoid build issues
       const { OpenAIEmbeddingProvider } = await import(
-        '../../ai/src/rag/embedding-generator'
+        '@financial-ai/ai/src/rag/embedding-generator'
       );
       this.embeddingProvider = new OpenAIEmbeddingProvider(apiKey);
     }
@@ -189,16 +189,17 @@ export class TransactionVectorSearchService {
         score: result.score || 0,
         relevanceFactors: {
           semantic: result.score || 0,
-          category: validatedQuery.filters?.categories?.includes(
-            result.category?.primary
-          ),
+          category:
+            validatedQuery.filters?.categories?.includes(
+              result.category?.primary
+            ) ?? false,
           amount: this.isAmountInRange(
             result.amount,
-            validatedQuery.filters?.amountRange || undefined
+            validatedQuery.filters?.amountRange
           ),
           date: this.isDateInRange(
             result.date,
-            validatedQuery.filters?.dateRange || undefined
+            validatedQuery.filters?.dateRange
           ),
         },
       }));
@@ -221,7 +222,7 @@ export class TransactionVectorSearchService {
       const sourceTransaction = await Transaction.findOne({
         _id: transactionId,
         userId: userId,
-      });
+      }).exec();
 
       if (!sourceTransaction || !(sourceTransaction as any).embedding) {
         throw new Error('Transaction not found or has no embedding');

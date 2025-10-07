@@ -103,9 +103,9 @@ TransactionSchema.index({ userId: 1, amount: 1 });
 TransactionSchema.index({ embedding: 1 }, { sparse: true });
 
 // Create and export the model
-export const Transaction = mongoose.model<ITransaction>(
-  'Transaction',
-  TransactionSchema
-);
+// Use mongoose.models to avoid "Cannot overwrite model" error in Next.js
+export const Transaction =
+  mongoose.models.Transaction ||
+  mongoose.model<ITransaction>('Transaction', TransactionSchema);
 
 export default Transaction;

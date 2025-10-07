@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Bitcoin - A Primeira Criptomoeda",
+    "content": "Bitcoin é a primeira criptomoeda descentralizada do mundo, criada em 2009 por Satoshi Nakamoto. Funciona através da tecnologia blockchain, um livro-razão público distribuído que registra todas as transações de forma transparente e imutável. O Bitcoin permite transações peer-to-peer sem intermediários como bancos, sendo uma alternativa ao sistema financeiro tradicional. A oferta total é limitada a 21 milhões de moedas, tornando-o deflacionário. Novos bitcoins são criados através da mineração, onde computadores resolvem problemas matemáticos complexos. Como investimento, é considerado de alto risco devido à volatilidade extrema, mas muitos o veem como reserva de valor digital e proteção contra inflação. Cada bitcoin pode ser dividido em 100 milhões de satoshis, permitindo microtransações.",
+    "source": "https://bitcoin.org/",
+    "category": "cryptocurrency"
+  },
+  {
+    "title": "Ethereum e Smart Contracts",
+    "content": "Ethereum é uma plataforma blockchain criada em 2015 por Vitalik Buterin que permite a execução de contratos inteligentes (smart contracts). Diferente do Bitcoin que é principalmente uma moeda digital, Ethereum é uma plataforma programável que permite criar aplicações descentralizadas (DApps). Os smart contracts são programas que executam automaticamente quando condições predefinidas são atendidas, eliminando intermediários. A criptomoeda nativa é o Ether (ETH), usado para pagar taxas de transação (gas fees). Ethereum passou por uma grande atualização chamada The Merge em 2022, mudando de Proof of Work para Proof of Stake, reduzindo consumo de energia em 99%. É a segunda maior criptomoeda por capitalização de mercado e base para DeFi, NFTs e Web3.",
+    "source": "https://ethereum.org/",
+    "category": "cryptocurrency"
+  }
+]

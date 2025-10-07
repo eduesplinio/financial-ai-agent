@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/chat/stream
- * Endpoint para streaming de chat (implementação futura)
+ * Endpoint para streaming de chat com RAG completo
  */
 export async function GET(request: NextRequest) {
   try {
@@ -27,44 +27,43 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Criar stream de resposta simulada
     const encoder = new TextEncoder();
 
     const stream = new ReadableStream({
-      start(controller) {
-        const responses = [
-          'Olá! ',
-          'Recebi sua mensagem: "' + message + '". ',
-          'O sistema de chat com IA está sendo implementado. ',
-          'Em breve você poderá fazer perguntas sobre suas finanças ',
-          'e receber análises personalizadas baseadas em suas transações!',
-        ];
+      async start(controller) {
+        try {
+          // Use the simplified RAG service
+          const { ChatRAGService } = await import('@/lib/chat-rag-service');
+          const chatRAGService = new ChatRAGService();
 
-        let index = 0;
-        const interval = setInterval(() => {
-          if (index < responses.length) {
+          // Stream response using RAG
+          for await (const chunk of chatRAGService.streamResponse(
+            session.user.id,
+            message
+          )) {
             controller.enqueue(
-              encoder.encode(
-                `data: ${JSON.stringify({
-                  content: responses[index],
-                  done: false,
-                })}\n\n`
-              )
+              encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`)
             );
-            index++;
-          } else {
-            controller.enqueue(
-              encoder.encode(
-                `data: ${JSON.stringify({
-                  content: '',
-                  done: true,
-                })}\n\n`
-              )
-            );
-            clearInterval(interval);
-            controller.close();
           }
-        }, 500);
+
+          controller.close();
+        } catch (error) {
+          console.error('Error in chat stream:', error);
+
+          // Send error message
+          controller.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({
+                type: 'complete',
+                content:
+                  'Desculpe, ocorreu um erro ao processar sua pergunta. Tente novamente em alguns instantes.',
+                sources: [],
+              })}\n\n`
+            )
+          );
+
+          controller.close();
+        }
       },
     });
 

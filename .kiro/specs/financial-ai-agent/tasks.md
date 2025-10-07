@@ -58,7 +58,7 @@
     - Criar sistema de webhooks para atualizações em tempo real
     - Implementar tratamento de erros e retry para falhas de sincronização
     - _Requisitos: 1.1, 2.1_
-  - [ ] 4.3 Implementar gerenciamento de consentimentos LGPD
+  - [~] 4.3 Implementar gerenciamento de consentimentos LGPD (SKIP)
     - Criar interface de consentimento explícito do usuário
     - Implementar armazenamento e rastreamento de consentimentos
     - Criar funcionalidade de revogação de consentimentos

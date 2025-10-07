@@ -24,3 +24,10 @@ export * from './utils';
 
 // NLP pipeline
 export * from './nlp/pipeline';
+
+// Chat and conversational AI
+export { ChatService } from './chat/chat-service';
+export {
+  IntentClassifier,
+  FinancialIntent as ChatFinancialIntent,
+} from './chat/intent-classifier';

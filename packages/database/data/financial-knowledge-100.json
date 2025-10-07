@@ -1,0 +1,20 @@
+[
+  {
+    "title": "Tesouro Direto - Guia Completo",
+    "content": "O Tesouro Direto é um programa do Tesouro Nacional para venda de títulos públicos federais a pessoas físicas pela internet. Os títulos são considerados os investimentos mais seguros do mercado brasileiro, pois são garantidos pelo Tesouro Nacional. Existem três tipos principais: Tesouro Selic (pós-fixado), Tesouro Prefixado e Tesouro IPCA+ (híbrido). O investimento mínimo é de aproximadamente R$ 30 e a liquidez é diária.",
+    "source": "https://www.tesourodireto.com.br/",
+    "category": "investment"
+  },
+  {
+    "title": "CDB - Certificado de Depósito Bancário",
+    "content": "CDB é um título de renda fixa emitido por bancos para captar recursos. O investidor empresta dinheiro ao banco e recebe juros em troca. Pode ser prefixado, pós-fixado (geralmente atrelado ao CDI) ou híbrido (IPCA+). É protegido pelo FGC até R$ 250 mil por CPF e instituição. A rentabilidade varia conforme o banco e prazo.",
+    "source": "https://www.bcb.gov.br/",
+    "category": "investment"
+  },
+  {
+    "title": "LCI e LCA - Letras de Crédito",
+    "content": "LCI (Letra de Crédito Imobiliário) e LCA (Letra de Crédito do Agronegócio) são títulos de renda fixa isentos de Imposto de Renda para pessoa física. São lastreados em créditos imobiliários e do agronegócio, respectivamente. Protegidos pelo FGC até R$ 250 mil. Geralmente têm prazo de carência e rentabilidade atrelada ao CDI.",
+    "source": "https://www.bcb.gov.br/",
+    "category": "investment"
+  }
+]
