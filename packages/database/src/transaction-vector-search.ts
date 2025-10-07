@@ -70,10 +70,10 @@ export class TransactionVectorSearchService {
       if (!apiKey) {
         throw new Error('OPENAI_API_KEY environment variable is required');
       }
-      // Dynamic import to avoid build issues
-      const { OpenAIEmbeddingProvider } = await import(
-        '@financial-ai/ai/src/rag/embedding-generator'
-      );
+      // Use dynamic require to avoid TypeScript path issues
+      const {
+        OpenAIEmbeddingProvider,
+      } = require('@financial-ai/ai/dist/rag/embedding-generator');
       this.embeddingProvider = new OpenAIEmbeddingProvider(apiKey);
     }
     return this.embeddingProvider;
@@ -128,11 +128,12 @@ export class TransactionVectorSearchService {
         // Date range filter
         if (validatedQuery.filters.dateRange) {
           const dateFilter: any = {};
-          if (validatedQuery.filters.dateRange.start) {
-            dateFilter.$gte = validatedQuery.filters.dateRange.start;
+          const { start, end } = validatedQuery.filters.dateRange;
+          if (start) {
+            dateFilter.$gte = start;
           }
-          if (validatedQuery.filters.dateRange.end) {
-            dateFilter.$lte = validatedQuery.filters.dateRange.end;
+          if (end) {
+            dateFilter.$lte = end;
           }
           if (Object.keys(dateFilter).length > 0) {
             matchFilters.date = dateFilter;
@@ -142,11 +143,12 @@ export class TransactionVectorSearchService {
         // Amount range filter
         if (validatedQuery.filters.amountRange) {
           const amountFilter: any = {};
-          if (validatedQuery.filters.amountRange.min !== undefined) {
-            amountFilter.$gte = validatedQuery.filters.amountRange.min;
+          const { min, max } = validatedQuery.filters.amountRange;
+          if (min !== undefined) {
+            amountFilter.$gte = min;
           }
-          if (validatedQuery.filters.amountRange.max !== undefined) {
-            amountFilter.$lte = validatedQuery.filters.amountRange.max;
+          if (max !== undefined) {
+            amountFilter.$lte = max;
           }
           if (Object.keys(amountFilter).length > 0) {
             matchFilters.amount = amountFilter;
@@ -218,11 +220,18 @@ export class TransactionVectorSearchService {
     limit: number = 5
   ): Promise<TransactionSearchResult[]> {
     try {
-      // Get the source transaction
-      const sourceTransaction = await Transaction.findOne({
-        _id: transactionId,
-        userId: userId,
-      }).exec();
+      // Get the source transaction using aggregation to avoid type issues
+      const sourceResults = await Transaction.aggregate([
+        {
+          $match: {
+            _id: new mongoose.Types.ObjectId(transactionId),
+            userId: userId,
+          },
+        },
+        { $limit: 1 },
+      ]);
+
+      const sourceTransaction = sourceResults[0];
 
       if (!sourceTransaction || !(sourceTransaction as any).embedding) {
         throw new Error('Transaction not found or has no embedding');
@@ -339,7 +348,7 @@ export class TransactionVectorSearchService {
 
   private static isAmountInRange(
     amount: number,
-    range?: { min?: number; max?: number }
+    range?: { min?: number | undefined; max?: number | undefined }
   ): boolean {
     if (!range) return false;
 
@@ -353,7 +362,7 @@ export class TransactionVectorSearchService {
 
   private static isDateInRange(
     date: Date,
-    range?: { start?: Date; end?: Date }
+    range?: { start?: Date | undefined; end?: Date | undefined }
   ): boolean {
     if (!range) return false;
 

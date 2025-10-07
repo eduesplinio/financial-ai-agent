@@ -149,7 +149,6 @@ export class ChatService {
         {
           documentLimit,
           transactionLimit,
-          filters: searchFilters,
         }
       );
 
