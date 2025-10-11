@@ -72,13 +72,59 @@ export class ChatRAGService {
         );
       }
 
-      // Check if we have any data
+      // Check if we have any data - if not, use general knowledge
       if (results.documents.length === 0 && results.transactions.length === 0) {
+        console.log('⚠️ No data found, using general financial knowledge');
+
+        // Stream response from OpenAI without RAG context
+        const completion = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: `Você é um assistente financeiro pessoal especializado em educação financeira.
+
+INSTRUÇÕES:
+1. Responda perguntas sobre finanças pessoais, investimentos e planejamento financeiro
+2. Seja direto e objetivo nas respostas
+3. Use seu conhecimento geral sobre finanças
+4. Para perguntas não relacionadas a finanças, responda: "Sou especializado em finanças. Posso ajudar com transações, investimentos e planejamento financeiro."
+5. Se o usuário perguntar sobre suas transações, informe que não há transações cadastradas ainda
+
+Responda de forma clara e concisa em português brasileiro.`,
+            },
+            {
+              role: 'user',
+              content: message,
+            },
+          ],
+          stream: true,
+          temperature: 0.7,
+          max_tokens: 1200,
+        });
+
+        let fullResponse = '';
+
+        for await (const chunk of completion) {
+          const content = chunk.choices[0]?.delta?.content || '';
+          if (content) {
+            fullResponse += content;
+            yield {
+              type: 'chunk',
+              content: content,
+            };
+          }
+        }
+
         yield {
           type: 'complete',
-          content:
-            'Não encontrei informações relevantes sobre sua pergunta na base de dados. Tente reformular ou fazer uma pergunta diferente.',
-          sources: [],
+          content: fullResponse,
+          sources: [
+            {
+              title: 'Conhecimento Geral (OpenAI)',
+              url: '#',
+            },
+          ],
         };
         return;
       }
