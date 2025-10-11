@@ -49,13 +49,26 @@ export class ChatRAGService {
       // Create RAG service instance
       const ragService = new RAGService();
 
+      // Detect if question is about concepts (what is, how does, explain) vs personal data (how much, my balance)
+      const isConceptQuestion =
+        /^(o que é|o que são|como funciona|explique|qual a diferença|quais são os tipos)/i.test(
+          message
+        );
+      const isPersonalDataQuestion =
+        /^(quanto|qual meu|meu saldo|meus gastos|minhas|meus)/i.test(message);
+
+      console.log(`📝 Tipo de pergunta detectado:`);
+      console.log(`   Conceito: ${isConceptQuestion}`);
+      console.log(`   Dados pessoais: ${isPersonalDataQuestion}`);
+      console.log(`   Incluir transações: ${!isConceptQuestion}`);
+
       // Use hybrid search to get both documents and transactions from MongoDB
       // Vector search finds relevant items, then full data is retrieved from collections
       const results = await ragService.hybridFinancialSearch(message, userId, {
         includeDocuments: true,
-        includeTransactions: true,
+        includeTransactions: !isConceptQuestion, // Don't fetch transactions for concept questions
         documentLimit: 5,
-        transactionLimit: 10000, // Very high limit to ensure we get all transactions
+        transactionLimit: isPersonalDataQuestion ? 10000 : 100, // More transactions for personal data questions
       });
 
       console.log(
@@ -68,9 +81,13 @@ export class ChatRAGService {
           results.documents.slice(0, 2).map((d: any) => ({
             title: d.document?.title || d.title,
             category: d.document?.category || d.category,
+            score: d.score?.toFixed(4),
           }))
         );
       }
+
+      // Filter to keep only highly relevant documents (score >= 0.88)
+      results.documents = results.documents.filter((d: any) => d.score >= 0.88);
 
       // Check if we have any data - if not, use general knowledge
       if (results.documents.length === 0 && results.transactions.length === 0) {
@@ -136,7 +153,8 @@ Responda de forma clara e concisa em português brasileiro.`,
       );
       const sources = this.buildSources(
         results.documents,
-        results.transactions
+        results.transactions,
+        message
       );
 
       // Create system prompt
@@ -270,31 +288,82 @@ Responda de forma clara e concisa em português brasileiro.`,
   }
 
   /**
-   * Build sources array - simplified
+   * Build sources array - intelligently based on question type
    */
   private buildSources(
     documents: any[],
-    transactions: any[]
+    transactions: any[],
+    message: string
   ): Array<{ title: string; url: string }> {
     const sources: Array<{ title: string; url: string }> = [];
 
-    // Add only top 3 document sources
-    documents.slice(0, 3).forEach(doc => {
-      const docData = doc.document || doc;
-      sources.push({
-        title: docData.title,
-        url: docData.source || '#',
-      });
-    });
+    // Detect question type
+    const isConceptQuestion =
+      /^(o que é|o que são|como funciona|explique|qual a diferença|quais são os tipos)/i.test(
+        message
+      );
+    const isPersonalDataQuestion =
+      /^(quanto|qual meu|meu saldo|meus gastos|minhas|meus)/i.test(message);
 
-    // Add transaction summary only if used
-    if (transactions.length > 0) {
-      sources.push({
-        title: 'Transações',
-        url: '/transactions',
-      });
+    console.log(`📚 Construindo fontes:`);
+    console.log(`   Documentos disponíveis: ${documents.length}`);
+    console.log(`   Transações disponíveis: ${transactions.length}`);
+    console.log(`   É pergunta de conceito: ${isConceptQuestion}`);
+    console.log(`   É pergunta de dados pessoais: ${isPersonalDataQuestion}`);
+
+    // For concept questions: ONLY add documents
+    if (isConceptQuestion) {
+      if (documents.length > 0) {
+        documents.slice(0, 3).forEach(doc => {
+          const docData = doc.document || doc;
+          sources.push({
+            title: docData.title,
+            url: docData.source || '#',
+          });
+        });
+        console.log(
+          `   ✅ Adicionou ${sources.length} documentos (pergunta de conceito)`
+        );
+      }
+      // Do NOT add transactions for concept questions
+      console.log(`   ⏭️  Pulou transações (pergunta de conceito)`);
+    }
+    // For personal data questions: ONLY add transactions
+    else if (isPersonalDataQuestion) {
+      if (transactions.length > 0) {
+        sources.push({
+          title: 'Transações',
+          url: '/transactions',
+        });
+        console.log(`   ✅ Adicionou transações (pergunta de dados pessoais)`);
+      }
+      // Do NOT add documents for personal data questions
+      console.log(`   ⏭️  Pulou documentos (pergunta de dados pessoais)`);
+    }
+    // For mixed/other questions: add both if relevant
+    else {
+      if (documents.length > 0) {
+        documents.slice(0, 2).forEach(doc => {
+          const docData = doc.document || doc;
+          sources.push({
+            title: docData.title,
+            url: docData.source || '#',
+          });
+        });
+        console.log(
+          `   ✅ Adicionou ${documents.length} documentos (pergunta mista)`
+        );
+      }
+      if (transactions.length > 0) {
+        sources.push({
+          title: 'Transações',
+          url: '/transactions',
+        });
+        console.log(`   ✅ Adicionou transações (pergunta mista)`);
+      }
     }
 
+    console.log(`   📋 Total de fontes: ${sources.length}`);
     return sources;
   }
 
@@ -307,29 +376,46 @@ Responda de forma clara e concisa em português brasileiro.`,
 CONTEXTO DISPONÍVEL:
 ${context}
 
-INSTRUÇÕES:
-1. Responda perguntas sobre finanças pessoais, investimentos, planejamento financeiro e análise de transações
-2. Use APENAS as informações fornecidas no contexto acima
-3. Para perguntas sobre conceitos financeiros (Bitcoin, Tesouro Direto, etc), use o conhecimento da base de dados
-4. Para perguntas sobre gastos, investimentos ou receitas, SEMPRE calcule o total somando TODAS as transações da categoria correspondente fornecidas no contexto
-5. Quando perguntarem "quanto tenho em investimentos", some TODAS as transações da categoria "Investimento"
-6. Quando perguntarem sobre receitas, some TODAS as transações da categoria "Receita"
-7. Quando perguntarem sobre despesas de uma categoria específica, some TODAS as transações daquela categoria
-8. IMPORTANTE: Ao calcular totais, considere o sinal do valor (positivo = receita/investimento, negativo = despesa)
-9. Se não houver informações no contexto, diga: "Não encontrei informações sobre isso na base de dados."
-10. Seja direto e objetivo nas respostas
-11. Para perguntas não relacionadas a finanças (nome, política, etc), responda: "Sou especializado em finanças. Posso ajudar com transações, investimentos e planejamento financeiro."
+INSTRUÇÕES IMPORTANTES:
 
-EXEMPLOS:
-- "O que é Bitcoin?" → Use o documento sobre Bitcoin da base
-- "Quanto gastei com casa?" → Some TODAS as transações da categoria Casa
-- "Quanto tenho em investimentos?" → Some TODAS as transações da categoria Investimento
-- "Como criar reserva de emergência?" → Use o documento sobre Reserva de Emergência
+**Sobre uso de fontes:**
+1. Use APENAS as informações fornecidas no contexto acima
+2. Para perguntas sobre CONCEITOS financeiros (O que é MEI? Como funciona Tesouro Direto?), use APENAS os documentos de conhecimento
+3. Para perguntas sobre SEUS DADOS (quanto gastei, quanto tenho), use APENAS as transações
+4. NÃO misture fontes: se a pergunta é sobre conceito, não use transações; se é sobre dados pessoais, não use documentos gerais
 
-FORMATO DE RESPOSTA PARA VALORES:
-- Sempre apresente valores em reais (R$) com duas casas decimais
-- Exemplo: "O total em investimentos é de R$ 100.594,50"
-- Se houver múltiplas transações, você pode mencionar quantas foram encontradas
+**Sobre cálculos:**
+5. Para perguntas sobre gastos, investimentos ou receitas, SEMPRE calcule o total somando TODAS as transações da categoria correspondente
+6. Considere o sinal do valor (positivo = receita/investimento, negativo = despesa)
+7. Use o resumo por categoria fornecido no contexto para cálculos rápidos
+
+**Sobre respostas:**
+8. Se não houver informações no contexto, diga: "Não encontrei informações sobre isso na base de dados."
+9. Seja direto e objetivo
+10. Para perguntas não relacionadas a finanças, responda: "Sou especializado em finanças. Posso ajudar com transações, investimentos e planejamento financeiro."
+
+**EXEMPLOS DE USO CORRETO:**
+
+Pergunta sobre CONCEITO (use documentos):
+- "O que é MEI?" → Use APENAS documento sobre MEI
+- "Como funciona Tesouro Direto?" → Use APENAS documento sobre Tesouro Direto
+- "O que é Bitcoin?" → Use APENAS documento sobre Bitcoin
+
+Pergunta sobre DADOS PESSOAIS (use transações):
+- "Quanto gastei com casa?" → Use APENAS transações da categoria Casa
+- "Quanto tenho em investimentos?" → Use APENAS transações da categoria Investimento
+- "Qual meu saldo?" → Use APENAS transações
+
+Pergunta MISTA (use ambos):
+- "Como posso investir melhor meu dinheiro?" → Use documentos sobre investimentos E mencione transações se relevante
+
+**FORMATO DE RESPOSTA:**
+- Valores: sempre em reais (R$) com duas casas decimais
+- NÃO mencione as fontes na resposta (elas serão exibidas automaticamente na seção "Fontes")
+- NÃO diga "Para mais detalhes, consulte..." ou "Você pode ver mais em..."
+- NÃO inclua links ou referências a documentos na resposta
+- Responda diretamente o conteúdo, sem mencionar de onde veio a informação
+- Não invente informações
 
 Responda de forma clara e concisa.`;
   }
