@@ -11,7 +11,7 @@ import { Transaction, ITransaction } from './models/transaction';
 export const TransactionVectorQuerySchema = z.object({
   queryText: z.string().min(1, 'Query text is required'),
   userId: z.string().min(1, 'User ID is required for security'),
-  limit: z.number().min(1).max(50).default(10),
+  limit: z.number().min(1).max(10000).default(1000),
   filters: z
     .object({
       dateRange: z
@@ -71,6 +71,7 @@ export class TransactionVectorSearchService {
         throw new Error('OPENAI_API_KEY environment variable is required');
       }
       // Use dynamic import to avoid circular dependencies
+      // @ts-ignore - Dynamic import path resolved at runtime
       const { OpenAIEmbeddingProvider } = await import(
         '../../ai/src/rag/embedding-generator'
       );

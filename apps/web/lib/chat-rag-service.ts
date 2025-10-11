@@ -55,7 +55,7 @@ export class ChatRAGService {
         includeDocuments: true,
         includeTransactions: true,
         documentLimit: 5,
-        transactionLimit: 20,
+        transactionLimit: 1000, // High limit to get all relevant transactions
       });
 
       console.log(

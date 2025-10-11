@@ -109,7 +109,7 @@ export class RAGService {
       const searchQuery = {
         queryText: query,
         userId: userId,
-        limit: 10,
+        limit: 1000, // High limit to get all relevant transactions
         filters: filters
           ? {
               dateRange: filters.dateRange,
