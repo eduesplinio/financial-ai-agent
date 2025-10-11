@@ -530,8 +530,18 @@ export const ChatWidget: React.FC = () => {
                             : 'bg-muted text-foreground border border-border'
                         }`}
                       >
-                        <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0 prose-headings:text-sm prose-headings:font-semibold prose-headings:my-2 prose-strong:font-semibold prose-strong:text-inherit">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0 prose-strong:font-semibold prose-strong:text-inherit">
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                              h1: ({ node, ...props }) => <strong {...props} />,
+                              h2: ({ node, ...props }) => <strong {...props} />,
+                              h3: ({ node, ...props }) => <strong {...props} />,
+                              h4: ({ node, ...props }) => <strong {...props} />,
+                              h5: ({ node, ...props }) => <strong {...props} />,
+                              h6: ({ node, ...props }) => <strong {...props} />,
+                            }}
+                          >
                             {message.content}
                           </ReactMarkdown>
                         </div>

@@ -266,7 +266,7 @@ Responda de forma clara e concisa em português brasileiro.`,
     // Add transaction summary only if used
     if (transactions.length > 0) {
       sources.push({
-        title: `${transactions.length} transações analisadas`,
+        title: 'Transações',
         url: '/transactions',
       });
     }
