@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { ChatHistory } from './ChatHistory';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export interface ChatMessage {
   id: string;
@@ -528,8 +530,10 @@ export const ChatWidget: React.FC = () => {
                             : 'bg-muted text-foreground border border-border'
                         }`}
                       >
-                        <div className="whitespace-pre-wrap">
-                          {message.content}
+                        <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0 prose-headings:text-sm prose-headings:font-semibold prose-headings:my-2 prose-strong:font-semibold prose-strong:text-inherit">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {message.content}
+                          </ReactMarkdown>
                         </div>
 
                         {/* Citations */}
