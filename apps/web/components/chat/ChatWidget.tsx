@@ -39,6 +39,7 @@ export const ChatWidget: React.FC = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Auto-scroll durante streaming
   useEffect(() => {
@@ -70,6 +71,10 @@ export const ChatWidget: React.FC = () => {
   useEffect(() => {
     if (showWidget) {
       setIsFullscreen(false);
+      // Focus input when widget opens
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
     }
   }, [showWidget]);
 
@@ -646,6 +651,7 @@ export const ChatWidget: React.FC = () => {
           >
             <div className="flex items-center gap-2">
               <input
+                ref={inputRef}
                 className="flex-1 px-3 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-1 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all text-sm placeholder:text-muted-foreground/60"
                 type="text"
                 value={input}
