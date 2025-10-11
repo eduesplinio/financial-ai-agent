@@ -630,20 +630,20 @@ addSoftDeleteMiddleware(ConversationSchema);
 // MODELS
 // =============================================================================
 
-export const User: Model<IUser> = mongoose.model<IUser>('User', UserSchema);
-export const Transaction: Model<ITransaction> = mongoose.model<ITransaction>(
-  'Transaction',
-  TransactionSchema
-);
+export const User: Model<IUser> =
+  mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
+export const Transaction: Model<ITransaction> =
+  mongoose.models.Transaction ||
+  mongoose.model<ITransaction>('Transaction', TransactionSchema);
 export const KnowledgeDocument: Model<IKnowledgeDocument> =
+  mongoose.models.KnowledgeDocument ||
   mongoose.model<IKnowledgeDocument>(
     'KnowledgeDocument',
     KnowledgeDocumentSchema
   );
-export const Conversation: Model<IConversation> = mongoose.model<IConversation>(
-  'Conversation',
-  ConversationSchema
-);
+export const Conversation: Model<IConversation> =
+  mongoose.models.Conversation ||
+  mongoose.model<IConversation>('Conversation', ConversationSchema);
 
 // =============================================================================
 // CRUD OPERATIONS

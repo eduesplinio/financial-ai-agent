@@ -72,7 +72,7 @@ export class TransactionVectorSearchService {
       }
       // Use dynamic import to avoid circular dependencies
       const { OpenAIEmbeddingProvider } = await import(
-        '@financial-ai/ai/src/rag/embedding-generator'
+        '../../ai/src/rag/embedding-generator'
       );
       this.embeddingProvider = new OpenAIEmbeddingProvider(apiKey);
     }
