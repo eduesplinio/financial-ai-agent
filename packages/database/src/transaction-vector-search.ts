@@ -70,10 +70,10 @@ export class TransactionVectorSearchService {
       if (!apiKey) {
         throw new Error('OPENAI_API_KEY environment variable is required');
       }
-      // Use dynamic require to avoid TypeScript path issues
-      const {
-        OpenAIEmbeddingProvider,
-      } = require('@financial-ai/ai/dist/rag/embedding-generator');
+      // Use dynamic import to avoid circular dependencies
+      const { OpenAIEmbeddingProvider } = await import(
+        '@financial-ai/ai/src/rag/embedding-generator'
+      );
       this.embeddingProvider = new OpenAIEmbeddingProvider(apiKey);
     }
     return this.embeddingProvider;
