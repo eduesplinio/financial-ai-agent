@@ -4,6 +4,9 @@ import { KnowledgeDocument } from '../src/models';
 import { OpenAIEmbeddingProvider } from '../../ai/src/rag/embedding-generator';
 
 const financialKnowledge = [
+  // ============================================================================
+  // INVESTIMENTOS - RENDA FIXA
+  // ============================================================================
   {
     title: 'Como investir melhor seu dinheiro',
     content: `Para investir melhor seu dinheiro, siga estas diretrizes fundamentais:
