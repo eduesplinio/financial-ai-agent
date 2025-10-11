@@ -55,7 +55,12 @@ export class ChatRAGService {
           message
         );
       const isPersonalDataQuestion =
-        /^(quanto|qual meu|meu saldo|meus gastos|minhas|meus)/i.test(message);
+        /^(quanto|qual meu|meu saldo|meus gastos|minhas|meus|analise|mostre|liste|veja)/i.test(
+          message
+        ) ||
+        /(gastos|despesas|receitas|transaç|saldo|investimentos|último mês|mês passado)/i.test(
+          message
+        );
 
       console.log(`📝 Tipo de pergunta detectado:`);
       console.log(`   Conceito: ${isConceptQuestion}`);
@@ -303,7 +308,12 @@ Responda de forma clara e concisa em português brasileiro.`,
         message
       );
     const isPersonalDataQuestion =
-      /^(quanto|qual meu|meu saldo|meus gastos|minhas|meus)/i.test(message);
+      /^(quanto|qual meu|meu saldo|meus gastos|minhas|meus|analise|mostre|liste|veja)/i.test(
+        message
+      ) ||
+      /(gastos|despesas|receitas|transaç|saldo|investimentos|último mês|mês passado)/i.test(
+        message
+      );
 
     console.log(`📚 Construindo fontes:`);
     console.log(`   Documentos disponíveis: ${documents.length}`);

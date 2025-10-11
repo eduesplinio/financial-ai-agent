@@ -14,6 +14,8 @@ const testQuestions = [
   { question: 'Qual meu saldo?', expectedType: 'personal' },
   { question: 'Meus gastos do mês', expectedType: 'personal' },
   { question: 'Quanto tenho em investimentos?', expectedType: 'personal' },
+  { question: 'Analise meus gastos do último mês', expectedType: 'personal' },
+  { question: 'Mostre minhas despesas', expectedType: 'personal' },
 
   // Mixed questions (should include both)
   { question: 'Como posso investir melhor?', expectedType: 'mixed' },
@@ -28,7 +30,12 @@ testQuestions.forEach(({ question, expectedType }) => {
       question
     );
   const isPersonalDataQuestion =
-    /^(quanto|qual meu|meu saldo|meus gastos|minhas|meus)/i.test(question);
+    /^(quanto|qual meu|meu saldo|meus gastos|minhas|meus|analise|mostre|liste|veja)/i.test(
+      question
+    ) ||
+    /(gastos|despesas|receitas|transaç|saldo|investimentos|último mês|mês passado)/i.test(
+      question
+    );
 
   let detectedType = 'mixed';
   if (isConceptQuestion) detectedType = 'concept';
