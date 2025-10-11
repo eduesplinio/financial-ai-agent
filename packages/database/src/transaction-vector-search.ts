@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
 import { z } from 'zod';
 import { Transaction, ITransaction } from './models/transaction';
-// Import will be resolved at runtime
-// import { OpenAIEmbeddingProvider } from '../../ai/src/rag/embedding-generator';
+// Import will be resolved at runtime via dynamic import
+// import { OpenAIEmbeddingProvider } from '@financial-ai/ai/src/rag/embedding-generator';
 
 // =============================================================================
 // VALIDATION SCHEMAS
@@ -71,9 +71,8 @@ export class TransactionVectorSearchService {
         throw new Error('OPENAI_API_KEY environment variable is required');
       }
       // Use dynamic import to avoid circular dependencies
-      // @ts-ignore - Dynamic import path resolved at runtime
       const { OpenAIEmbeddingProvider } = await import(
-        '../../ai/src/rag/embedding-generator'
+        '@financial-ai/ai/src/rag/embedding-generator'
       );
       this.embeddingProvider = new OpenAIEmbeddingProvider(apiKey);
     }
@@ -102,14 +101,18 @@ export class TransactionVectorSearchService {
       );
 
       // Build MongoDB aggregation pipeline
+      // MongoDB Atlas Vector Search has a max numCandidates of 10000
+      const numCandidates = Math.min(validatedQuery.limit * 4, 10000);
+      const searchLimit = Math.min(validatedQuery.limit * 2, 10000);
+
       const pipeline: any[] = [
         {
           $vectorSearch: {
             index: 'transaction_vector_search',
             path: 'embedding',
             queryVector: queryVector,
-            numCandidates: validatedQuery.limit * 4,
-            limit: validatedQuery.limit * 2,
+            numCandidates: numCandidates,
+            limit: searchLimit,
             filter: {
               userId: validatedQuery.userId,
             },
@@ -239,13 +242,16 @@ export class TransactionVectorSearchService {
       }
 
       // Search for similar transactions
+      // MongoDB Atlas Vector Search has a max numCandidates of 10000
+      const numCandidates = Math.min(limit * 4, 10000);
+
       const pipeline = [
         {
           $vectorSearch: {
             index: 'transaction_vector_search',
             path: 'embedding',
             queryVector: (sourceTransaction as any).embedding,
-            numCandidates: limit * 4,
+            numCandidates: numCandidates,
             limit: limit + 1,
             filter: {
               userId: userId,

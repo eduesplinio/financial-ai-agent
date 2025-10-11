@@ -332,6 +332,9 @@ importers:
 
   packages/database:
     dependencies:
+      '@financial-ai/ai':
+        specifier: workspace:*
+        version: link:../ai
       mongodb:
         specifier: ^6.3.0
         version: 6.19.0

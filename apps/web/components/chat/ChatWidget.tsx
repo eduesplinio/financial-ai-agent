@@ -71,6 +71,11 @@ export const ChatWidget: React.FC = () => {
   useEffect(() => {
     if (showWidget) {
       setIsFullscreen(false);
+      // Scroll to bottom instantly when widget opens (no animation)
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop =
+          messagesContainerRef.current.scrollHeight;
+      }
       // Focus input when widget opens
       setTimeout(() => {
         inputRef.current?.focus();

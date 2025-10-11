@@ -55,7 +55,7 @@ export class ChatRAGService {
         includeDocuments: true,
         includeTransactions: true,
         documentLimit: 5,
-        transactionLimit: 1000, // High limit to get all relevant transactions
+        transactionLimit: 10000, // Very high limit to ensure we get all transactions
       });
 
       console.log(
@@ -214,7 +214,30 @@ Responda de forma clara e concisa em português brasileiro.`,
 
     // Add transactions with complete information from MongoDB
     if (transactions.length > 0) {
-      context += `SUAS TRANSAÇÕES FINANCEIRAS (${transactions.length} encontradas):\n`;
+      // Group transactions by category for summary
+      const categoryTotals: Record<string, { count: number; total: number }> =
+        {};
+      transactions.forEach(tx => {
+        const txData = tx.transaction || tx;
+        const category = txData.category?.primary || 'Sem categoria';
+        if (!categoryTotals[category]) {
+          categoryTotals[category] = { count: 0, total: 0 };
+        }
+        categoryTotals[category].count++;
+        categoryTotals[category].total += txData.amount;
+      });
+
+      context += `SUAS TRANSAÇÕES FINANCEIRAS (${transactions.length} encontradas):\n\n`;
+
+      // Add category summary first
+      context += `RESUMO POR CATEGORIA:\n`;
+      Object.entries(categoryTotals).forEach(([category, data]) => {
+        context += `- ${category}: ${data.count} transações, Total: R$ ${data.total.toFixed(2)}\n`;
+      });
+      context += '\n';
+
+      // Add detailed transactions
+      context += `DETALHES DAS TRANSAÇÕES:\n`;
       transactions.forEach((tx, i) => {
         const txData = tx.transaction || tx;
         const date = new Date(txData.date).toLocaleDateString('pt-BR');
@@ -223,6 +246,7 @@ Responda de forma clara e concisa em português brasileiro.`,
 
         context += `${i + 1}. ${txData.description}\n`;
         context += `   Valor: R$ ${amount} (${type})\n`;
+        context += `   Valor Real (com sinal): R$ ${txData.amount.toFixed(2)}\n`;
         context += `   Data: ${date}\n`;
         context += `   Categoria: ${txData.category?.primary || 'Sem categoria'}\n`;
 
@@ -287,15 +311,25 @@ INSTRUÇÕES:
 1. Responda perguntas sobre finanças pessoais, investimentos, planejamento financeiro e análise de transações
 2. Use APENAS as informações fornecidas no contexto acima
 3. Para perguntas sobre conceitos financeiros (Bitcoin, Tesouro Direto, etc), use o conhecimento da base de dados
-4. Para perguntas sobre gastos, use as transações fornecidas
-5. Se não houver informações no contexto, diga: "Não encontrei informações sobre isso na base de dados."
-6. Seja direto e objetivo nas respostas
-7. Para perguntas não relacionadas a finanças (nome, política, etc), responda: "Sou especializado em finanças. Posso ajudar com transações, investimentos e planejamento financeiro."
+4. Para perguntas sobre gastos, investimentos ou receitas, SEMPRE calcule o total somando TODAS as transações da categoria correspondente fornecidas no contexto
+5. Quando perguntarem "quanto tenho em investimentos", some TODAS as transações da categoria "Investimento"
+6. Quando perguntarem sobre receitas, some TODAS as transações da categoria "Receita"
+7. Quando perguntarem sobre despesas de uma categoria específica, some TODAS as transações daquela categoria
+8. IMPORTANTE: Ao calcular totais, considere o sinal do valor (positivo = receita/investimento, negativo = despesa)
+9. Se não houver informações no contexto, diga: "Não encontrei informações sobre isso na base de dados."
+10. Seja direto e objetivo nas respostas
+11. Para perguntas não relacionadas a finanças (nome, política, etc), responda: "Sou especializado em finanças. Posso ajudar com transações, investimentos e planejamento financeiro."
 
 EXEMPLOS:
 - "O que é Bitcoin?" → Use o documento sobre Bitcoin da base
-- "Quanto gastei com casa?" → Analise as transações da categoria Casa
+- "Quanto gastei com casa?" → Some TODAS as transações da categoria Casa
+- "Quanto tenho em investimentos?" → Some TODAS as transações da categoria Investimento
 - "Como criar reserva de emergência?" → Use o documento sobre Reserva de Emergência
+
+FORMATO DE RESPOSTA PARA VALORES:
+- Sempre apresente valores em reais (R$) com duas casas decimais
+- Exemplo: "O total em investimentos é de R$ 100.594,50"
+- Se houver múltiplas transações, você pode mencionar quantas foram encontradas
 
 Responda de forma clara e concisa.`;
   }
