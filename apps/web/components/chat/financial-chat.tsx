@@ -49,21 +49,22 @@ export function FinancialChat({
   const handleSendMessage = async () => {
     if (!inputText.trim() || isLoading) return;
 
+    const messageText = inputText;
     const userMessage: Message = {
       id: Date.now().toString(),
-      text: inputText,
+      text: messageText,
       sender: 'user',
       timestamp: new Date(),
       type: 'text',
     };
 
-    setMessages(prev => [...prev, userMessage]);
     setInputText('');
     setIsLoading(true);
+    setMessages(prev => [...prev, userMessage]);
 
     try {
       // Simular resposta do agente financeiro
-      const response = await simulateFinancialAgent(inputText);
+      const response = await simulateFinancialAgent(messageText);
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -193,23 +194,28 @@ export function FinancialChat({
           <div className="space-y-4">
             {messages.map(renderMessage)}
             {isLoading && (
-              <div className="flex justify-start">
-                <div className="bg-muted rounded-lg px-4 py-2">
-                  <div className="flex items-center gap-2">
-                    <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                      <div
-                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                        style={{ animationDelay: '0.1s' }}
-                      ></div>
-                      <div
-                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                        style={{ animationDelay: '0.2s' }}
-                      ></div>
+              <div className="flex justify-start mb-4">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm bg-secondary order-2 ml-2">
+                  <span className="animate-pulse">🤖</span>
+                </div>
+                <div className="max-w-[70%] order-1">
+                  <div className="bg-muted rounded-lg px-4 py-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">
+                        Pensando
+                      </span>
+                      <div className="flex space-x-1">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                        <div
+                          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                          style={{ animationDelay: '0.15s' }}
+                        ></div>
+                        <div
+                          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                          style={{ animationDelay: '0.3s' }}
+                        ></div>
+                      </div>
                     </div>
-                    <span className="text-sm text-muted-foreground">
-                      Analisando...
-                    </span>
                   </div>
                 </div>
               </div>

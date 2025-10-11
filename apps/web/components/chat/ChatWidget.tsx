@@ -36,14 +36,33 @@ export const ChatWidget: React.FC = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  // Scroll to bottom when messages change (backup for any missed cases)
+  // Auto-scroll durante streaming
+  useEffect(() => {
+    if (streaming && messagesContainerRef.current) {
+      const container = messagesContainerRef.current;
+      container.scrollTop = container.scrollHeight;
+    }
+  }, [messages, streaming]);
+
+  // Scroll to bottom when messages change
   useEffect(() => {
     const timer = setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 50);
     return () => clearTimeout(timer);
-  }, [messages.length]); // Only trigger on new messages, not content updates
+  }, [messages.length, loading]);
+
+  // Scroll to bottom after streaming completes (para mostrar fontes e feedback)
+  useEffect(() => {
+    if (!streaming && !loading && messages.length > 0) {
+      const timer = setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [streaming, loading, messages.length]);
 
   // Reset to windowed mode when widget opens
   useEffect(() => {
@@ -51,6 +70,14 @@ export const ChatWidget: React.FC = () => {
       setIsFullscreen(false);
     }
   }, [showWidget]);
+
+  // Scroll to bottom when toggling fullscreen
+  useEffect(() => {
+    if (messages.length > 0 && messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop =
+        messagesContainerRef.current.scrollHeight;
+    }
+  }, [isFullscreen]);
 
   // Brazilian nicknames mapping
   const getNickname = (fullName: string): string => {
@@ -203,12 +230,6 @@ export const ChatWidget: React.FC = () => {
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setLoading(true);
-    setStreaming(true);
-
-    // Scroll to bottom immediately after sending message
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
 
     try {
       // Use Server-Sent Events for streaming
@@ -226,6 +247,7 @@ export const ChatWidget: React.FC = () => {
 
       let assistantMsgId = (Date.now() + 1).toString();
       let currentContent = '';
+      let hasStartedStreaming = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -240,6 +262,11 @@ export const ChatWidget: React.FC = () => {
               const data = JSON.parse(line.slice(6));
 
               if (data.type === 'chunk' || data.type === 'stream') {
+                if (!hasStartedStreaming) {
+                  setStreaming(true);
+                  hasStartedStreaming = true;
+                }
+
                 if (data.type === 'chunk') {
                   currentContent += data.content;
                 } else {
@@ -269,13 +296,6 @@ export const ChatWidget: React.FC = () => {
                     ];
                   }
                 });
-
-                // Scroll to bottom during streaming (like Claude.ai)
-                setTimeout(() => {
-                  messagesEndRef.current?.scrollIntoView({
-                    behavior: 'smooth',
-                  });
-                }, 10);
               } else if (data.type === 'complete') {
                 setMessages(prev =>
                   prev.map(msg =>
@@ -290,12 +310,6 @@ export const ChatWidget: React.FC = () => {
                       : msg
                   )
                 );
-                // Scroll to bottom when streaming completes
-                setTimeout(() => {
-                  messagesEndRef.current?.scrollIntoView({
-                    behavior: 'smooth',
-                  });
-                }, 100);
               }
             } catch (err) {
               console.error('Error parsing SSE data:', err);
@@ -416,10 +430,10 @@ export const ChatWidget: React.FC = () => {
 
           {/* Messages */}
           <div
+            ref={messagesContainerRef}
             className={`overflow-y-auto px-4 py-3 space-y-3 ${
               isFullscreen ? 'flex-1' : 'h-96'
             }`}
-            ref={messagesEndRef}
           >
             {messages.length === 0 ? (
               <div
@@ -493,86 +507,120 @@ export const ChatWidget: React.FC = () => {
                 </div>
               </div>
             ) : (
-              messages.map(message => (
-                <div
-                  key={message.id}
-                  className={`flex ${
-                    message.role === 'user' ? 'justify-end' : 'justify-start'
-                  } mb-4`}
-                >
-                  {/* Message Bubble */}
+              <>
+                {messages.map(message => (
                   <div
-                    className={`max-w-[80%] ${
-                      message.role === 'user' ? 'text-right' : ''
-                    }`}
+                    key={message.id}
+                    className={`flex ${
+                      message.role === 'user' ? 'justify-end' : 'justify-start'
+                    } mb-4`}
                   >
+                    {/* Message Bubble */}
                     <div
-                      className={`inline-block px-3 py-2 rounded-lg text-sm ${
-                        message.role === 'user'
-                          ? 'bg-[#11684A] text-white'
-                          : 'bg-muted text-foreground border border-border'
+                      className={`max-w-[80%] ${
+                        message.role === 'user' ? 'text-right' : ''
                       }`}
                     >
-                      <div className="whitespace-pre-wrap">
-                        {message.content}
+                      <div
+                        className={`inline-block px-3 py-2 rounded-lg text-sm ${
+                          message.role === 'user'
+                            ? 'bg-[#11684A] text-white'
+                            : 'bg-muted text-foreground border border-border'
+                        }`}
+                      >
+                        <div className="whitespace-pre-wrap">
+                          {message.content}
+                        </div>
+
+                        {/* Citations */}
+                        {message.sources && message.sources.length > 0 && (
+                          <div className="mt-2 pt-2 border-t border-border/20">
+                            <div className="text-xs text-muted-foreground mb-1">
+                              Fontes:
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                              {message.sources.map((source, index) => (
+                                <a
+                                  key={index}
+                                  href={source.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs bg-background/50 px-2 py-1 rounded hover:bg-background/80 transition-colors"
+                                >
+                                  {source.title}
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
 
-                      {/* Citations */}
-                      {message.sources && message.sources.length > 0 && (
-                        <div className="mt-2 pt-2 border-t border-border/20">
-                          <div className="text-xs text-muted-foreground mb-1">
-                            Fontes:
-                          </div>
-                          <div className="flex flex-wrap gap-1">
-                            {message.sources.map((source, index) => (
-                              <a
-                                key={index}
-                                href={source.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-xs bg-background/50 px-2 py-1 rounded hover:bg-background/80 transition-colors"
-                              >
-                                {source.title}
-                              </a>
-                            ))}
-                          </div>
+                      {/* Feedback - only after message is fully processed */}
+                      {message.role === 'assistant' && !message.streaming && (
+                        <div className="mt-2 pt-2 border-t border-border/20 flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">
+                            Esta resposta foi útil?
+                          </span>
+                          <button
+                            onClick={() =>
+                              handleFeedback(message.id, 'positive')
+                            }
+                            className={`p-1 rounded transition-colors ${
+                              message.feedback === 'positive'
+                                ? 'text-green-600 bg-green-100'
+                                : 'text-muted-foreground hover:text-green-600'
+                            }`}
+                            aria-label="Resposta útil"
+                          >
+                            <ThumbsUp className="h-3 w-3" />
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleFeedback(message.id, 'negative')
+                            }
+                            className={`p-1 rounded transition-colors ${
+                              message.feedback === 'negative'
+                                ? 'text-red-600 bg-red-100'
+                                : 'text-muted-foreground hover:text-red-600'
+                            }`}
+                            aria-label="Resposta não útil"
+                          >
+                            <ThumbsDown className="h-3 w-3" />
+                          </button>
                         </div>
                       )}
                     </div>
-
-                    {/* Feedback - only after message is fully processed */}
-                    {message.role === 'assistant' && !message.streaming && (
-                      <div className="mt-2 pt-2 border-t border-border/20 flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">
-                          Esta resposta foi útil?
-                        </span>
-                        <button
-                          onClick={() => handleFeedback(message.id, 'positive')}
-                          className={`p-1 rounded transition-colors ${
-                            message.feedback === 'positive'
-                              ? 'text-green-600 bg-green-100'
-                              : 'text-muted-foreground hover:text-green-600'
-                          }`}
-                          aria-label="Resposta útil"
-                        >
-                          <ThumbsUp className="h-3 w-3" />
-                        </button>
-                        <button
-                          onClick={() => handleFeedback(message.id, 'negative')}
-                          className={`p-1 rounded transition-colors ${
-                            message.feedback === 'negative'
-                              ? 'text-red-600 bg-red-100'
-                              : 'text-muted-foreground hover:text-red-600'
-                          }`}
-                          aria-label="Resposta não útil"
-                        >
-                          <ThumbsDown className="h-3 w-3" />
-                        </button>
-                      </div>
-                    )}
                   </div>
-                </div>
-              ))
+                ))}
+
+                {/* Loading Indicator - só aparece antes do streaming começar */}
+                {loading &&
+                  !streaming &&
+                  messages.length > 0 &&
+                  messages[messages.length - 1].role === 'user' && (
+                    <div className="flex justify-start mb-4">
+                      <div className="inline-block px-3 py-2 rounded-lg text-sm bg-muted text-foreground border border-border">
+                        <div className="flex items-center gap-2">
+                          <Bot className="h-4 w-4 animate-pulse text-[#11684A]" />
+                          <span className="text-sm text-muted-foreground">
+                            Pensando
+                          </span>
+                          <div className="flex space-x-1">
+                            <div className="w-2 h-2 bg-[#11684A] rounded-full animate-bounce"></div>
+                            <div
+                              className="w-2 h-2 bg-[#11684A] rounded-full animate-bounce"
+                              style={{ animationDelay: '0.15s' }}
+                            ></div>
+                            <div
+                              className="w-2 h-2 bg-[#11684A] rounded-full animate-bounce"
+                              style={{ animationDelay: '0.3s' }}
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+              </>
             )}
             <div ref={messagesEndRef} />
           </div>
