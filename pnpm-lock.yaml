@@ -265,6 +265,9 @@ importers:
       '@financial-ai/database':
         specifier: workspace:*
         version: link:../database
+      '@financial-ai/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@langchain/anthropic':
         specifier: ^0.0.4
         version: 0.0.4(openai@4.104.0(ws@8.18.3)(zod@3.25.76))
@@ -332,9 +335,6 @@ importers:
 
   packages/database:
     dependencies:
-      '@financial-ai/ai':
-        specifier: workspace:*
-        version: link:../ai
       mongodb:
         specifier: ^6.3.0
         version: 6.19.0

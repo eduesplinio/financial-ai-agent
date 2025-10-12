@@ -11,7 +11,7 @@ import {
   AugmentedResponseGenerator,
   AugmentedResponse,
 } from '../rag/augmented-response-generator';
-import { UserProfile, MessageRole } from '@financial-ai/shared/src/types';
+import { UserProfile, MessageRole } from '@financial-ai/shared';
 
 export interface ConversationMessage {
   id: string;

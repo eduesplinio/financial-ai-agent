@@ -63,27 +63,20 @@ export class TransactionVectorSearchService {
 
   /**
    * Initialize the embedding provider
+   * @deprecated This method creates a circular dependency. Pass embeddings directly instead.
    */
   private static async getEmbeddingProvider(): Promise<any> {
-    if (!this.embeddingProvider) {
-      const apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey) {
-        throw new Error('OPENAI_API_KEY environment variable is required');
-      }
-      // Use dynamic import to avoid circular dependencies
-      const { OpenAIEmbeddingProvider } = await import(
-        '@financial-ai/ai/src/rag/embedding-generator'
-      );
-      this.embeddingProvider = new OpenAIEmbeddingProvider(apiKey);
-    }
-    return this.embeddingProvider;
+    throw new Error(
+      'getEmbeddingProvider is deprecated. Generate embeddings in the AI package and pass them to search methods.'
+    );
   }
 
   /**
-   * Search transactions using semantic similarity
+   * Search transactions using semantic similarity with a pre-generated embedding
    */
-  static async searchTransactions(
-    query: TransactionVectorQuery
+  static async searchTransactionsWithEmbedding(
+    query: TransactionVectorQuery,
+    queryVector: number[]
   ): Promise<TransactionSearchResult[]> {
     try {
       // Ensure MongoDB connection
@@ -93,12 +86,6 @@ export class TransactionVectorSearchService {
 
       // Validate input
       const validatedQuery = TransactionVectorQuerySchema.parse(query);
-
-      // Generate embedding for the query
-      const embeddingProvider = await this.getEmbeddingProvider();
-      const queryVector = await embeddingProvider.getEmbedding(
-        validatedQuery.queryText
-      );
 
       // Build MongoDB aggregation pipeline
       // MongoDB Atlas Vector Search has a max numCandidates of 10000
@@ -216,6 +203,18 @@ export class TransactionVectorSearchService {
   }
 
   /**
+   * Search transactions using semantic similarity
+   * @deprecated Use searchTransactionsWithEmbedding instead and generate embeddings in the AI package
+   */
+  static async searchTransactions(
+    query: TransactionVectorQuery
+  ): Promise<TransactionSearchResult[]> {
+    throw new Error(
+      'searchTransactions is deprecated. Use searchTransactionsWithEmbedding and generate embeddings in the AI package to avoid circular dependencies.'
+    );
+  }
+
+  /**
    * Find similar transactions to a given transaction
    */
   static async findSimilarTransactions(
@@ -291,11 +290,11 @@ export class TransactionVectorSearchService {
   }
 
   /**
-   * Get spending insights using vector search
+   * Get spending insights using vector search with pre-generated embedding
    */
-  static async getSpendingInsights(
+  static async getSpendingInsightsWithEmbedding(
     userId: string,
-    query: string,
+    queryVector: number[],
     timeframe?: { start: Date; end: Date }
   ): Promise<{
     transactions: TransactionSearchResult[];
@@ -309,13 +308,16 @@ export class TransactionVectorSearchService {
     try {
       // Search for relevant transactions
       const searchQuery: TransactionVectorQuery = {
-        queryText: query,
+        queryText: '', // Not used when embedding is provided
         userId,
         limit: 20,
         filters: timeframe ? { dateRange: timeframe } : undefined,
       };
 
-      const transactions = await this.searchTransactions(searchQuery);
+      const transactions = await this.searchTransactionsWithEmbedding(
+        searchQuery,
+        queryVector
+      );
 
       // Calculate summary
       const totalAmount = transactions.reduce(
@@ -347,6 +349,28 @@ export class TransactionVectorSearchService {
         `Get spending insights failed: ${(error as Error).message}`
       );
     }
+  }
+
+  /**
+   * Get spending insights using vector search
+   * @deprecated Use getSpendingInsightsWithEmbedding instead and generate embeddings in the AI package
+   */
+  static async getSpendingInsights(
+    userId: string,
+    query: string,
+    timeframe?: { start: Date; end: Date }
+  ): Promise<{
+    transactions: TransactionSearchResult[];
+    summary: {
+      totalAmount: number;
+      transactionCount: number;
+      averageAmount: number;
+      categories: Record<string, number>;
+    };
+  }> {
+    throw new Error(
+      'getSpendingInsights is deprecated. Use getSpendingInsightsWithEmbedding and generate embeddings in the AI package to avoid circular dependencies.'
+    );
   }
 
   // =============================================================================

@@ -100,6 +100,9 @@ export class RAGService {
     filters?: TransactionSearchFilters
   ): Promise<RelevantTransaction[]> {
     try {
+      // Generate embedding for the query
+      const queryVector = await this.embeddingProvider.getEmbedding(query);
+
       // Dynamic import to avoid circular dependencies
       const { TransactionVectorSearchService } = await import(
         '../../../database/src/transaction-vector-search'
@@ -120,9 +123,12 @@ export class RAGService {
           : undefined,
       };
 
-      // Execute search using TransactionVectorSearchService
+      // Execute search using TransactionVectorSearchService with pre-generated embedding
       const results =
-        await TransactionVectorSearchService.searchTransactions(searchQuery);
+        await TransactionVectorSearchService.searchTransactionsWithEmbedding(
+          searchQuery,
+          queryVector
+        );
 
       // Convert to RelevantTransaction format
       return results.map(result => ({

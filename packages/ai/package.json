@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@financial-ai/database": "workspace:*",
+    "@financial-ai/shared": "workspace:*",
     "@langchain/anthropic": "^0.0.4",
     "@langchain/openai": "^0.0.14",
     "chromadb": "^1.7.3",
