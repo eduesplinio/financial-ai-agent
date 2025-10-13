@@ -620,11 +620,11 @@ function addSoftDeleteMiddleware<T extends Document>(schema: Schema<T>) {
   };
 }
 
-// Apply soft delete to all schemas
+// Apply soft delete to all schemas (except Conversation - causes query issues)
 addSoftDeleteMiddleware(UserSchema);
 addSoftDeleteMiddleware(TransactionSchema);
 addSoftDeleteMiddleware(KnowledgeDocumentSchema);
-addSoftDeleteMiddleware(ConversationSchema);
+// addSoftDeleteMiddleware(ConversationSchema); // Removed - use hard delete for conversations
 
 // =============================================================================
 // MODELS
