@@ -265,6 +265,13 @@ Responda de forma clara e concisa em português brasileiro.`,
                 role: 'assistant',
                 content: fullResponse,
                 timestamp: new Date(),
+                sources: [
+                  {
+                    id: 'openai_general',
+                    title: 'Conhecimento Geral (OpenAI)',
+                    url: '#',
+                  },
+                ],
               }
             );
             console.log(
@@ -402,6 +409,11 @@ Responda de forma clara e concisa em português brasileiro.`,
             role: 'assistant',
             content: fullResponse,
             timestamp: new Date(),
+            sources: sources.map((src, index) => ({
+              id: `source_${index}`,
+              title: src.title,
+              url: src.url,
+            })),
           };
 
           const result2 = await (
