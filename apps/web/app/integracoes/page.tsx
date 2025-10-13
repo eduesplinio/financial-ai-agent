@@ -27,36 +27,41 @@ import {
 import { useToast } from '@/components/ui/use-toast';
 import { useConfirmationModal } from '@/components/ui/confirmation-modal';
 
-// Função para obter ícone do banco com cor
-const getBankIcon = (bankId: string) => {
-  const icons = {
-    'banco-do-brasil': <Building2 className="h-8 w-8 text-yellow-600" />,
-    itau: <Building2 className="h-8 w-8 text-orange-600" />,
-    bradesco: <Building2 className="h-8 w-8 text-red-600" />,
-    santander: <Building2 className="h-8 w-8 text-red-500" />,
-    caixa: <Building2 className="h-8 w-8 text-blue-600" />,
-    nubank: <Building2 className="h-8 w-8 text-purple-600" />,
-    inter: <Building2 className="h-8 w-8 text-orange-500" />,
-    'c6-bank': <Building2 className="h-8 w-8 text-gray-800" />,
+// Função para obter logo do banco
+const getBankLogo = (bankId: string, institutionName: string) => {
+  const logos: Record<string, string> = {
+    'banco-do-brasil': '/bank-logos/banco-do-brasil.svg',
+    bradesco: '/bank-logos/bradesco.svg',
+    nubank: '/bank-logos/nubank.svg',
+    inter: '/bank-logos/inter.svg',
+    itau: '/bank-logos/itau.svg',
+    'btg-pactual-001': '/bank-logos/btg.svg',
+    caixa: '/bank-logos/caixa.svg',
+    'c6-bank': '/bank-logos/c6.svg',
+    santander: '/bank-logos/santander.svg',
   };
-  return (
-    icons[bankId as keyof typeof icons] || <Building2 className="h-8 w-8" />
-  );
-};
 
-// Função para obter cor de fundo do banco
-const getBankColor = (bankId: string) => {
-  const colors = {
-    'banco-do-brasil': 'bg-yellow-100',
-    itau: 'bg-orange-100',
-    bradesco: 'bg-red-100',
-    santander: 'bg-red-50',
-    caixa: 'bg-blue-100',
-    nubank: 'bg-purple-100',
-    inter: 'bg-orange-50',
-    'c6-bank': 'bg-gray-100',
-  };
-  return colors[bankId as keyof typeof colors] || 'bg-muted';
+  const logoUrl = logos[bankId];
+
+  if (logoUrl) {
+    return (
+      <img
+        src={logoUrl}
+        alt={`Logo ${institutionName}`}
+        className="w-full h-full object-contain"
+        onError={e => {
+          console.error(`Erro ao carregar logo: ${logoUrl} para ${bankId}`);
+          e.currentTarget.style.display = 'none';
+        }}
+        onLoad={() => {
+          console.log(`Logo carregado com sucesso: ${logoUrl}`);
+        }}
+      />
+    );
+  }
+
+  // Fallback para ícone genérico
+  return <Building2 className="h-8 w-8 text-muted-foreground" />;
 };
 
 interface Institution {
@@ -382,10 +387,11 @@ export default function IntegracoesPage() {
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
-                          <div
-                            className={`w-12 h-12 rounded-lg flex items-center justify-center ${getBankColor(group.institutionId)}`}
-                          >
-                            {getBankIcon(group.institutionId)}
+                          <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white shadow-sm border border-gray-100 p-1.5">
+                            {getBankLogo(
+                              group.institutionId,
+                              group.institutionName
+                            )}
                           </div>
                           <div className="flex items-center space-x-4">
                             <span className="font-semibold">
@@ -452,10 +458,8 @@ export default function IntegracoesPage() {
                 <Card key={institution.id}>
                   <CardContent className="p-4">
                     <div className="flex items-center space-x-3 mb-4">
-                      <div
-                        className={`w-16 h-16 rounded-lg flex items-center justify-center ${getBankColor(institution.id)}`}
-                      >
-                        {getBankIcon(institution.id)}
+                      <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white shadow-sm border border-gray-100 p-1.5">
+                        {getBankLogo(institution.id, institution.name)}
                       </div>
                       <div className="flex-1">
                         <h3 className="text-lg font-semibold">

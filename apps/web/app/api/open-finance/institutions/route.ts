@@ -93,7 +93,7 @@ const AVAILABLE_INSTITUTIONS = [
     logoUrl: '/logos/btg.svg', // Adapte o caminho do logo se necessário
     status: 'active',
     supportedServices: ['accounts', 'investments', 'transactions'], // Apenas receitas e investimentos
-    description: 'Banco BTG Pactual. Apenas receitas e investimentos.',
+    description: 'Banco BTG Pactual.',
   },
 ];
 
