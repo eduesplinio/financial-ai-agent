@@ -189,9 +189,22 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
                         {conv.title}
                       </h3>
                     </div>
-                    <p className="text-xs text-muted-foreground truncate mb-2">
-                      {conv.lastMessage}
-                    </p>
+                    <div className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          p: ({ node, ...props }) => <span {...props} />,
+                          h1: ({ node, ...props }) => <strong {...props} />,
+                          h2: ({ node, ...props }) => <strong {...props} />,
+                          h3: ({ node, ...props }) => <strong {...props} />,
+                          ul: ({ node, ...props }) => <span {...props} />,
+                          ol: ({ node, ...props }) => <span {...props} />,
+                          li: ({ node, ...props }) => <span {...props} />,
+                        }}
+                      >
+                        {conv.lastMessage}
+                      </ReactMarkdown>
+                    </div>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Calendar className="h-3 w-3" />
                       <span>{conv.timestamp.toLocaleDateString('pt-BR')}</span>
