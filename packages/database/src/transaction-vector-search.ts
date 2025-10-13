@@ -62,6 +62,19 @@ export class TransactionVectorSearchService {
   private static embeddingProvider: any = null;
 
   /**
+   * Ensure database connection is established
+   * @private
+   */
+  private static async ensureConnection(): Promise<void> {
+    const { mongoConnection } = await import('./connection');
+
+    if (!mongoConnection.isConnected()) {
+      console.log('⚠️ Database not connected, connecting now...');
+      await mongoConnection.connect();
+    }
+  }
+
+  /**
    * Initialize the embedding provider
    * @deprecated This method creates a circular dependency. Pass embeddings directly instead.
    */
@@ -79,10 +92,8 @@ export class TransactionVectorSearchService {
     queryVector: number[]
   ): Promise<TransactionSearchResult[]> {
     try {
-      // Ensure MongoDB connection
-      if (mongoose.connection.readyState !== 1) {
-        await mongoose.connect(process.env.MONGODB_URI!);
-      }
+      // Ensure database connection before querying
+      await this.ensureConnection();
 
       // Validate input
       const validatedQuery = TransactionVectorQuerySchema.parse(query);

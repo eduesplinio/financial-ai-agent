@@ -251,8 +251,8 @@ class MongoDBConnection {
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
 
-      // Buffering settings - bufferMaxEntries removido pois está obsoleto
-      bufferCommands: false,
+      // Buffering settings - enable buffering to queue operations until connected
+      bufferCommands: true,
 
       // Monitoring
       monitorCommands: nodeEnv === 'development',
@@ -330,8 +330,13 @@ class MongoDBConnection {
 
   /**
    * Start periodic health check monitoring
+   * DISABLED: Causing reconnection loops
    */
   private startHealthCheckMonitoring(): void {
+    // Health check disabled to prevent reconnection loops
+    console.log('ℹ️  Health check monitoring disabled');
+    return;
+
     // Perform health check every 30 seconds
     this.healthCheckInterval = setInterval(async () => {
       const health = await this.healthCheck();

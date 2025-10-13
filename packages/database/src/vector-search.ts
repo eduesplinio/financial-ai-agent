@@ -100,6 +100,19 @@ export interface VectorSearchStats {
 
 export class VectorSearchService {
   /**
+   * Ensure database connection is established
+   * @private
+   */
+  private static async ensureConnection(): Promise<void> {
+    const { mongoConnection } = await import('./connection');
+
+    if (!mongoConnection.isConnected()) {
+      console.log('⚠️ Database not connected, connecting now...');
+      await mongoConnection.connect();
+    }
+  }
+
+  /**
    * Create vector search index in MongoDB Atlas
    * This should be run once during setup or when index configuration changes
    */
@@ -142,6 +155,9 @@ export class VectorSearchService {
     query: VectorSearchQuery
   ): Promise<SimilaritySearchResult[]> {
     try {
+      // Ensure database connection before querying
+      await this.ensureConnection();
+
       // Garantir que numCandidates tenha um valor padrão se não for fornecido
       const queryWithDefaults = {
         ...query,
