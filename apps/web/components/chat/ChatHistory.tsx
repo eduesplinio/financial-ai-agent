@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Search, MessageCircle, Calendar, Filter, X } from 'lucide-react';
+import { Search, MessageCircle, Calendar, X } from 'lucide-react';
 import { ChatMessage } from './ChatWidget';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface ChatHistoryProps {
   isOpen: boolean;
@@ -27,64 +29,78 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
     string | null
   >(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loadingConversations, setLoadingConversations] = useState(false);
+  const [loadingMessages, setLoadingMessages] = useState(false);
 
-  // Mock data for demonstration
+  // Load conversations from API
   useEffect(() => {
     if (isOpen) {
-      const mockConversations: ConversationSummary[] = [
-        {
-          id: '1',
-          title: 'Planejamento Financeiro 2024',
-          lastMessage: 'Como posso organizar melhor meu orçamento?',
-          timestamp: new Date('2024-01-15T10:30:00'),
-          messageCount: 8,
-        },
-        {
-          id: '2',
-          title: 'Investimentos em Renda Fixa',
-          lastMessage: 'Quais são as melhores opções de CDB?',
-          timestamp: new Date('2024-01-14T15:45:00'),
-          messageCount: 12,
-        },
-        {
-          id: '3',
-          title: 'Análise de Gastos Dezembro',
-          lastMessage: 'Meus gastos aumentaram muito em dezembro',
-          timestamp: new Date('2024-01-10T09:20:00'),
-          messageCount: 5,
-        },
-      ];
-      setConversations(mockConversations);
+      loadConversations();
     }
   }, [isOpen]);
 
-  const loadConversation = async (conversationId: string) => {
-    setLoading(true);
+  const loadConversations = async () => {
+    setLoadingConversations(true);
     try {
-      // Mock loading conversation messages
-      const mockMessages: ChatMessage[] = [
-        {
-          id: '1',
-          role: 'user',
-          content: 'Como posso organizar melhor meu orçamento?',
-        },
-        {
-          id: '2',
-          role: 'assistant',
-          content:
-            'Para organizar seu orçamento de forma eficiente, recomendo seguir a regra 50-30-20: 50% para gastos essenciais, 30% para gastos pessoais e 20% para poupança e investimentos.',
-          sources: [{ title: 'Guia de Planejamento Financeiro', url: '#' }],
-          feedback: null,
-        },
-      ];
+      const response = await fetch('/api/chat/history');
+      if (!response.ok) {
+        throw new Error('Failed to load conversations');
+      }
 
-      setMessages(mockMessages);
-      setSelectedConversation(conversationId);
+      const data = await response.json();
+      const conversationsList: ConversationSummary[] = data.conversations.map(
+        (conv: any) => ({
+          id: conv.id,
+          title: conv.title,
+          lastMessage: conv.lastMessage,
+          timestamp: new Date(conv.timestamp),
+          messageCount: conv.messageCount,
+        })
+      );
+
+      setConversations(conversationsList);
+    } catch (error) {
+      console.error('Error loading conversations:', error);
+      setConversations([]);
+    } finally {
+      setLoadingConversations(false);
+    }
+  };
+
+  const loadConversation = async (conversationId: string) => {
+    setLoadingMessages(true);
+    setSelectedConversation(conversationId);
+    try {
+      const response = await fetch('/api/chat/history', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ conversationId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to load conversation');
+      }
+
+      const data = await response.json();
+      const conversationMessages: ChatMessage[] = data.messages.map(
+        (msg: any) => ({
+          id: msg.id,
+          role: msg.role,
+          content: msg.content,
+          sources:
+            msg.sources && msg.sources.length > 0 ? msg.sources : undefined,
+          feedback: null,
+        })
+      );
+
+      setMessages(conversationMessages);
     } catch (error) {
       console.error('Error loading conversation:', error);
+      setMessages([]);
     } finally {
-      setLoading(false);
+      setLoadingMessages(false);
     }
   };
 
@@ -97,8 +113,14 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-background border border-border rounded-xl shadow-2xl w-full max-w-4xl h-full max-h-[80vh] flex flex-col">
+    <div
+      className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-background border border-border rounded-xl shadow-2xl w-full max-w-6xl h-full max-h-[85vh] flex flex-col"
+        onClick={e => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="bg-[#11684A] text-white px-6 py-4 rounded-t-xl flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -133,7 +155,22 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
 
             {/* Conversation List */}
             <div className="flex-1 overflow-y-auto">
-              {filteredConversations.length === 0 ? (
+              {loadingConversations && conversations.length === 0 ? (
+                <div className="p-4 text-center text-muted-foreground">
+                  <div className="flex items-center justify-center gap-2 mb-3">
+                    <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
+                    <div
+                      className="w-2 h-2 bg-primary rounded-full animate-bounce"
+                      style={{ animationDelay: '0.1s' }}
+                    ></div>
+                    <div
+                      className="w-2 h-2 bg-primary rounded-full animate-bounce"
+                      style={{ animationDelay: '0.2s' }}
+                    ></div>
+                  </div>
+                  <p>Carregando conversas...</p>
+                </div>
+              ) : filteredConversations.length === 0 ? (
                 <div className="p-4 text-center text-muted-foreground">
                   <MessageCircle className="h-12 w-12 mx-auto mb-3 opacity-50" />
                   <p>Nenhuma conversa encontrada</p>
@@ -147,13 +184,10 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
                       selectedConversation === conv.id ? 'bg-muted' : ''
                     }`}
                   >
-                    <div className="flex items-start justify-between mb-1">
+                    <div className="mb-1">
                       <h3 className="font-medium text-sm truncate">
                         {conv.title}
                       </h3>
-                      <span className="text-xs text-muted-foreground ml-2">
-                        {conv.messageCount} msgs
-                      </span>
                     </div>
                     <p className="text-xs text-muted-foreground truncate mb-2">
                       {conv.lastMessage}
@@ -182,7 +216,7 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4">
-                  {loading ? (
+                  {loadingMessages ? (
                     <div className="flex items-center justify-center h-full">
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
@@ -209,12 +243,36 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
                           <div
                             className={`rounded-lg px-3 py-2 max-w-[85%] ${
                               msg.role === 'user'
-                                ? 'bg-primary text-primary-foreground'
-                                : 'bg-muted text-foreground'
+                                ? 'bg-[#11684A] text-white'
+                                : 'bg-muted text-foreground border border-border'
                             }`}
                           >
-                            <div className="whitespace-pre-wrap">
-                              {msg.content}
+                            <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0 prose-strong:font-semibold prose-strong:text-inherit">
+                              <ReactMarkdown
+                                remarkPlugins={[remarkGfm]}
+                                components={{
+                                  h1: ({ node, ...props }) => (
+                                    <strong {...props} />
+                                  ),
+                                  h2: ({ node, ...props }) => (
+                                    <strong {...props} />
+                                  ),
+                                  h3: ({ node, ...props }) => (
+                                    <strong {...props} />
+                                  ),
+                                  h4: ({ node, ...props }) => (
+                                    <strong {...props} />
+                                  ),
+                                  h5: ({ node, ...props }) => (
+                                    <strong {...props} />
+                                  ),
+                                  h6: ({ node, ...props }) => (
+                                    <strong {...props} />
+                                  ),
+                                }}
+                              >
+                                {msg.content}
+                              </ReactMarkdown>
                             </div>
 
                             {msg.sources && msg.sources.length > 0 && (
