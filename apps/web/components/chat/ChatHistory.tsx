@@ -180,11 +180,11 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
                   <button
                     key={conv.id}
                     onClick={() => loadConversation(conv.id)}
-                    className={`w-full p-4 text-left border-b border-border hover:bg-muted/50 transition-colors ${
+                    className={`w-full p-3 text-left border-b border-border hover:bg-muted/50 transition-colors ${
                       selectedConversation === conv.id ? 'bg-muted' : ''
                     }`}
                   >
-                    <div className="mb-1">
+                    <div className="mb-1.5">
                       <h3 className="font-medium text-sm truncate">
                         {conv.title}
                       </h3>
@@ -205,7 +205,7 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
                         {conv.lastMessage}
                       </ReactMarkdown>
                     </div>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
                       <Calendar className="h-3 w-3" />
                       <span>{conv.timestamp.toLocaleDateString('pt-BR')}</span>
                     </div>
@@ -220,7 +220,7 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
             {selectedConversation ? (
               <>
                 <div className="p-4 border-b border-border">
-                  <h3 className="font-semibold">
+                  <h3 className="font-semibold text-sm">
                     {
                       conversations.find(c => c.id === selectedConversation)
                         ?.title
@@ -254,13 +254,13 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
                           className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                         >
                           <div
-                            className={`rounded-lg px-3 py-2 max-w-[85%] ${
+                            className={`rounded-lg px-3 py-2 max-w-[85%] text-sm ${
                               msg.role === 'user'
                                 ? 'bg-[#11684A] text-white'
                                 : 'bg-muted text-foreground border border-border'
                             }`}
                           >
-                            <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0 prose-strong:font-semibold prose-strong:text-inherit">
+                            <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0 prose-strong:font-semibold prose-strong:text-inherit [&>*]:text-sm">
                               <ReactMarkdown
                                 remarkPlugins={[remarkGfm]}
                                 components={{
@@ -290,7 +290,7 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
 
                             {msg.sources && msg.sources.length > 0 && (
                               <div className="mt-2 pt-2 border-t border-border/20">
-                                <div className="text-xs text-muted-foreground mb-1">
+                                <div className="text-[10px] text-muted-foreground mb-1">
                                   Fontes:
                                 </div>
                                 <div className="flex flex-wrap gap-1">
@@ -300,7 +300,7 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
                                       href={src.url}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="text-xs bg-background/50 px-2 py-1 rounded hover:bg-background/80 transition-colors"
+                                      className="text-[10px] bg-background/50 px-1.5 py-0.5 rounded hover:bg-background/80 transition-colors"
                                     >
                                       {src.title}
                                     </a>
