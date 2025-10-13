@@ -37,9 +37,19 @@ export const ChatWidget: React.FC = () => {
   const [showWidget, setShowWidget] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [sessionId, setSessionId] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Initialize sessionId when widget opens
+  useEffect(() => {
+    if (showWidget && !sessionId && session?.user?.id) {
+      const newSessionId = `session_${Date.now()}_${session.user.id}`;
+      setSessionId(newSessionId);
+      console.log('📝 Created new session:', newSessionId);
+    }
+  }, [showWidget, sessionId, session?.user?.id]);
 
   // Auto-scroll durante streaming
   useEffect(() => {
@@ -244,10 +254,24 @@ export const ChatWidget: React.FC = () => {
     setLoading(true);
 
     try {
-      // Use Server-Sent Events for streaming
-      const response = await fetch(
-        `/api/chat/stream?message=${encodeURIComponent(userMessage.content)}`
-      );
+      // Build conversation history (last 10 messages for context)
+      const history = messages.slice(-10).map(msg => ({
+        role: msg.role,
+        content: msg.content,
+      }));
+
+      // Use Server-Sent Events for streaming with conversation history
+      const response = await fetch('/api/chat/stream', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: userMessage.content,
+          history: history,
+          sessionId: sessionId, // Send sessionId for persistence
+        }),
+      });
 
       if (!response.ok) {
         throw new Error('Failed to send message');
@@ -341,6 +365,11 @@ export const ChatWidget: React.FC = () => {
     } finally {
       setLoading(false);
       setStreaming(false);
+
+      // Focus input after response is complete
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
     }
   };
 

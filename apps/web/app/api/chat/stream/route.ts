@@ -6,10 +6,10 @@ import { authOptions } from '@/lib/auth';
 export const dynamic = 'force-dynamic';
 
 /**
- * GET /api/chat/stream
- * Endpoint para streaming de chat com RAG completo
+ * POST /api/chat/stream
+ * Endpoint para streaming de chat com RAG completo e memória de conversação
  */
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -17,8 +17,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
-    const message = searchParams.get('message');
+    const body = await request.json();
+    const { message, history = [], sessionId } = body;
 
     if (!message) {
       return NextResponse.json(
@@ -36,10 +36,12 @@ export async function GET(request: NextRequest) {
           const { ChatRAGService } = await import('@/lib/chat-rag-service');
           const chatRAGService = new ChatRAGService();
 
-          // Stream response using RAG
+          // Stream response using RAG with conversation history
           for await (const chunk of chatRAGService.streamResponse(
             session.user.id,
-            message
+            message,
+            history,
+            sessionId
           )) {
             controller.enqueue(
               encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`)
