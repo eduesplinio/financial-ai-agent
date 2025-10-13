@@ -24,22 +24,93 @@ export class ChatRAGService {
    */
   async processMessage(
     userId: string,
-    message: string
+    message: string,
+    history?: Array<{ role: string; content: string }>,
+    sessionId?: string
   ): Promise<AsyncGenerator<ChatChunk>> {
-    return this.streamResponse(userId, message);
+    return this.streamResponse(userId, message, history, sessionId);
   }
 
   /**
    * Stream response with RAG context from MongoDB
+   * @param userId - User ID
+   * @param message - Current user message
+   * @param history - Conversation history (last N messages)
    */
   async *streamResponse(
     userId: string,
-    message: string
+    message: string,
+    history: Array<{ role: string; content: string }> = [],
+    sessionId?: string
   ): AsyncGenerator<ChatChunk> {
     try {
       console.log(
         `🔍 Processing chat message for user ${userId}: "${message}"`
       );
+      console.log(`📚 Conversation history: ${history.length} messages`);
+      console.log(`🔑 Session ID: ${sessionId || 'none'}`);
+      if (history.length > 0) {
+        console.log(
+          `   Last message: ${history[history.length - 1]?.content?.substring(0, 50)}...`
+        );
+      }
+
+      // Import conversation service for persistence
+      const { ConversationService, Conversation } = await import(
+        '../../../packages/database/src/models'
+      );
+
+      // Get or create conversation for persistence
+      let conversation = null;
+      const effectiveSessionId = sessionId || `session_${Date.now()}_${userId}`;
+
+      try {
+        // Try to find existing conversation by sessionId
+        // Use direct MongoDB query to bypass middleware issues
+        const mongoose = await import('mongoose');
+        const db = mongoose.default.connection.db;
+
+        if (sessionId && db) {
+          console.log(
+            `🔍 Searching for conversation with sessionId: ${sessionId}`
+          );
+
+          // Direct MongoDB query (bypasses Mongoose middleware)
+          const conversationDoc = await db
+            .collection('conversations')
+            .findOne({ sessionId: sessionId });
+
+          if (conversationDoc) {
+            // Convert to Mongoose document
+            conversation = new Conversation(conversationDoc);
+            console.log(
+              `📖 Using existing conversation: ${conversation._id} (${conversation.messages?.length || 0} messages)`
+            );
+          } else {
+            console.log(`   No conversation found with this sessionId`);
+          }
+        }
+
+        // If not found, create new conversation
+        if (!conversation) {
+          console.log(
+            `📝 Creating new conversation with sessionId: ${effectiveSessionId}`
+          );
+          conversation = await ConversationService.create({
+            userId,
+            sessionId: effectiveSessionId,
+            messages: [],
+            context: {},
+          });
+          console.log(`✅ Created conversation: ${conversation._id}`);
+          console.log(`   SessionId: ${conversation.sessionId}`);
+          console.log(`   Messages: ${conversation.messages?.length || 0}`);
+        }
+      } catch (error) {
+        console.error('❌ Error managing conversation:', error);
+        console.error('   Error details:', error);
+        // Continue without persistence if there's an error
+      }
 
       // Import RAGService dynamically to avoid build issues
       const { RAGService } = await import(
@@ -98,13 +169,11 @@ export class ChatRAGService {
       if (results.documents.length === 0 && results.transactions.length === 0) {
         console.log('⚠️ No data found, using general financial knowledge');
 
-        // Stream response from OpenAI without RAG context
-        const completion = await openai.chat.completions.create({
-          model: 'gpt-4o-mini',
-          messages: [
-            {
-              role: 'system',
-              content: `Você é um assistente financeiro pessoal especializado em educação financeira.
+        // Build messages with conversation history
+        const messages: any[] = [
+          {
+            role: 'system',
+            content: `Você é um assistente financeiro pessoal especializado em educação financeira.
 
 INSTRUÇÕES:
 1. Responda perguntas sobre finanças pessoais, investimentos e planejamento financeiro
@@ -113,13 +182,42 @@ INSTRUÇÕES:
 4. Para perguntas não relacionadas a finanças, responda: "Sou especializado em finanças. Posso ajudar com transações, investimentos e planejamento financeiro."
 5. Se o usuário perguntar sobre suas transações, informe que não há transações cadastradas ainda
 
+IMPORTANTE - CONTEXTO DA CONVERSA:
+6. SEMPRE analise o histórico da conversa antes de responder
+7. Se a pergunta for vaga ou incompleta (ex: "como comprar", "pra que serve"), use o contexto das mensagens anteriores para entender sobre o que o usuário está falando
+8. Mantenha o tópico da conversa anterior a menos que o usuário mude explicitamente de assunto
+9. Perguntas de acompanhamento referem-se ao tópico atual da conversa
+
 Responda de forma clara e concisa em português brasileiro.`,
-            },
-            {
-              role: 'user',
-              content: message,
-            },
-          ],
+          },
+        ];
+
+        // Add conversation history
+        console.log(`📝 Adding ${history.length} messages to context`);
+        history.forEach((msg, index) => {
+          console.log(
+            `   ${index + 1}. ${msg.role}: ${msg.content.substring(0, 30)}...`
+          );
+          messages.push({
+            role: msg.role,
+            content: msg.content,
+          });
+        });
+
+        // Add current message
+        messages.push({
+          role: 'user',
+          content: message,
+        });
+
+        console.log(
+          `📤 Sending ${messages.length} messages to OpenAI (including system prompt)`
+        );
+
+        // Stream response from OpenAI without RAG context
+        const completion = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages,
           stream: true,
           temperature: 0.7,
           max_tokens: 1200,
@@ -136,6 +234,47 @@ Responda de forma clara e concisa em português brasileiro.`,
               content: content,
             };
           }
+        }
+
+        // Save messages to database
+        if (conversation) {
+          try {
+            console.log(
+              `💾 Saving user message to conversation ${conversation.sessionId}`
+            );
+            const updatedConv1 = await ConversationService.addMessage(
+              conversation.sessionId,
+              {
+                id: `msg_${Date.now()}_user`,
+                role: 'user',
+                content: message,
+                timestamp: new Date(),
+              }
+            );
+            console.log(
+              `✅ User message saved. Total messages: ${updatedConv1?.messages.length || 0}`
+            );
+
+            console.log(
+              `💾 Saving assistant message to conversation ${conversation.sessionId}`
+            );
+            const updatedConv2 = await ConversationService.addMessage(
+              conversation.sessionId,
+              {
+                id: `msg_${Date.now()}_assistant`,
+                role: 'assistant',
+                content: fullResponse,
+                timestamp: new Date(),
+              }
+            );
+            console.log(
+              `✅ Assistant message saved. Total messages: ${updatedConv2?.messages.length || 0}`
+            );
+          } catch (error) {
+            console.error('❌ Error saving messages:', error);
+          }
+        } else {
+          console.warn('⚠️ No conversation object, skipping save');
         }
 
         yield {
@@ -165,19 +304,40 @@ Responda de forma clara e concisa em português brasileiro.`,
       // Create system prompt
       const systemPrompt = this.createSystemPrompt(context);
 
+      // Build messages with conversation history
+      const messages: any[] = [
+        {
+          role: 'system',
+          content: systemPrompt,
+        },
+      ];
+
+      // Add conversation history
+      console.log(`📝 Adding ${history.length} messages to context`);
+      history.forEach((msg, index) => {
+        console.log(
+          `   ${index + 1}. ${msg.role}: ${msg.content.substring(0, 30)}...`
+        );
+        messages.push({
+          role: msg.role,
+          content: msg.content,
+        });
+      });
+
+      // Add current message
+      messages.push({
+        role: 'user',
+        content: message,
+      });
+
+      console.log(
+        `📤 Sending ${messages.length} messages to OpenAI (including system prompt)`
+      );
+
       // Stream response from OpenAI
       const completion = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: systemPrompt,
-          },
-          {
-            role: 'user',
-            content: message,
-          },
-        ],
+        messages,
         stream: true,
         temperature: 0.7,
         max_tokens: 1200,
@@ -194,6 +354,79 @@ Responda de forma clara e concisa em português brasileiro.`,
             content: content,
           };
         }
+      }
+
+      // Save messages to database
+      if (conversation) {
+        try {
+          console.log(
+            `💾 Saving user message to conversation ${conversation.sessionId}`
+          );
+
+          // Use direct MongoDB update to bypass middleware
+          const mongoose = await import('mongoose');
+          const db = mongoose.default.connection.db;
+
+          const userMsg = {
+            id: `msg_${Date.now()}_user`,
+            role: 'user',
+            content: message,
+            timestamp: new Date(),
+          };
+
+          const result1 = await (
+            db.collection('conversations') as any
+          ).findOneAndUpdate(
+            { sessionId: conversation.sessionId },
+            {
+              $push: { messages: userMsg },
+              $set: { updatedAt: new Date() },
+            },
+            { returnDocument: 'after' }
+          );
+
+          if (result1) {
+            console.log(
+              `✅ User message saved. Total messages: ${result1.messages?.length || 0}`
+            );
+          } else {
+            console.error(`❌ Failed to save user message`);
+          }
+
+          console.log(
+            `💾 Saving assistant message to conversation ${conversation.sessionId}`
+          );
+
+          const assistantMsg = {
+            id: `msg_${Date.now()}_assistant`,
+            role: 'assistant',
+            content: fullResponse,
+            timestamp: new Date(),
+          };
+
+          const result2 = await (
+            db.collection('conversations') as any
+          ).findOneAndUpdate(
+            { sessionId: conversation.sessionId },
+            {
+              $push: { messages: assistantMsg },
+              $set: { updatedAt: new Date() },
+            },
+            { returnDocument: 'after' }
+          );
+
+          if (result2) {
+            console.log(
+              `✅ Assistant message saved. Total messages: ${result2.messages?.length || 0}`
+            );
+          } else {
+            console.error(`❌ Failed to save assistant message`);
+          }
+        } catch (error) {
+          console.error('❌ Error saving messages:', error);
+        }
+      } else {
+        console.warn('⚠️ No conversation object, skipping save');
       }
 
       // Send completion with sources
@@ -393,6 +626,13 @@ INSTRUÇÕES IMPORTANTES:
 2. Para perguntas sobre CONCEITOS financeiros (O que é MEI? Como funciona Tesouro Direto?), use APENAS os documentos de conhecimento
 3. Para perguntas sobre SEUS DADOS (quanto gastei, quanto tenho), use APENAS as transações
 4. NÃO misture fontes: se a pergunta é sobre conceito, não use transações; se é sobre dados pessoais, não use documentos gerais
+
+**IMPORTANTE - CONTEXTO DA CONVERSA:**
+5. SEMPRE analise o histórico da conversa antes de responder
+6. Se a pergunta for vaga ou incompleta (ex: "como comprar", "pra que serve", "quanto custa"), use o contexto das mensagens anteriores para entender sobre o que o usuário está falando
+7. Mantenha o tópico da conversa anterior a menos que o usuário mude explicitamente de assunto
+8. Perguntas de acompanhamento referem-se ao tópico atual da conversa
+9. Exemplo: se o usuário perguntou "o que é bitcoin" e depois pergunta "como comprar", ele está perguntando como comprar BITCOIN
 
 **Sobre cálculos:**
 5. Para perguntas sobre gastos, investimentos ou receitas, SEMPRE calcule o total somando TODAS as transações da categoria correspondente
