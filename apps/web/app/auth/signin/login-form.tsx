@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { BRAND } from '@/lib/branding';
 
 export function LoginForm() {
+  const router = useRouter();
   const [isSignUp, setIsSignUp] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -76,9 +78,7 @@ export function LoginForm() {
         }
 
         setRedirecting(true);
-        setTimeout(() => {
-          window.location.href = '/dashboard';
-        }, 800);
+        router.push('/dashboard');
         return;
       } else {
         // Login normal
@@ -99,21 +99,9 @@ export function LoginForm() {
         if (result?.error) {
           setError('Email ou senha incorretos');
           setLoading(false);
-        } else if (result?.ok || result?.url) {
-          setLoading(true);
+        } else if (result?.ok) {
           setRedirecting(true);
-
-          setTimeout(() => {
-            window.location.href = result?.url || '/dashboard';
-          }, 800);
-          return;
-        } else {
-          setLoading(true);
-          setRedirecting(true);
-
-          setTimeout(() => {
-            window.location.href = '/dashboard';
-          }, 800);
+          router.push('/dashboard');
           return;
         }
       }
