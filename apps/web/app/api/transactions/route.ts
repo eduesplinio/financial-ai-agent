@@ -41,7 +41,9 @@ export async function GET(request: NextRequest) {
     }
 
     if (category) {
-      filter['category.primary'] = category;
+      filter['category.primary'] = {
+        $regex: new RegExp(`^${category}$`, 'i'),
+      };
     }
 
     if (type) {
