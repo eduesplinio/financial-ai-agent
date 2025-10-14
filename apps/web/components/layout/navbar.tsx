@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Logo } from '@/components/ui/logo';
 import {
   User,
   LogOut,
@@ -107,15 +108,9 @@ export function Sidebar({ className }: SidebarProps) {
     >
       {/* Logo and Toggle */}
       <div className="flex items-center justify-between p-4 border-b">
-        {expanded ? (
-          <Link href="/dashboard" className="text-xl font-bold">
-            Agente Financeiro IA
-          </Link>
-        ) : (
-          <Link href="/dashboard" className="text-xl font-bold mx-auto">
-            AI
-          </Link>
-        )}
+        <Link href="/dashboard">
+          {expanded ? <Logo size="md" /> : <Logo variant="symbol" size="md" />}
+        </Link>
         <Button
           variant="ghost"
           size="icon"

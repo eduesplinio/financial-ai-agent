@@ -49,6 +49,7 @@ import {
   Landmark,
   X,
 } from 'lucide-react';
+import { Logo } from '@/components/ui/logo';
 
 interface NavItem {
   name: string;
@@ -437,9 +438,7 @@ export function Sidebar({ className }: SidebarProps) {
               <path d="M2 17l10 5 10-5" />
               <path d="M2 12l10 5 10-5" />
             </svg>
-            <span className="ml-2 text-xl font-bold text-foreground dark:text-white">
-              FinanceAI
-            </span>
+            <Logo variant="text" size="md" />
           </Link>
 
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -465,7 +464,7 @@ export function Sidebar({ className }: SidebarProps) {
                     <path d="M2 17l10 5 10-5" />
                     <path d="M2 12l10 5 10-5" />
                   </svg>
-                  FinanceAI
+                  <Logo variant="text" size="sm" />
                 </SheetTitle>
               </SheetHeader>
               <div className="flex flex-col h-full overflow-x-hidden">
@@ -519,9 +518,9 @@ export function Sidebar({ className }: SidebarProps) {
                 <path d="M2 12l10 5 10-5" />
               </svg>
               {expanded && (
-                <span className="ml-2 text-xl font-bold whitespace-nowrap transition-opacity duration-500 ease-in-out text-foreground dark:text-white">
-                  FinanceAI
-                </span>
+                <div className="ml-2 transition-opacity duration-500 ease-in-out">
+                  <Logo variant="text" size="md" />
+                </div>
               )}
             </div>
           </Link>

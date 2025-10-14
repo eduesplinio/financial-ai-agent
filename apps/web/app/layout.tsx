@@ -13,10 +13,29 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'Financial AI Agent',
-  description: 'AI-powered financial advisor using RAG architecture',
-  keywords: ['finance', 'AI', 'advisor', 'RAG', 'financial planning'],
-  authors: [{ name: 'Financial AI Team' }],
+  title: 'Linio - Assistente de IA Financeira',
+  description:
+    'Transforme sua vida financeira com inteligência artificial. Linio oferece orientação personalizada, análise de gastos e planejamento financeiro inteligente.',
+  keywords: [
+    'IA financeira',
+    'assistente financeiro',
+    'planejamento financeiro',
+    'análise de gastos',
+    'investimentos',
+    'Linio',
+  ],
+  authors: [{ name: 'Linio Team' }],
+  openGraph: {
+    title: 'Linio - Assistente de IA Financeira',
+    description: 'Transforme sua vida financeira com inteligência artificial',
+    type: 'website',
+    locale: 'pt_BR',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Linio - Assistente de IA Financeira',
+    description: 'Transforme sua vida financeira com inteligência artificial',
+  },
 };
 
 export default function RootLayout({
@@ -26,6 +45,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/favicon.svg?v=2" />
+        <link rel="shortcut icon" href="/favicon.svg?v=2" />
+      </head>
       <body className={inter.className} suppressHydrationWarning>
         <Providers>
           <AppShell>{children}</AppShell>
