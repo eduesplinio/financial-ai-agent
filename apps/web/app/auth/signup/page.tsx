@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Logo } from '@/components/ui/logo';
 
 export default function SignUpPage() {
   const [name, setName] = useState('');
@@ -60,10 +61,14 @@ export default function SignUpPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full space-y-8 p-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Criar nova conta
+        <div className="text-center">
+          <Logo size="lg" className="mx-auto mb-4" />
+          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+            Criar nova conta no Linio
           </h2>
+          <p className="mt-2 text-sm text-gray-600">
+            Seu assistente de IA financeira personalizado
+          </p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>

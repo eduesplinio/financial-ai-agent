@@ -1,3 +1,10 @@
+import { getPageTitle } from '@/lib/page-titles';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: getPageTitle('chat'),
+};
+
 export default function ChatPage() {
   return (
     <div className="p-8">
