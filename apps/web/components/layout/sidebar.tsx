@@ -324,7 +324,7 @@ export function Sidebar({ className }: SidebarProps) {
               <div className="py-1 px-0.5 border-b border-gray-300 dark:border-border/40">
                 <Link
                   href="/profile"
-                  className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium text-green-400 hover:text-green-300 no-underline hover:no-underline focus:no-underline active:no-underline hover:bg-muted/70 transition-colors"
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium text-foreground hover:text-primary no-underline hover:no-underline focus:no-underline active:no-underline hover:bg-muted/70 transition-colors"
                 >
                   <User className="h-4 w-4" />
                   <div>Perfil</div>
@@ -332,7 +332,7 @@ export function Sidebar({ className }: SidebarProps) {
 
                 <Link
                   href="/settings"
-                  className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium text-green-400 hover:text-green-300 no-underline hover:no-underline focus:no-underline active:no-underline hover:bg-muted/70 transition-colors"
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium text-foreground hover:text-primary no-underline hover:no-underline focus:no-underline active:no-underline hover:bg-muted/70 transition-colors"
                 >
                   <Settings className="h-4 w-4" />
                   <div>Configurações</div>
@@ -341,7 +341,7 @@ export function Sidebar({ className }: SidebarProps) {
                 {session.user.role === 'admin' && (
                   <Link
                     href="/admin"
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium text-green-400 hover:text-green-300 no-underline hover:no-underline focus:no-underline active:no-underline hover:bg-muted/70 transition-colors"
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium text-foreground hover:text-primary no-underline hover:no-underline focus:no-underline active:no-underline hover:bg-muted/70 transition-colors"
                   >
                     <Shield className="h-4 w-4" />
                     <div>Admin</div>
