@@ -1,6 +1,6 @@
-# Financial AI Agent
+# Linio
 
-Um agente de IA financeira baseado em arquitetura RAG (Retrieval-Augmented Generation) que fornece orientação financeira personalizada através da integração segura com contas bancárias dos usuários.
+Assistente de IA financeira personalizado baseado em arquitetura RAG (Retrieval-Augmented Generation) que fornece orientação financeira inteligente através da integração segura com suas contas bancárias.
 
 ## 🚀 Tecnologias
 
@@ -24,7 +24,7 @@ Um agente de IA financeira baseado em arquitetura RAG (Retrieval-Augmented Gener
 
 ```bash
 git clone <repository-url>
-cd financial-ai-agent
+cd linio
 ```
 
 ### 2. Instale as dependências
@@ -143,7 +143,7 @@ npm run test:e2e
 ## 🏗️ Estrutura do Projeto
 
 ```
-financial-ai-agent/
+linio/
 ├── apps/
 │   └── web/                 # Next.js frontend
 │       ├── app/            # App Router pages

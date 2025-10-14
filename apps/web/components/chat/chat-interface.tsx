@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { CHAT_CONFIG } from '@/lib/branding';
 
 interface ChatMessage {
   id: string;
@@ -32,8 +33,7 @@ export function ChatInterface({
     {
       id: '1',
       type: 'bot',
-      content:
-        '🤖 Olá! Sou seu assistente financeiro pessoal. Posso ajudá-lo com consultas sobre transações, investimentos, planejamento financeiro e muito mais. Como posso ajudá-lo hoje?',
+      content: CHAT_CONFIG.welcomeMessage,
       timestamp: new Date(),
       metadata: {
         confidence: 1.0,
@@ -187,7 +187,7 @@ export function ChatInterface({
     <Card className="flex flex-col h-[600px]">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2">
-          🤖 Assistente Financeiro IA
+          🤖 Linio - Seu Assistente Financeiro
           <span className="text-sm font-normal text-muted-foreground">
             • {messages.length - 1} mensagens
           </span>
@@ -280,7 +280,7 @@ export function ChatInterface({
               value={inputMessage}
               onChange={e => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Digite sua mensagem sobre finanças..."
+              placeholder={CHAT_CONFIG.placeholderText}
               disabled={isLoading}
               className="flex-1"
             />
@@ -293,8 +293,12 @@ export function ChatInterface({
           </div>
 
           <div className="mt-2 text-xs text-muted-foreground">
-            Exemplos: "Qual meu saldo?", "Gastos em alimentação", "Como investir
-            R$ 1000?"
+            Exemplos:{' '}
+            {CHAT_CONFIG.examples.slice(0, 3).map((example, i) => (
+              <span key={i}>
+                "{example}"{i < 2 ? ', ' : ''}
+              </span>
+            ))}
           </div>
         </div>
       </CardContent>
