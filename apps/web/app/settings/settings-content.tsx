@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 import {
   Card,
   CardContent,
@@ -515,13 +516,14 @@ export function SettingsContent() {
                   Baixar Dados
                 </Button>
 
-                <Button
-                  variant="outline"
-                  className="bg-card border-border hover:bg-primary/10 text-primary"
-                  onClick={() => (window.location.href = '/privacy')}
-                >
-                  Ver Política
-                </Button>
+                <Link href="/privacy">
+                  <Button
+                    variant="outline"
+                    className="bg-card border-border hover:bg-primary/10 text-primary w-full"
+                  >
+                    Ver Política
+                  </Button>
+                </Link>
 
                 <Button
                   variant="destructive"
