@@ -190,7 +190,7 @@ export const MessageSchema = z.object({
       z.object({
         id: z.string(),
         title: z.string(),
-        url: z.string().url().optional(),
+        url: z.string().optional(),
         relevanceScore: z.number().min(0).max(1).optional(),
       })
     )

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { MongoClient, ObjectId } from 'mongodb';
+import { ObjectId } from 'mongodb';
 import { z } from 'zod';
-
-const client = new MongoClient(process.env.MONGODB_URI!);
+import mongoose from 'mongoose';
+import { mongoConnection } from '@financial-ai/database';
 
 const preferencesSchema = z.object({
   theme: z.enum(['light', 'dark', 'system']).optional(),
@@ -53,10 +53,12 @@ export async function PUT(request: NextRequest) {
 
     const validatedData = preferencesSchema.parse(body);
 
-    await client.connect();
+    if (!mongoConnection.isConnected()) {
+      await mongoConnection.connect();
+    }
     console.log('[API Preferences] Conexão com MongoDB estabelecida');
 
-    const db = client.db();
+    const db = mongoose.connection.db;
 
     // Atualizar diretamente na collection de usuários
     const users = db.collection('users');
@@ -271,8 +273,6 @@ export async function PUT(request: NextRequest) {
       { message: 'Erro interno do servidor' },
       { status: 500 }
     );
-  } finally {
-    await client.close();
   }
 }
 
@@ -288,10 +288,12 @@ export async function GET() {
     console.log('[API Preferences GET] ID do usuário:', userId);
     console.log('[API Preferences GET] Sessão do usuário:', session);
 
-    await client.connect();
+    if (!mongoConnection.isConnected()) {
+      await mongoConnection.connect();
+    }
     console.log('[API Preferences GET] Conexão com MongoDB estabelecida');
 
-    const db = client.db();
+    const db = mongoose.connection.db;
 
     // Primeiro buscar no documento do usuário
     const users = db.collection('users');
@@ -399,7 +401,5 @@ export async function GET() {
       { message: 'Erro interno do servidor' },
       { status: 500 }
     );
-  } finally {
-    await client.close();
   }
 }

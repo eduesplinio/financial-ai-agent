@@ -257,6 +257,9 @@ class MongoDBConnection {
 
       // Monitoring
       monitorCommands: nodeEnv === 'development',
+
+      // Heartbeat settings
+      heartbeatFrequencyMS: 30000,
     };
 
     return {
