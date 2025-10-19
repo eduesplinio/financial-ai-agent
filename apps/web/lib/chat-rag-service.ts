@@ -65,24 +65,14 @@ export class ChatRAGService {
       const effectiveSessionId = sessionId || `session_${Date.now()}_${userId}`;
 
       try {
-        // Try to find existing conversation by sessionId
-        // Use direct MongoDB query to bypass middleware issues
-        const mongoose = await import('mongoose');
-        const db = mongoose.default.connection.db;
-
-        if (sessionId && db) {
+        // Try to find existing conversation by sessionId using Mongoose
+        if (sessionId) {
           console.log(
             `🔍 Searching for conversation with sessionId: ${sessionId}`
           );
+          conversation = await ConversationService.findBySessionId(sessionId);
 
-          // Direct MongoDB query (bypasses Mongoose middleware)
-          const conversationDoc = await db
-            .collection('conversations')
-            .findOne({ sessionId: sessionId });
-
-          if (conversationDoc) {
-            // Convert to Mongoose document
-            conversation = new Conversation(conversationDoc);
+          if (conversation) {
             console.log(
               `📖 Using existing conversation: ${conversation._id} (${conversation.messages?.length || 0} messages)`
             );
@@ -108,7 +98,6 @@ export class ChatRAGService {
         }
       } catch (error) {
         console.error('❌ Error managing conversation:', error);
-        console.error('   Error details:', error);
         // Continue without persistence if there's an error
       }
 
@@ -239,49 +228,29 @@ Responda de forma clara e concisa em português brasileiro.`,
         // Save messages to database
         if (conversation) {
           try {
-            console.log(
-              `💾 Saving user message to conversation ${conversation.sessionId}`
-            );
-            const updatedConv1 = await ConversationService.addMessage(
-              conversation.sessionId,
-              {
-                id: `msg_${Date.now()}_user`,
-                role: 'user',
-                content: message,
-                timestamp: new Date(),
-              }
-            );
-            console.log(
-              `✅ User message saved. Total messages: ${updatedConv1?.messages.length || 0}`
-            );
+            await ConversationService.addMessage(conversation.sessionId, {
+              id: `msg_${Date.now()}_user`,
+              role: 'user',
+              content: message,
+              timestamp: new Date(),
+            });
 
-            console.log(
-              `💾 Saving assistant message to conversation ${conversation.sessionId}`
-            );
-            const updatedConv2 = await ConversationService.addMessage(
-              conversation.sessionId,
-              {
-                id: `msg_${Date.now()}_assistant`,
-                role: 'assistant',
-                content: fullResponse,
-                timestamp: new Date(),
-                sources: [
-                  {
-                    id: 'openai_general',
-                    title: 'Conhecimento Geral (OpenAI)',
-                    url: '#',
-                  },
-                ],
-              }
-            );
-            console.log(
-              `✅ Assistant message saved. Total messages: ${updatedConv2?.messages.length || 0}`
-            );
+            await ConversationService.addMessage(conversation.sessionId, {
+              id: `msg_${Date.now()}_assistant`,
+              role: 'assistant',
+              content: fullResponse,
+              timestamp: new Date(),
+              sources: [
+                {
+                  id: 'openai_general',
+                  title: 'Conhecimento Geral (OpenAI)',
+                  url: '#',
+                },
+              ],
+            });
           } catch (error) {
             console.error('❌ Error saving messages:', error);
           }
-        } else {
-          console.warn('⚠️ No conversation object, skipping save');
         }
 
         yield {
@@ -366,45 +335,14 @@ Responda de forma clara e concisa em português brasileiro.`,
       // Save messages to database
       if (conversation) {
         try {
-          console.log(
-            `💾 Saving user message to conversation ${conversation.sessionId}`
-          );
-
-          // Use direct MongoDB update to bypass middleware
-          const mongoose = await import('mongoose');
-          const db = mongoose.default.connection.db;
-
-          const userMsg = {
+          await ConversationService.addMessage(conversation.sessionId, {
             id: `msg_${Date.now()}_user`,
             role: 'user',
             content: message,
             timestamp: new Date(),
-          };
+          });
 
-          const result1 = await (
-            db.collection('conversations') as any
-          ).findOneAndUpdate(
-            { sessionId: conversation.sessionId },
-            {
-              $push: { messages: userMsg },
-              $set: { updatedAt: new Date() },
-            },
-            { returnDocument: 'after' }
-          );
-
-          if (result1) {
-            console.log(
-              `✅ User message saved. Total messages: ${result1.messages?.length || 0}`
-            );
-          } else {
-            console.error(`❌ Failed to save user message`);
-          }
-
-          console.log(
-            `💾 Saving assistant message to conversation ${conversation.sessionId}`
-          );
-
-          const assistantMsg = {
+          await ConversationService.addMessage(conversation.sessionId, {
             id: `msg_${Date.now()}_assistant`,
             role: 'assistant',
             content: fullResponse,
@@ -414,31 +352,10 @@ Responda de forma clara e concisa em português brasileiro.`,
               title: src.title,
               url: src.url,
             })),
-          };
-
-          const result2 = await (
-            db.collection('conversations') as any
-          ).findOneAndUpdate(
-            { sessionId: conversation.sessionId },
-            {
-              $push: { messages: assistantMsg },
-              $set: { updatedAt: new Date() },
-            },
-            { returnDocument: 'after' }
-          );
-
-          if (result2) {
-            console.log(
-              `✅ Assistant message saved. Total messages: ${result2.messages?.length || 0}`
-            );
-          } else {
-            console.error(`❌ Failed to save assistant message`);
-          }
+          });
         } catch (error) {
           console.error('❌ Error saving messages:', error);
         }
-      } else {
-        console.warn('⚠️ No conversation object, skipping save');
       }
 
       // Send completion with sources

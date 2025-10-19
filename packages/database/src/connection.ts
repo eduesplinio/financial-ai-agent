@@ -246,10 +246,11 @@ class MongoDBConnection {
     const baseOptions: mongoose.ConnectOptions = {
       // Connection pooling settings
       maxPoolSize: nodeEnv === 'production' ? 10 : 5,
-      minPoolSize: 1,
-      maxIdleTimeMS: 30000,
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
+      minPoolSize: 2,
+      maxIdleTimeMS: 60000,
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 60000,
+      connectTimeoutMS: 10000,
 
       // Buffering settings - enable buffering to queue operations until connected
       bufferCommands: true,
