@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';
 import mongoose from 'mongoose';
-import { mongoConnection } from '@financial-ai/database';
+// import { mongoConnection } from '@financial-ai/database';
 
 const preferencesSchema = z.object({
   theme: z.enum(['light', 'dark', 'system']).optional(),
@@ -53,9 +53,7 @@ export async function PUT(request: NextRequest) {
 
     const validatedData = preferencesSchema.parse(body);
 
-    if (!mongoConnection.isConnected()) {
-      await mongoConnection.connect();
-    }
+    // MongoDB connection handled by mongoose
     console.log('[API Preferences] Conexão com MongoDB estabelecida');
 
     const db = mongoose.connection.db;
@@ -288,9 +286,7 @@ export async function GET() {
     console.log('[API Preferences GET] ID do usuário:', userId);
     console.log('[API Preferences GET] Sessão do usuário:', session);
 
-    if (!mongoConnection.isConnected()) {
-      await mongoConnection.connect();
-    }
+    // MongoDB connection handled by mongoose
     console.log('[API Preferences GET] Conexão com MongoDB estabelecida');
 
     const db = mongoose.connection.db;
