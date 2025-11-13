@@ -540,10 +540,12 @@ export class RAGService {
         }
       }
 
-      return results.map(result => ({
-        document: result.document,
-        score: result.score,
-      }));
+      return results
+        .filter(result => result.document)
+        .map(result => ({
+          document: result.document,
+          score: result.score,
+        }));
     } catch (error) {
       console.error('❌ Semantic search failed:', error);
       // Return empty array instead of mock data
