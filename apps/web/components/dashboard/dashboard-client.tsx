@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -29,9 +29,9 @@ import {
   Legend,
   ArcElement,
 } from 'chart.js';
-import { Line, Bar, Doughnut } from 'react-chartjs-2';
+import { Line, Doughnut } from 'react-chartjs-2';
+import type { DashboardData } from '@/lib/server/dashboard-data';
 
-// Registrar componentes do Chart.js
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -44,127 +44,26 @@ ChartJS.register(
   ArcElement
 );
 
-interface FinancialDashboardProps {
-  userId?: string;
+interface DashboardClientProps {
+  data: DashboardData;
 }
 
-export function FinancialDashboard({ userId }: FinancialDashboardProps) {
-  // ...existing code...
-
-  // Cálculo correto para receitas e investimentos (após transactions)
-
+export function DashboardClient({ data }: DashboardClientProps) {
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
 
-  // Dados reais das transações
-  const [loading, setLoading] = useState(true);
-  const [transactions, setTransactions] = useState<any[]>([]);
-  const [stats, setStats] = useState<any | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [categoryExpenses, setCategoryExpenses] = useState<any[]>([]);
-  const [monthlyTrend, setMonthlyTrend] = useState<any[]>([]);
-
-  const totalReceitas = transactions
-    .filter(tx => tx.category?.primary === 'Receita')
-    .reduce(
-      (sum, tx) => sum + (typeof tx.amount === 'number' ? tx.amount : 0),
-      0
-    );
-
-  const totalInvestimentos = transactions
-    .filter(tx => tx.category?.primary === 'Investimento')
-    .reduce(
-      (sum, tx) => sum + (typeof tx.amount === 'number' ? tx.amount : 0),
-      0
-    );
-
-  useEffect(() => {
-    setLoading(true);
-    fetch('/api/transactions?limit=1000', {
-      next: { revalidate: 60 }, // Cache por 60 segundos
-    } as any)
-      .then(res => res.json())
-      .then(data => {
-        setTransactions(data.transactions || []);
-        setStats(data.statistics || null);
-        setCategories(data.statistics?.uniqueCategories || []);
-        // Monta gastos por categoria
-        let categoryColors = [
-          '#FF6384',
-          '#36A2EB',
-          '#FFCE56',
-          '#4BC0C0',
-          '#9966FF',
-          '#FF9F40',
-          '#10B981',
-          '#EF4444',
-          '#F59E42',
-          '#A3E635',
-        ];
-        let catMap: Record<string, { amount: number; color: string }> = {};
-        (data.transactions || []).forEach((tx, idx) => {
-          const cat = tx.category?.primary || tx.category;
-          // Excluir receitas e investimentos dos gráficos de despesas
-          if (
-            cat &&
-            typeof cat === 'string' &&
-            cat !== 'Receita' &&
-            cat !== 'Investimento'
-          ) {
-            if (!catMap[cat]) {
-              catMap[cat] = {
-                amount: 0,
-                color: categoryColors[idx % categoryColors.length],
-              };
-            }
-            catMap[cat].amount += Math.abs(tx.amount);
-          }
-        });
-        setCategoryExpenses(
-          Object.entries(catMap).map(([category, obj]) => ({
-            category,
-            amount: obj.amount,
-            color: obj.color,
-          }))
-        );
-        // Monta tendência mensal
-        const months: Record<string, { income: number; expenses: number }> = {};
-        (data.transactions || []).forEach(tx => {
-          const d = new Date(tx.date);
-          const month = d.toLocaleString('pt-BR', {
-            month: 'short',
-            year: '2-digit',
-          });
-          if (!months[month]) months[month] = { income: 0, expenses: 0 };
-          if (tx.amount > 0) months[month].income += tx.amount;
-          else months[month].expenses += Math.abs(tx.amount);
-        });
-        setMonthlyTrend(
-          Object.entries(months)
-            .map(([month, v]) => ({ month, ...v }))
-            .sort((a, b) => a.month.localeCompare(b.month))
-        );
-        setLoading(false);
-      })
-      .catch(() => {
-        setError('Erro ao carregar dados do dashboard');
-        setLoading(false);
-      });
-  }, []);
-  // Configuração do gráfico de tendências
   const trendChartData = {
-    labels: monthlyTrend.map(item => item.month),
+    labels: data.monthlyTrend.map(item => item.month),
     datasets: [
       {
         label: 'Receitas',
-        data: monthlyTrend.map(item => item.income),
+        data: data.monthlyTrend.map(item => item.income),
         borderColor: '#10B981',
         backgroundColor: 'rgba(16, 185, 129, 0.1)',
         tension: 0.4,
       },
       {
         label: 'Gastos',
-        data: monthlyTrend.map(item => item.expenses),
+        data: data.monthlyTrend.map(item => item.expenses),
         borderColor: '#EF4444',
         backgroundColor: 'rgba(239, 68, 68, 0.1)',
         tension: 0.4,
@@ -172,17 +71,12 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
     ],
   };
 
-  // Configuração do gráfico de gastos por categoria
   const categoryChartData = {
-    labels: categoryExpenses.map(item =>
-      typeof item.category === 'string' ? item.category : String(item.category)
-    ),
+    labels: data.categoryExpenses.map(item => item.category),
     datasets: [
       {
-        data: categoryExpenses.map(item =>
-          typeof item.amount === 'number' ? item.amount : 0
-        ),
-        backgroundColor: categoryExpenses.map(item => item.color || '#36A2EB'),
+        data: data.categoryExpenses.map(item => item.amount),
+        backgroundColor: data.categoryExpenses.map(item => item.color),
         borderWidth: 0,
       },
     ],
@@ -211,7 +105,7 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
   const doughnutOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    cutout: '90%', // borda fina
+    cutout: '90%',
     plugins: {
       legend: {
         position: 'bottom' as const,
@@ -221,7 +115,6 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header com controles */}
       <div className="flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
         <div>
           <h2 className="text-xl font-semibold">Dashboard</h2>
@@ -247,7 +140,6 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
         </div>
       </div>
 
-      {/* Cards de métricas principais */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="bg-green-100 dark:bg-green-900/20 border-green-200 dark:border-green-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -258,18 +150,10 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
           <CardContent>
             <div className="text-2xl font-bold text-green-600 dark:text-green-400">
               R${' '}
-              {typeof stats?.totalCredits === 'number' &&
-              typeof stats?.totalDebits === 'number'
-                ? (stats.totalCredits - stats.totalDebits).toLocaleString(
-                    'pt-BR',
-                    { minimumFractionDigits: 2 }
-                  )
-                : '0,00'}
+              {data.totalBalance.toLocaleString('pt-BR', {
+                minimumFractionDigits: 2,
+              })}
             </div>
-            <p className="text-xs text-green-700/70 dark:text-green-300/70">
-              {/* Variação pode ser calculada se stats trouxer histórico */}
-              {/* +5.2% em relação ao mês passado */}
-            </p>
           </CardContent>
         </Card>
 
@@ -282,13 +166,10 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
           <CardContent>
             <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
               R${' '}
-              {totalReceitas.toLocaleString('pt-BR', {
+              {data.totalIncome.toLocaleString('pt-BR', {
                 minimumFractionDigits: 2,
               })}
             </div>
-            <p className="text-xs text-blue-700/70 dark:text-blue-300/70">
-              {/* +2.1% em relação ao mês passado */}
-            </p>
           </CardContent>
         </Card>
 
@@ -301,15 +182,10 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
           <CardContent>
             <div className="text-2xl font-bold text-red-600 dark:text-red-400">
               R${' '}
-              {typeof stats?.totalDebits === 'number'
-                ? stats.totalDebits.toLocaleString('pt-BR', {
-                    minimumFractionDigits: 2,
-                  })
-                : '0,00'}
+              {data.totalExpenses.toLocaleString('pt-BR', {
+                minimumFractionDigits: 2,
+              })}
             </div>
-            <p className="text-xs text-red-700/70 dark:text-red-300/70">
-              {/* -3.4% em relação ao mês passado */}
-            </p>
           </CardContent>
         </Card>
 
@@ -322,18 +198,14 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
           <CardContent>
             <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
               R${' '}
-              {totalInvestimentos.toLocaleString('pt-BR', {
+              {data.totalInvestments.toLocaleString('pt-BR', {
                 minimumFractionDigits: 2,
               })}
             </div>
-            <p className="text-xs text-purple-700/70 dark:text-purple-300/70">
-              {/* +8.7% em relação ao mês passado */}
-            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Gráfico de tendências */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <Card className="xl:col-span-2 bg-muted/40">
           <CardHeader>
@@ -350,9 +222,7 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
         </Card>
       </div>
 
-      {/* Gráfico de categorias e detalhamento lado a lado */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Gráfico de gastos por categoria */}
         <Card className="bg-muted/40">
           <CardHeader>
             <CardTitle>Gastos por Categoria</CardTitle>
@@ -366,7 +236,7 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
             </div>
           </CardContent>
         </Card>
-        {/* Detalhamento por categoria */}
+
         <Card>
           <CardHeader>
             <CardTitle>Detalhamento por Categoria</CardTitle>
@@ -377,12 +247,12 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {categoryExpenses.length === 0 ? (
+              {data.categoryExpenses.length === 0 ? (
                 <div className="text-muted-foreground">
                   Nenhum dado de categoria encontrado.
                 </div>
               ) : (
-                categoryExpenses.map((item, index) => (
+                data.categoryExpenses.map((item, index) => (
                   <div
                     key={index}
                     className="flex items-center justify-between p-3 rounded-lg"
@@ -390,24 +260,22 @@ export function FinancialDashboard({ userId }: FinancialDashboardProps) {
                   >
                     <div className="flex items-center gap-3">
                       <span className="font-medium text-gray-800 dark:text-gray-200">
-                        {typeof item.category === 'string'
-                          ? item.category
-                          : String(item.category)}
+                        {item.category}
                       </span>
                     </div>
                     <div className="text-right">
                       <div className="font-bold text-gray-800 dark:text-gray-200">
                         R${' '}
-                        {typeof item.amount === 'number'
-                          ? item.amount.toLocaleString('pt-BR', {
-                              minimumFractionDigits: 2,
-                            })
-                          : '0,00'}
+                        {item.amount.toLocaleString('pt-BR', {
+                          minimumFractionDigits: 2,
+                        })}
                       </div>
                       <div className="text-xs opacity-90 text-gray-700 dark:text-gray-300">
-                        {typeof stats?.totalDebits === 'number' &&
-                        stats.totalDebits > 0
-                          ? ((item.amount / stats.totalDebits) * 100).toFixed(1)
+                        {data.statistics.totalDebits > 0
+                          ? (
+                              (item.amount / data.statistics.totalDebits) *
+                              100
+                            ).toFixed(1)
                           : '0.0'}
                         % do total
                       </div>

@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
       createdAt: transaction.createdAt,
     }));
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       transactions: transactionsResponse,
       pagination: {
         total,
@@ -151,6 +151,13 @@ export async function GET(request: NextRequest) {
         type: type || null,
       },
     });
+
+    // Add cache headers
+    response.headers.set(
+      'Cache-Control',
+      's-maxage=60, stale-while-revalidate=300'
+    );
+    return response;
   } catch (error) {
     console.error('Error fetching transactions:', error);
     return NextResponse.json(
