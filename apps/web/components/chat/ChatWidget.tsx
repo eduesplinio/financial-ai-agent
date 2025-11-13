@@ -432,7 +432,10 @@ export const ChatWidget: React.FC = () => {
                 <Bot className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-medium text-sm">Agente Financeiro</h3>
+                <h3 className="font-medium text-sm">Linio</h3>
+                <p className="text-xs text-white/70">
+                  Seu assistente financeiro
+                </p>
               </div>
             </div>
 
@@ -494,8 +497,9 @@ export const ChatWidget: React.FC = () => {
                     isFullscreen ? 'text-base max-w-md' : 'text-sm max-w-xs'
                   }`}
                 >
-                  Sou seu agente financeiro pessoal. Te ajudo a economizar mais,
-                  investir melhor e alcançar suas metas financeiras.
+                  Sou o Linio, seu assistente financeiro pessoal! Te ajudo a
+                  economizar mais, investir melhor e alcançar suas metas
+                  financeiras.
                 </p>
                 <div
                   className={`flex justify-center gap-3 mx-auto ${

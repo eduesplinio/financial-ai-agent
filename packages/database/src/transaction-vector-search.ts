@@ -98,6 +98,11 @@ export class TransactionVectorSearchService {
       // Validate input
       const validatedQuery = TransactionVectorQuerySchema.parse(query);
 
+      console.log('🔍 Transaction Vector Search Debug:');
+      console.log('   userId:', validatedQuery.userId);
+      console.log('   queryText:', validatedQuery.queryText);
+      console.log('   limit:', validatedQuery.limit);
+
       // Build MongoDB aggregation pipeline
       // MongoDB Atlas Vector Search has a max numCandidates of 10000
       const numCandidates = Math.min(validatedQuery.limit * 4, 10000);
@@ -106,11 +111,11 @@ export class TransactionVectorSearchService {
       const pipeline: any[] = [
         {
           $vectorSearch: {
-            index: 'transaction_vector_search',
+            index: 'vector_index',
             path: 'embedding',
             queryVector: queryVector,
-            numCandidates: numCandidates,
-            limit: searchLimit,
+            numCandidates: 10000,
+            limit: 10000,
             filter: {
               userId: validatedQuery.userId,
             },
@@ -187,6 +192,16 @@ export class TransactionVectorSearchService {
       // Execute the search
       const results = await Transaction.aggregate(pipeline);
 
+      console.log(`   ✅ Found ${results.length} transactions`);
+      if (results.length > 0) {
+        console.log(
+          '   Sample:',
+          results[0].description,
+          '- userId:',
+          results[0].userId
+        );
+      }
+
       // Format results
       return results.map(result => ({
         transaction: result,
@@ -258,7 +273,7 @@ export class TransactionVectorSearchService {
       const pipeline = [
         {
           $vectorSearch: {
-            index: 'transaction_vector_search',
+            index: 'vector_index',
             path: 'embedding',
             queryVector: (sourceTransaction as any).embedding,
             numCandidates: numCandidates,

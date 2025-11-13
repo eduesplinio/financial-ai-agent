@@ -475,8 +475,11 @@ export class RAGService {
     filters: SearchFilters
   ): Promise<RelevantDocument[]> {
     try {
+      console.log(`🔍 RAG semanticSearch - query: "${query}"`);
+
       // Generate embedding for the query
       const queryEmbedding = await this.embeddingProvider.getEmbedding(query);
+      console.log(`✅ Generated embedding: ${queryEmbedding.length}D`);
 
       // Use VectorSearchService to search in MongoDB
       const { VectorSearchService } = await import(
@@ -488,6 +491,54 @@ export class RAGService {
         numCandidates: 100,
         limit: 10,
       });
+
+      console.log(
+        `📊 Vector search found ${results.length} documents, top scores:`,
+        results
+          .slice(0, 3)
+          .map(r => ({ title: r.document.title, score: r.score.toFixed(4) }))
+      );
+
+      // Fallback: busca por texto se vector search não retornar bons resultados
+      if (results.length === 0 || (results[0] && results[0].score < 0.6)) {
+        console.log('⚠️ Low scores, trying text search fallback...');
+        const { KnowledgeDocument } = await import(
+          '@financial-ai/database/src/models'
+        );
+
+        // Limpar query removendo pontuação e palavras muito curtas
+        const cleanQuery = query.replace(/[?!.,;]/g, '').trim();
+        const keywords = cleanQuery.split(' ').filter(w => w.length > 3); // Apenas palavras com 4+ caracteres
+
+        if (keywords.length === 0) {
+          console.log('❌ No valid keywords for text search');
+          return results;
+        }
+
+        console.log(`🔍 Searching for keywords: ${keywords.join(', ')}`);
+
+        const textResults = await KnowledgeDocument.find({
+          $or: [
+            { title: { $regex: keywords.join('|'), $options: 'i' } },
+            { content: { $regex: keywords.join('|'), $options: 'i' } },
+          ],
+        })
+          .limit(5)
+          .lean();
+
+        if (textResults.length > 0) {
+          console.log(
+            `✅ Text search found ${textResults.length} documents:`,
+            textResults.map(d => d.title)
+          );
+          // Adicionar resultados de texto com score alto
+          textResults.forEach(doc => {
+            results.unshift({ document: doc, score: 0.85 });
+          });
+        } else {
+          console.log('❌ Text search found no results');
+        }
+      }
 
       return results.map(result => ({
         document: result.document,
