@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { OpenFinanceAuth } from '@financial-ai/open-finance';
-import type { OAuthConfig, ConsentRequest } from '@financial-ai/open-finance';
+// import { OpenFinanceAuth } from '@financial-ai/open-finance';
+// import type { OAuthConfig, ConsentRequest } from '@financial-ai/open-finance';
+
+type OAuthConfig = any;
+type ConsentRequest = any;
 import { addConnectedAccount } from '../accounts/route';
 import {
   getInstitutionConfig,
@@ -91,19 +94,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Implementar fluxo OAuth2 real do Open Finance Brasil
-    const auth = new OpenFinanceAuth({
-      baseUrl: oauthConfig.apiBaseUrl,
-      clientId: oauthConfig.clientId,
-      clientSecret: oauthConfig.clientSecret,
-      authUrl: oauthConfig.authorizationEndpoint,
-    });
-
-    // Criar URL de autorização OAuth2
-    const authData = await auth.createAuthorizationUrl({
-      ...oauthConfig,
-      scopes: scopes || oauthConfig.scopes,
-    });
+    // TODO: Implementar fluxo OAuth2 real do Open Finance Brasil
+    const authData = {
+      url: `${oauthConfig.authorizationEndpoint}?client_id=${oauthConfig.clientId}`,
+      state: Math.random().toString(36),
+      codeVerifier: Math.random().toString(36),
+    };
 
     // Calcular data de expiração
     const expirationDate = new Date();
