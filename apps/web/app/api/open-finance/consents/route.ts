@@ -6,7 +6,7 @@ import { authOptions } from '@/lib/auth';
 
 type OAuthConfig = any;
 type ConsentRequest = any;
-import { addConnectedAccount } from '../accounts/route';
+// import { addConnectedAccount } from '../accounts/route';
 import {
   getInstitutionConfig,
   SANDBOX_CONFIG,
