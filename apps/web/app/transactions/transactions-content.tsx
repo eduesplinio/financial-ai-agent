@@ -96,16 +96,29 @@ export function TransactionsContent() {
   const fetchTransactions = React.useCallback(() => {
     if (!session?.user) return;
     setLoading(true);
-    const params = new URLSearchParams({
-      ...(filters.startDate ? { startDate: filters.startDate } : {}),
-      ...(filters.endDate ? { endDate: filters.endDate } : {}),
-      ...(filters.type ? { type: filters.type } : {}),
-      ...(filters.category ? { category: filters.category } : {}),
-      ...(selectedAccount ? { accountId: selectedAccount } : {}),
-      limit: String(limit),
-      offset: String(page * limit),
-    });
-    fetch(`/api/transactions?${params.toString()}`)
+
+    // Build params object, only including non-empty values
+    const paramsObj: Record<string, string> = {};
+
+    if (filters.startDate) paramsObj.startDate = filters.startDate;
+    if (filters.endDate) paramsObj.endDate = filters.endDate;
+    if (filters.type) paramsObj.type = filters.type;
+    if (filters.category) paramsObj.category = filters.category;
+    if (selectedAccount && selectedAccount.trim() !== '') {
+      paramsObj.accountId = selectedAccount;
+    }
+
+    paramsObj.limit = String(limit);
+    paramsObj.offset = String(page * limit);
+
+    const params = new URLSearchParams(paramsObj);
+
+    fetch(`/api/transactions?${params.toString()}`, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache',
+      },
+    })
       .then(res => res.json())
       .then(data => {
         setTransactions(data.transactions || []);
@@ -121,6 +134,29 @@ export function TransactionsContent() {
 
   React.useEffect(() => {
     fetchTransactions();
+  }, [fetchTransactions]);
+
+  // Polling: refresh every 10 seconds when page is visible
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchTransactions();
+      }
+    }, 10000); // 10 seconds
+
+    return () => clearInterval(interval);
+  }, [fetchTransactions]);
+
+  // Cross-tab sync: listen for account changes
+  React.useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'accounts-changed') {
+        fetchTransactions();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, [fetchTransactions]);
 
   const handleFilterChange = (

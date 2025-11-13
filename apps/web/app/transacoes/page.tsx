@@ -79,6 +79,29 @@ export default function TransacoesPage() {
     loadTransactions();
   }, [selectedCategory]);
 
+  // Polling: refresh every 10 seconds when page is visible
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        loadTransactions();
+      }
+    }, 10000); // 10 seconds
+
+    return () => clearInterval(interval);
+  }, [loadTransactions]);
+
+  // Cross-tab sync: listen for account changes
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'accounts-changed') {
+        loadTransactions();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [loadTransactions]);
+
   const loadTransactions = async () => {
     try {
       setLoading(true);

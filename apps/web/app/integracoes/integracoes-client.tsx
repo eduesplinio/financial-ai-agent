@@ -200,6 +200,10 @@ export function IntegracoesClient() {
           });
         }
 
+        // Notify other tabs about account changes
+        localStorage.setItem('accounts-changed', Date.now().toString());
+        window.dispatchEvent(new Event('storage'));
+
         loadData(); // Recarregar dados
         setActiveTab('connected'); // Voltar para aba de contas conectadas
       } else {
@@ -271,6 +275,10 @@ export function IntegracoesClient() {
           );
 
           if (response.ok) {
+            // Notify other tabs about account changes
+            localStorage.setItem('accounts-changed', Date.now().toString());
+            window.dispatchEvent(new Event('storage'));
+
             toast({
               title: 'Conta desconectada',
               description: `${institutionName} desconectado`,

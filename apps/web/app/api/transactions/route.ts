@@ -152,10 +152,10 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Add cache headers
+    // No cache - always fetch fresh data
     response.headers.set(
       'Cache-Control',
-      's-maxage=60, stale-while-revalidate=300'
+      'no-cache, must-revalidate, max-age=0'
     );
     return response;
   } catch (error) {
