@@ -113,15 +113,16 @@ export function IntegracoesClient() {
     try {
       setLoading(true);
 
-      // Carregar instituições disponíveis
-      const institutionsRes = await fetch('/api/open-finance/institutions');
+      const [institutionsRes, accountsRes] = await Promise.all([
+        fetch('/api/open-finance/institutions', { cache: 'no-store' }),
+        fetch('/api/open-finance/accounts', { cache: 'no-store' }),
+      ]);
+
       if (institutionsRes.ok) {
         const institutionsData = await institutionsRes.json();
         setInstitutions(institutionsData.institutions || []);
       }
 
-      // Carregar contas conectadas
-      const accountsRes = await fetch('/api/open-finance/accounts');
       if (accountsRes.ok) {
         const accountsData = await accountsRes.json();
         setConnectedAccounts(accountsData.accounts || []);
@@ -330,7 +331,8 @@ export function IntegracoesClient() {
     return (
       <div className="p-8">
         <div className="flex items-center justify-center h-64">
-          <RefreshCw className="h-8 w-8 animate-spin" />
+          <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2 text-muted-foreground">Carregando...</span>
         </div>
       </div>
     );

@@ -87,9 +87,11 @@ export default function TransacoesPage() {
       if (selectedCategory) {
         params.append('category', selectedCategory);
       }
-      params.append('limit', '100'); // Carregar mais transações para análise
+      params.append('limit', '100');
 
-      const response = await fetch(`/api/transactions?${params}`);
+      const response = await fetch(`/api/transactions?${params}`, {
+        cache: 'no-store',
+      });
 
       if (response.ok) {
         const data = await response.json();
@@ -144,7 +146,8 @@ export default function TransacoesPage() {
     return (
       <div className="p-8">
         <div className="flex items-center justify-center h-64">
-          <RefreshCw className="h-8 w-8 animate-spin" />
+          <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2 text-muted-foreground">Carregando...</span>
         </div>
       </div>
     );

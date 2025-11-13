@@ -384,7 +384,7 @@ export async function POST(request: NextRequest) {
         { $set: updateData }
       );
 
-      return NextResponse.json({
+      const response = NextResponse.json({
         message: 'Sincronização concluída com sucesso',
         syncId: syncId,
         results: {
@@ -395,6 +395,9 @@ export async function POST(request: NextRequest) {
           duration: '1s',
         },
       });
+
+      response.headers.set('Cache-Control', 'no-store, must-revalidate');
+      return response;
     } catch (syncError) {
       // Marcar sincronização como falha
       await syncHistory.updateOne(
