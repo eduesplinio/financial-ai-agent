@@ -976,12 +976,12 @@ export class RealisticSandboxService {
   private getRecurringPattern(
     type: string
   ): 'MONTHLY' | 'WEEKLY' | 'DAILY' | undefined {
-    const patterns = {
+    const patterns: Record<string, 'MONTHLY' | 'WEEKLY' | 'DAILY'> = {
       PAYMENT: 'MONTHLY',
       DEPOSIT: 'MONTHLY',
       INVESTMENT: 'MONTHLY',
     };
-    return patterns[type as keyof typeof patterns];
+    return patterns[type];
   }
 
   private generateOpeningDate(): string {
