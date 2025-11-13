@@ -201,14 +201,10 @@ export function SettingsContent() {
       if (response.ok) {
         setSaveMessage('Configurações de notificação salvas com sucesso!');
         console.log('Notificações salvas:', updatedNotifications);
-      } else {
-        setSaveMessage('Erro ao salvar configurações');
-        console.error('Erro ao salvar notificações:', response.statusText);
       }
       setTimeout(() => setSaveMessage(''), 3000);
     } catch (error) {
       console.error('Erro ao salvar notificações:', error);
-      setSaveMessage('Erro ao salvar configurações');
     } finally {
       setIsSaving(false);
     }
@@ -253,12 +249,10 @@ export function SettingsContent() {
         setSaveMessage(
           `Consentimento ${value ? 'concedido' : 'revogado'} com sucesso!`
         );
-      } else {
-        setSaveMessage('Erro ao atualizar consentimento');
       }
       setTimeout(() => setSaveMessage(''), 3000);
     } catch (error) {
-      setSaveMessage('Erro ao atualizar consentimento');
+      console.error('Erro ao atualizar consentimento:', error);
     } finally {
       setLoading(false);
     }
