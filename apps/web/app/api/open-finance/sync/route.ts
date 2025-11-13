@@ -301,37 +301,8 @@ export async function POST(request: NextRequest) {
       // Inserir transações no banco com embeddings
       let insertedTransactions = 0;
       if (transactions.length > 0) {
-        // Gerar embeddings para as transações
-        try {
-          const { OpenAIEmbeddingProvider } = await import(
-            '@financial-ai/ai/src/rag/embedding-generator'
-          );
-          const embeddingProvider = new OpenAIEmbeddingProvider(
-            process.env.OPENAI_API_KEY!
-          );
-
-          // Adicionar embeddings às transações
-          for (const transaction of transactions) {
-            const content = [
-              transaction.description,
-              transaction.category?.primary
-                ? `Categoria: ${transaction.category.primary}`
-                : '',
-              transaction.merchant
-                ? `Estabelecimento: ${transaction.merchant}`
-                : '',
-              transaction.amount < 0 ? 'Despesa' : 'Receita',
-            ]
-              .filter(Boolean)
-              .join(' - ');
-
-            transaction.embedding =
-              await embeddingProvider.getEmbedding(content);
-          }
-        } catch (error) {
-          console.error('❌ Error generating embeddings:', error);
-          // Continue sem embeddings se falhar
-        }
+        // TODO: Gerar embeddings para as transações
+        // Desabilitado temporariamente para deploy
 
         const insertResult =
           await transactionsCollection.insertMany(transactions);
