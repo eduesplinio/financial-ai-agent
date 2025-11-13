@@ -11,6 +11,14 @@ const nextConfig = {
   reactStrictMode: true,
   // Optimize bundle size
   swcMinify: true,
+  // Disable ESLint during build (run separately)
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  // Disable TypeScript errors during build
+  typescript: {
+    ignoreBuildErrors: false,
+  },
   // Enable experimental features
   experimental: {
     serverComponentsExternalPackages: ['mongoose'],
