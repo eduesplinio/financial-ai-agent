@@ -23,6 +23,15 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['mongoose'],
   },
+  // Exclude packages from transpilation
+  transpilePackages: [],
+  // Exclude ai package from build
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.externals.push('@financial-ai/ai');
+    }
+    return config;
+  },
   // Security headers
   async headers() {
     return [
