@@ -276,8 +276,7 @@ export async function POST(request: NextRequest) {
 
     // Simular processo de sincronização e armazenar dados reais
     try {
-      // Simular delay de processamento
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Sem delay - processamento imediato
 
       // Gerar e armazenar transações simuladas
       const transactionsToCreate =
