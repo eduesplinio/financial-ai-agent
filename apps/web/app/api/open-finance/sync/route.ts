@@ -298,17 +298,46 @@ export async function POST(request: NextRequest) {
         transactions.push(transaction);
       }
 
-      // Inserir transações no banco (embeddings serão gerados em background)
+      // Inserir transações no banco COM embeddings
       let insertedTransactions = 0;
       if (transactions.length > 0) {
+        // Gerar embeddings usando OpenAI diretamente
+        try {
+          const OpenAI = (await import('openai')).default;
+          const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+          for (const transaction of transactions) {
+            const content = [
+              transaction.description,
+              transaction.category?.primary
+                ? `Categoria: ${transaction.category.primary}`
+                : '',
+              transaction.merchant?.name
+                ? `Estabelecimento: ${transaction.merchant.name}`
+                : '',
+              transaction.amount < 0 ? 'Despesa' : 'Receita',
+            ]
+              .filter(Boolean)
+              .join(' - ');
+
+            const response = await openai.embeddings.create({
+              model: 'text-embedding-3-small',
+              input: content,
+            });
+            transaction.embedding = response.data[0].embedding;
+          }
+          console.log(
+            `✅ Generated embeddings for ${transactions.length} transactions`
+          );
+        } catch (error) {
+          console.error('❌ Error generating embeddings:', error);
+        }
+
         const insertResult =
           await transactionsCollection.insertMany(transactions);
         insertedTransactions = insertResult.insertedCount;
-
-        // TODO: Trigger background job to generate embeddings
-        // Os embeddings podem ser gerados depois via script ou job assíncrono
         console.log(
-          `✅ Inserted ${insertedTransactions} transactions (embeddings will be generated in background)`
+          `✅ Inserted ${insertedTransactions} transactions with embeddings`
         );
       }
 
