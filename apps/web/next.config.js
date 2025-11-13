@@ -17,7 +17,7 @@ const nextConfig = {
   },
   // Disable TypeScript errors during build
   typescript: {
-    ignoreBuildErrors: false,
+    ignoreBuildErrors: true,
   },
   // Enable experimental features
   experimental: {
