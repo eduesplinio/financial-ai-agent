@@ -1,45 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthorizedUserId } from '@/lib/server/mobile-auth';
+import { beginPluggyConnection } from '@/lib/server/pluggy';
 
 type ConnectRequestBody = {
   redirectUri?: string;
   platform?: string;
+  institutionId?: string;
 };
 
 /**
  * POST /v1/integrations/connect/token
  *
  * Contrato para o app iOS:
- * - devolve um `connectToken` (opaco, útil para rastrear a tentativa) e um `connectURL`
- *   que pode ser aberto no navegador para completar o fluxo.
- *
- * Observação: neste projeto web o fluxo de conexão é simulado via `/api/open-finance/accounts`.
- * Este endpoint entrega um deep link para a tela web de integrações.
+ * - devolve um `connectToken` e um `connectURL`
+ *   que abre uma página hospedada por nós com Pluggy Connect.
  */
 export async function POST(request: NextRequest) {
-  const userId = await getAuthorizedUserId(request);
-  if (!userId) {
-    return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
+  try {
+    const userId = await getAuthorizedUserId(request);
+    if (!userId) {
+      return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
+    }
+
+    const body = (await request.json().catch(() => ({}))) as ConnectRequestBody;
+    const url = new URL(request.url);
+    const redirectUri = body.redirectUri || 'linio://integrations/callback';
+    const platform = body.platform || 'ios';
+    const institutionId = body.institutionId;
+
+    const result = await beginPluggyConnection({
+      userId,
+      institutionId,
+      appRedirectUri: redirectUri,
+      origin: url.origin,
+      platform,
+    });
+
+    return NextResponse.json({
+      connectionStatus: 'connecting',
+      connectToken: result.connectToken,
+      connectURL: result.connectURL,
+      lastSyncTimestamp: null,
+      errorMessage: null,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        connectionStatus: 'failed',
+        lastSyncTimestamp: null,
+        connectURL: null,
+        connectToken: null,
+        errorMessage:
+          error instanceof Error
+            ? error.message
+            : 'Não foi possível iniciar a conexão com a Pluggy.',
+      },
+      { status: 503 }
+    );
   }
-
-  const body = (await request.json().catch(() => ({}))) as ConnectRequestBody;
-  const url = new URL(request.url);
-  const origin = url.origin;
-  const redirectUri = body.redirectUri || 'linio://integrations/callback';
-  const platform = body.platform || 'ios';
-
-  const connectToken = `ct_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-  const connectURL = new URL('/v1/integrations/connect/complete', origin);
-  connectURL.searchParams.set('token', connectToken);
-  connectURL.searchParams.set('userId', userId);
-  connectURL.searchParams.set('redirectUri', redirectUri);
-  connectURL.searchParams.set('platform', platform);
-
-  return NextResponse.json({
-    connectionStatus: 'connecting',
-    connectToken,
-    connectURL: connectURL.toString(),
-    lastSyncTimestamp: null,
-    errorMessage: null,
-  });
 }

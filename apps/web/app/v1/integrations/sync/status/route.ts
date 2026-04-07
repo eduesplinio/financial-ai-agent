@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDatabase } from '@/lib/mongodb';
 import { getAuthorizedUserId } from '@/lib/server/mobile-auth';
+import { getPluggyStatus } from '@/lib/server/pluggy';
 
 /**
  * GET /v1/integrations/sync/status
@@ -15,38 +15,13 @@ export async function GET(_request: NextRequest) {
     return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
   }
 
-  const db = await getDatabase();
-  const connectedAccounts = db.collection('connected_accounts');
-
-  const accounts = await connectedAccounts
-    .find({ userId, deletedAt: { $exists: false } })
-    .project({ lastSync: 1 })
-    .toArray();
-
-  if (accounts.length === 0) {
-    return NextResponse.json({
-      connectionStatus: 'notConnected',
-      lastSyncTimestamp: null,
-      connectURL: null,
-      connectToken: null,
-      errorMessage: null,
-    });
-  }
-
-  const lastSyncAt = accounts
-    .map(a => (a.lastSync ? new Date(a.lastSync) : null))
-    .filter(Boolean)
-    .reduce<Date | null>((acc, date) => {
-      if (!date) return acc;
-      if (!acc) return date;
-      return date > acc ? date : acc;
-    }, null);
+  const status = await getPluggyStatus(userId);
 
   return NextResponse.json({
-    connectionStatus: 'connected',
-    lastSyncTimestamp: lastSyncAt ? Math.floor(lastSyncAt.getTime() / 1000) : null,
+    connectionStatus: status.connectionStatus,
+    lastSyncTimestamp: status.lastSyncTimestamp,
     connectURL: null,
     connectToken: null,
-    errorMessage: null,
+    errorMessage: status.errorMessage,
   });
 }
