@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { persistPluggyTransactions } from '@/lib/server/pluggy';
+import {
+  persistPluggyTransactions,
+  reconcilePluggyItem,
+} from '@/lib/server/pluggy';
 
 export async function POST(request: NextRequest) {
   const payload = await request.json().catch(() => null);
@@ -8,9 +11,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
+  if (payload.event === 'item/created' || payload.event === 'item/updated') {
+    await reconcilePluggyItem({
+      userId: payload.clientUserId,
+      itemId: payload.itemId,
+    }).catch(() => undefined);
+  }
+
   if (
-    payload.event === 'item/created' ||
-    payload.event === 'item/updated' ||
     payload.event === 'transactions/created' ||
     payload.event === 'transactions/updated'
   ) {

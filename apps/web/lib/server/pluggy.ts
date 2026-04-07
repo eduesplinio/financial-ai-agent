@@ -16,6 +16,13 @@ type FinalizeConnectionParams = {
   itemId: string;
 };
 
+type ReconcileConnectionParams = {
+  userId: string;
+  itemId: string;
+  appRedirectUri?: string | null;
+  platform?: string | null;
+};
+
 type SyncAccountsParams = {
   userId: string;
 };
@@ -158,25 +165,63 @@ export async function finalizePluggyConnection({
     throw new Error('Sessão de conexão expirada.');
   }
 
+  await reconcilePluggyItem({
+    userId: session.userId,
+    itemId,
+    appRedirectUri: session.appRedirectUri,
+    platform: session.platform,
+  });
+  await sessions.deleteOne({ sessionId });
+
+  return {
+    redirectURL: appendQueryParams(session.appRedirectUri, {
+      status: 'success',
+      itemId,
+      userId: session.userId,
+    }),
+  };
+}
+
+export async function reconcilePluggyItem({
+  userId,
+  itemId,
+  appRedirectUri,
+  platform,
+}: ReconcileConnectionParams) {
+  const db = await getDatabase();
+  const connections = db.collection<IntegrationConnection>(
+    'open_finance_connections'
+  );
+  const connectedAccounts = db.collection('connected_accounts');
   const item = await getPluggyItem(itemId);
   const accounts = await listPluggyAccounts(itemId);
+  const existingConnection = await connections.findOne({
+    userId,
+    provider: 'pluggy',
+    itemId,
+  });
   const now = new Date();
+  const resolvedRedirectUri =
+    appRedirectUri ||
+    existingConnection?.appRedirectUri ||
+    'linio://integrations/callback';
+  const resolvedPlatform = platform || existingConnection?.platform || 'ios';
 
   await connections.updateOne(
-    { userId: session.userId, provider: 'pluggy', itemId },
+    { userId, provider: 'pluggy', itemId },
     {
       $set: {
-        userId: session.userId,
+        userId,
         provider: 'pluggy',
         itemId,
         status: item.status || 'UPDATING',
         executionStatus: item.executionStatus || null,
         connectorId: item.connector?.id || null,
         connectorName: item.connector?.name || null,
-        appRedirectUri: session.appRedirectUri,
-        platform: session.platform,
+        appRedirectUri: resolvedRedirectUri,
+        platform: resolvedPlatform,
         lastSyncAt: item.lastUpdatedAt ? new Date(item.lastUpdatedAt) : null,
-        connectedAt: now,
+        connectedAt: existingConnection?.connectedAt || now,
         errorMessage: item.error?.message || null,
         updatedAt: now,
       },
@@ -190,13 +235,13 @@ export async function finalizePluggyConnection({
   for (const account of accounts) {
     await connectedAccounts.updateOne(
       {
-        userId: session.userId,
+        userId,
         institutionId: `pluggy:${item.connector?.id || 'unknown'}`,
         accountId: account.id,
       },
       {
         $set: {
-          userId: session.userId,
+          userId,
           institutionId: `pluggy:${item.connector?.id || 'unknown'}`,
           institutionName: item.connector?.name || 'Pluggy',
           accountId: account.id,
@@ -217,16 +262,7 @@ export async function finalizePluggyConnection({
     );
   }
 
-  await persistPluggyTransactions(session.userId, itemId, accounts);
-  await sessions.deleteOne({ sessionId });
-
-  return {
-    redirectURL: appendQueryParams(session.appRedirectUri, {
-      status: 'success',
-      itemId,
-      userId: session.userId,
-    }),
-  };
+  await persistPluggyTransactions(userId, itemId, accounts);
 }
 
 export async function getPluggyStatus(userId: string) {
@@ -234,10 +270,23 @@ export async function getPluggyStatus(userId: string) {
   const connections = db.collection<IntegrationConnection>(
     'open_finance_connections'
   );
+  const sessions = db.collection<PluggySession>('pluggy_connect_sessions');
   const latestConnection = await connections.findOne(
     { userId, provider: 'pluggy' },
     { sort: { updatedAt: -1 } }
   );
+  const pendingSession = await sessions.findOne(
+    { userId, expiresAt: { $gt: new Date() } },
+    { sort: { createdAt: -1 } }
+  );
+
+  if (!latestConnection && pendingSession) {
+    return {
+      connectionStatus: 'connecting',
+      lastSyncTimestamp: null,
+      errorMessage: null,
+    };
+  }
 
   if (!latestConnection) {
     return {

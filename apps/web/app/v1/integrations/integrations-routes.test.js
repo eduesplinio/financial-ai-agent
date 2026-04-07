@@ -5,6 +5,8 @@ const mockBeginPluggyConnection = jest.fn();
 const mockFinalizePluggyConnection = jest.fn();
 const mockGetPluggyStatus = jest.fn();
 const mockSyncPluggyItem = jest.fn();
+const mockReconcilePluggyItem = jest.fn();
+const mockPersistPluggyTransactions = jest.fn();
 
 jest.mock('@/lib/server/mobile-auth', () => ({
   getAuthorizedUserId: (...args) => mockGetAuthorizedUserId(...args),
@@ -15,11 +17,16 @@ jest.mock('@/lib/server/pluggy', () => ({
   finalizePluggyConnection: (...args) => mockFinalizePluggyConnection(...args),
   getPluggyStatus: (...args) => mockGetPluggyStatus(...args),
   syncPluggyItem: (...args) => mockSyncPluggyItem(...args),
+  reconcilePluggyItem: (...args) => mockReconcilePluggyItem(...args),
+  persistPluggyTransactions: (...args) =>
+    mockPersistPluggyTransactions(...args),
 }));
 
 describe('pluggy integrations routes', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockReconcilePluggyItem.mockResolvedValue(undefined);
+    mockPersistPluggyTransactions.mockResolvedValue(undefined);
   });
 
   test('POST /v1/integrations/connect/token returns hosted Pluggy connect URL', async () => {
@@ -141,5 +148,62 @@ describe('pluggy integrations routes', () => {
     expect(mockSyncPluggyItem).toHaveBeenCalledWith({
       userId: 'user-123',
     });
+  });
+
+  test('POST /v1/integrations/webhook reconciles item lifecycle events', async () => {
+    const { POST } = require('./webhook/route');
+    const request = new NextRequest(
+      'http://localhost:3000/v1/integrations/webhook',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          event: 'item/updated',
+          itemId: 'item-123',
+          clientUserId: 'user-123',
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(mockReconcilePluggyItem).toHaveBeenCalledWith({
+      userId: 'user-123',
+      itemId: 'item-123',
+    });
+    expect(mockPersistPluggyTransactions).not.toHaveBeenCalled();
+  });
+
+  test('POST /v1/integrations/webhook persists transactions for transaction events', async () => {
+    const { POST } = require('./webhook/route');
+    const request = new NextRequest(
+      'http://localhost:3000/v1/integrations/webhook',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          event: 'transactions/updated',
+          itemId: 'item-123',
+          clientUserId: 'user-123',
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(mockPersistPluggyTransactions).toHaveBeenCalledWith(
+      'user-123',
+      'item-123'
+    );
   });
 });

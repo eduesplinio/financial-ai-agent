@@ -69,6 +69,7 @@ describe('pluggy helper', () => {
       deleteOne: jest.fn().mockResolvedValue({}),
     };
     const connectionsCollection = {
+      findOne: jest.fn().mockResolvedValue(null),
       updateOne: jest.fn().mockResolvedValue({}),
     };
     const accountsCollection = {
@@ -151,6 +152,98 @@ describe('pluggy helper', () => {
     expect(transactionsCollection.updateOne).toHaveBeenCalled();
   });
 
+  test('reconcilePluggyItem upserts connection without session context', async () => {
+    const connectionsCollection = {
+      findOne: jest.fn().mockResolvedValue(null),
+      updateOne: jest.fn().mockResolvedValue({}),
+    };
+    const accountsCollection = {
+      updateOne: jest.fn().mockResolvedValue({}),
+      find: jest.fn().mockReturnValue({
+        toArray: jest.fn().mockResolvedValue([
+          {
+            accountId: 'acc-1',
+            institutionId: 'pluggy:201',
+          },
+        ]),
+      }),
+    };
+    const transactionsCollection = {
+      updateOne: jest.fn().mockResolvedValue({}),
+    };
+
+    mockGetDatabase.mockResolvedValue({
+      collection: jest.fn().mockImplementation(name => {
+        if (name === 'open_finance_connections') return connectionsCollection;
+        if (name === 'connected_accounts') return accountsCollection;
+        if (name === 'transactions') return transactionsCollection;
+        throw new Error(`Unexpected collection ${name}`);
+      }),
+    });
+
+    global.fetch
+      .mockResolvedValueOnce(jsonResponse({ apiKey: 'api-key-123' }))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          id: 'item-123',
+          status: 'UPDATED',
+          executionStatus: 'SUCCESS',
+          lastUpdatedAt: '2026-04-07T15:00:00.000Z',
+          connector: { id: 201, name: 'Banco X' },
+        })
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          results: [
+            {
+              id: 'acc-1',
+              itemId: 'item-123',
+              type: 'BANK',
+              subtype: 'CHECKING_ACCOUNT',
+              name: 'Conta Corrente',
+              currencyCode: 'BRL',
+            },
+          ],
+        })
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          results: [
+            {
+              id: 'tx-1',
+              accountId: 'acc-1',
+              description: 'Uber',
+              amount: 25.5,
+              currencyCode: 'BRL',
+              date: '2026-04-07T12:00:00.000Z',
+              type: 'DEBIT',
+              status: 'COMPLETED',
+            },
+          ],
+        })
+      );
+
+    const { reconcilePluggyItem } = require('./pluggy');
+    await reconcilePluggyItem({
+      userId: 'user-123',
+      itemId: 'item-123',
+    });
+
+    expect(connectionsCollection.updateOne).toHaveBeenCalledWith(
+      { userId: 'user-123', provider: 'pluggy', itemId: 'item-123' },
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          appRedirectUri: 'linio://integrations/callback',
+          platform: 'ios',
+          connectorName: 'Banco X',
+        }),
+      }),
+      { upsert: true }
+    );
+    expect(accountsCollection.updateOne).toHaveBeenCalled();
+    expect(transactionsCollection.updateOne).toHaveBeenCalled();
+  });
+
   test('getPluggyStatus maps item status to connected', async () => {
     const connectionsCollection = {
       findOne: jest.fn().mockResolvedValue({
@@ -161,10 +254,14 @@ describe('pluggy helper', () => {
       }),
       updateOne: jest.fn().mockResolvedValue({}),
     };
+    const sessionsCollection = {
+      findOne: jest.fn().mockResolvedValue(null),
+    };
 
     mockGetDatabase.mockResolvedValue({
       collection: jest.fn().mockImplementation(name => {
         if (name === 'open_finance_connections') return connectionsCollection;
+        if (name === 'pluggy_connect_sessions') return sessionsCollection;
         throw new Error(`Unexpected collection ${name}`);
       }),
     });
@@ -186,6 +283,36 @@ describe('pluggy helper', () => {
     expect(result).toEqual({
       connectionStatus: 'connected',
       lastSyncTimestamp: 1775574000,
+      errorMessage: null,
+    });
+  });
+
+  test('getPluggyStatus returns connecting while session is pending', async () => {
+    const connectionsCollection = {
+      findOne: jest.fn().mockResolvedValue(null),
+    };
+    const sessionsCollection = {
+      findOne: jest.fn().mockResolvedValue({
+        sessionId: 'session-123',
+        userId: 'user-123',
+        expiresAt: new Date(Date.now() + 60_000),
+      }),
+    };
+
+    mockGetDatabase.mockResolvedValue({
+      collection: jest.fn().mockImplementation(name => {
+        if (name === 'open_finance_connections') return connectionsCollection;
+        if (name === 'pluggy_connect_sessions') return sessionsCollection;
+        throw new Error(`Unexpected collection ${name}`);
+      }),
+    });
+
+    const { getPluggyStatus } = require('./pluggy');
+    const result = await getPluggyStatus('user-123');
+
+    expect(result).toEqual({
+      connectionStatus: 'connecting',
+      lastSyncTimestamp: null,
       errorMessage: null,
     });
   });
